@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:www.muslimpro.com)",
+      "WebSearch",
+      "WebFetch(domain:brandfetch.com)",
+      "WebFetch(domain:web.archive.org)",
+      "WebFetch(domain:dribbble.com)",
+      "WebFetch(domain:bitsmedia.com)",
+      "WebFetch(domain:muslimpro.com)",
+      "WebFetch(domain:support.muslimpro.com)",
+      "WebFetch(domain:tracxn.com)",
+      "WebFetch(domain:halodigital.co)",
+      "WebFetch(domain:deenwebworks.com)",
+      "Bash(npm install:*)"
+    ]
+  }
+}
