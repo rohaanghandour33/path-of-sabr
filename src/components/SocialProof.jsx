@@ -19,35 +19,34 @@ function Stars({ gold }) {
 function hl(quote, word) {
   const parts = quote.split(word);
   if (parts.length < 2) return quote;
-  return <>{parts[0]}<mark className="bg-[#C9952A]/20 text-[#C9952A] not-italic font-semibold rounded px-0.5 not-italic">{word}</mark>{parts[1]}</>;
+  return <>{parts[0]}<mark className="bg-[#C9952A]/20 text-[#C9952A] not-italic font-semibold rounded px-0.5">{word}</mark>{parts[1]}</>;
 }
 
 export default function SocialProof() {
   return (
-    <section className="relative py-24 overflow-hidden" style={{ background: 'linear-gradient(160deg, #051a10 0%, #072d1c 100%)' }}>
+    <section className="relative py-16 sm:py-24 overflow-hidden" style={{ background: 'linear-gradient(160deg, #051a10 0%, #072d1c 100%)' }}>
 
-      {/* Spotlight */}
       <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse 70% 50% at 50% 100%, rgba(29,158,117,0.12) 0%, transparent 70%)' }} />
 
       <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
 
-        <div className="text-center mb-14">
+        <div className="text-center mb-10 sm:mb-14">
           <p className="section-label text-[#C9952A] mb-3">Community</p>
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight mb-4">You are not alone in this</h2>
-          <p className="text-white/45 max-w-md mx-auto text-base">Muslims across the UK are already on the waitlist. Here's what they're saying.</p>
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white tracking-tight mb-3 sm:mb-4">You are not alone in this</h2>
+          <p className="text-white/45 max-w-md mx-auto text-sm sm:text-base">Muslims across the UK are already on the waitlist. Here's what they're saying.</p>
         </div>
 
         {/* Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-start">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
           {testimonials.map((t, i) => (
             <div
               key={t.name}
-              className={`flex flex-col rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1.5 ${i === 1 ? 'md:-translate-y-3' : ''}`}
+              className="flex flex-col rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1"
               style={{ background: 'linear-gradient(145deg, #0d3320 0%, #0a2318 100%)', border: '1px solid rgba(29,158,117,0.2)', boxShadow: '0 4px 24px rgba(0,0,0,0.3)' }}
             >
               <div className="h-[2px]" style={{ background: i === 1 ? 'linear-gradient(90deg,#C9952A,#1D9E75)' : 'linear-gradient(90deg,#1D9E75,#085041)' }} />
 
-              <div className="p-6 flex flex-col gap-4 flex-1">
+              <div className="p-5 sm:p-6 flex flex-col gap-3 sm:gap-4 flex-1">
                 <div className="flex items-center justify-between">
                   <Stars gold={i === 1} />
                   <span className="text-[10px] font-bold text-[#1D9E75] bg-[#1D9E75]/15 px-2 py-0.5 rounded-full">Verified</span>
@@ -70,7 +69,7 @@ export default function SocialProof() {
         </div>
 
         {/* Trust bar */}
-        <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-5 text-sm text-white/45">
+        <div className="mt-8 sm:mt-10 flex flex-wrap items-center justify-center gap-4 sm:gap-5 text-xs sm:text-sm text-white/45">
           <div className="flex items-center gap-2">
             <div className="flex -space-x-2">
               {['FA','OR','AM','ZK','NR'].map((ini, i) => (
@@ -79,22 +78,23 @@ export default function SocialProof() {
             </div>
             <span><strong className="text-white">500+</strong> Muslims on the waitlist</span>
           </div>
-          <span className="hidden sm:block text-white/15">|</span>
-          <div className="flex items-center gap-1.5"><Stars /><span><strong className="text-white">4.9/5</strong> early access rating</span></div>
-          <span className="hidden sm:block text-white/15">|</span>
-          <span>🇬🇧 Built in the UK, for Muslims worldwide</span>
+          <div className="flex items-center gap-1.5">
+            <Stars />
+            <span><strong className="text-white">4.9/5</strong> rating</span>
+          </div>
+          <span>🇬🇧 Built in the UK</span>
         </div>
 
         {/* CTA strip */}
         <div
-          className="mt-12 rounded-2xl p-8 flex flex-col md:flex-row items-center justify-between gap-6"
-          style={{ background: 'linear-gradient(145deg, #0d3320, #0a2318)', border: '1px solid rgba(29,158,117,0.25)', boxShadow: '0 0 60px rgba(29,158,117,0.08)' }}
+          className="mt-10 sm:mt-12 rounded-2xl p-6 sm:p-8 flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between sm:gap-6"
+          style={{ background: 'linear-gradient(145deg, #0d3320, #0a2318)', border: '1px solid rgba(29,158,117,0.25)' }}
         >
           <div>
-            <p className="text-white font-bold text-xl mb-1">Ready to start your journey?</p>
+            <p className="text-white font-bold text-lg sm:text-xl mb-1">Ready to start your journey?</p>
             <p className="text-white/45 text-sm">Join Muslims across the UK building consistency in their deen.</p>
           </div>
-          <a href="#waitlist" className="btn-primary shrink-0 text-white font-semibold px-8 py-3.5 rounded-xl whitespace-nowrap">
+          <a href="#waitlist" className="btn-primary text-white font-semibold px-8 py-4 rounded-xl text-center text-sm whitespace-nowrap">
             Join the Waitlist →
           </a>
         </div>

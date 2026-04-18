@@ -27,24 +27,24 @@ const plans = [
 function PlanCard({ plan }) {
   return (
     <div
-      className="relative rounded-3xl p-8 flex flex-col gap-6 transition-all duration-300 hover:-translate-y-1"
+      className={`relative rounded-3xl p-7 sm:p-8 flex flex-col gap-5 sm:gap-6 transition-all duration-300 hover:-translate-y-1 ${plan.primary ? 'sm:scale-[1.03]' : ''}`}
       style={plan.primary ? {
         background: 'linear-gradient(160deg, #0d5c3a 0%, #085041 100%)',
         border: '1px solid rgba(29,158,117,0.5)',
         boxShadow: '0 0 60px rgba(29,158,117,0.2), 0 20px 60px rgba(0,0,0,0.3)',
-        scale: '1.03',
       } : {
         background: 'rgba(255,255,255,0.04)',
         border: '1px solid rgba(255,255,255,0.1)',
         backdropFilter: 'blur(12px)',
       }}
     >
-      {/* Top glow line on primary */}
-      {plan.primary && <div className="absolute top-0 left-8 right-8 h-px" style={{ background: 'linear-gradient(90deg, transparent, rgba(201,149,42,0.8), transparent)' }} />}
+      {plan.primary && (
+        <div className="absolute top-0 left-8 right-8 h-px" style={{ background: 'linear-gradient(90deg, transparent, rgba(201,149,42,0.8), transparent)' }} />
+      )}
 
       {plan.badge && (
         <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-          <span className="inline-flex items-center gap-1.5 bg-[#C9952A] text-white text-xs font-bold px-4 py-1.5 rounded-full shadow-lg">
+          <span className="inline-flex items-center gap-1.5 bg-[#C9952A] text-white text-xs font-bold px-4 py-1.5 rounded-full shadow-lg whitespace-nowrap">
             <Sparkles size={12} /> {plan.badge}
           </span>
         </div>
@@ -52,14 +52,15 @@ function PlanCard({ plan }) {
 
       <div>
         <p className="section-label text-[#C9952A] mb-2">{plan.name}</p>
-        <div className="flex items-end gap-1 mb-3">
-          <span className="text-5xl font-extrabold tracking-tight text-white">{plan.price ?? 'Free'}</span>
-          {plan.period && <span className="text-base mb-2 text-white/60">{plan.period}</span>}
+        <div className="flex items-end gap-1 mb-2 sm:mb-3">
+          <span className="text-4xl sm:text-5xl font-extrabold tracking-tight text-white">{plan.price ?? 'Free'}</span>
+          {plan.period && <span className="text-base mb-1 sm:mb-2 text-white/60">{plan.period}</span>}
         </div>
         <p className="text-sm leading-relaxed text-white/55">{plan.description}</p>
       </div>
 
-      <a href={plan.ctaHref} className={`text-center font-semibold text-sm py-3.5 rounded-xl transition-all duration-200 ${plan.primary ? 'bg-white text-[#085041] hover:bg-[#E1F5EE] shadow-md' : 'btn-primary text-white'}`}>
+      <a href={plan.ctaHref}
+        className={`text-center font-semibold text-sm py-4 rounded-xl transition-all duration-200 ${plan.primary ? 'bg-white text-[#085041] hover:bg-[#E1F5EE] shadow-md' : 'btn-primary text-white'}`}>
         {plan.cta}
       </a>
 
@@ -81,23 +82,23 @@ function PlanCard({ plan }) {
 
 export default function Pricing() {
   return (
-    <section id="pricing" className="relative py-24 overflow-hidden" style={{ background: 'linear-gradient(160deg, #051a10 0%, #062516 100%)' }}>
+    <section id="pricing" className="relative py-16 sm:py-24 overflow-hidden" style={{ background: 'linear-gradient(160deg, #051a10 0%, #062516 100%)' }}>
       <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse 60% 50% at 50% 50%, rgba(201,149,42,0.1) 0%, transparent 70%)' }} />
 
       <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
+        <div className="text-center mb-12 sm:mb-16">
           <p className="section-label text-[#C9952A] mb-3">Pricing</p>
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-white mb-4 tracking-tight">Simple, transparent pricing</h2>
-          <p className="text-white/50 max-w-lg mx-auto text-base leading-relaxed">
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white mb-3 sm:mb-4 tracking-tight">Simple, transparent pricing</h2>
+          <p className="text-white/50 max-w-lg mx-auto text-sm sm:text-base leading-relaxed">
             Start free and upgrade when you're ready. Every Core subscription gives 10% to sadaqah automatically.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 items-start max-w-3xl mx-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8 items-start max-w-3xl mx-auto">
           {plans.map((plan) => <PlanCard key={plan.name} plan={plan} />)}
         </div>
 
-        <div className="mt-12 text-center">
+        <div className="mt-10 sm:mt-12 text-center">
           <p className="text-xs text-white/30 max-w-md mx-auto">
             ✦ Sadaqah is distributed to verified Islamic charities monthly. You'll receive a full breakdown.
           </p>
