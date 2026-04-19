@@ -1,6 +1,30 @@
 import { Resend } from 'resend';
+import { google } from 'googleapis';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
+
+async function appendToSheet(email) {
+  const auth = new google.auth.JWT({
+    email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
+    key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+    scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+  });
+
+  const sheets = google.sheets({ version: 'v4', auth });
+
+  const now = new Date();
+  const date = now.toLocaleDateString('en-GB'); // e.g. 17/04/2026
+  const time = now.toLocaleTimeString('en-GB'); // e.g. 14:32:01
+
+  await sheets.spreadsheets.values.append({
+    spreadsheetId: process.env.GOOGLE_SHEET_ID,
+    range: 'Sheet1!A:C',
+    valueInputOption: 'RAW',
+    requestBody: {
+      values: [[email, date, time]],
+    },
+  });
+}
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -13,8 +37,9 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Valid email required' });
   }
 
-  try {
-    await resend.emails.send({
+  // Run both in parallel — email notification + sheet logging
+  const [emailResult, sheetResult] = await Promise.allSettled([
+    resend.emails.send({
       from: 'Path of Sabr <onboarding@resend.dev>',
       to: 'rohaanghandour33@gmail.com',
       subject: '🌿 New Waitlist Signup — Path of Sabr',
@@ -28,11 +53,21 @@ export default async function handler(req, res) {
           <p style="color: #ffffff50; font-size: 13px; margin-top: 24px;">Path of Sabr — Built for the Muslim who is genuinely trying.</p>
         </div>
       `,
-    });
+    }),
+    appendToSheet(email),
+  ]);
 
-    return res.status(200).json({ ok: true });
-  } catch (err) {
-    console.error('Resend error:', err);
-    return res.status(500).json({ error: 'Failed to send email' });
+  if (emailResult.status === 'rejected') {
+    console.error('Resend error:', emailResult.reason);
   }
+  if (sheetResult.status === 'rejected') {
+    console.error('Google Sheets error:', sheetResult.reason);
+  }
+
+  // Still return success as long as at least one succeeded
+  if (emailResult.status === 'rejected' && sheetResult.status === 'rejected') {
+    return res.status(500).json({ error: 'Failed to process signup' });
+  }
+
+  return res.status(200).json({ ok: true });
 }
