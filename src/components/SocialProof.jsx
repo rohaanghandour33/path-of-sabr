@@ -1,26 +1,41 @@
-const testimonials = [
-  { quote: "I've tried every habit app out there. None of them understood why I felt guilty when I missed Fajr. This does.",           name: 'Fatima A.', location: 'London, UK',     initials: 'FA', highlight: 'felt guilty when I missed Fajr',    gradient: 'linear-gradient(135deg,#1D9E75,#085041)' },
-  { quote: "The AI doesn't just remind me to pray — it asks how I'm feeling about my deen. That's the difference.",                   name: 'Omar R.',   location: 'Manchester, UK', initials: 'OR', highlight: "asks how I'm feeling about my deen", gradient: 'linear-gradient(135deg,#C9952A,#7a5a1a)' },
-  { quote: "Knowing 10% goes to sadaqah made me feel like my subscription itself is an act of worship. SubhanAllah.",                 name: 'Aisha M.',  location: 'Birmingham, UK', initials: 'AM', highlight: 'an act of worship',                  gradient: 'linear-gradient(135deg,#085041,#1D9E75)' },
+const struggles = [
+  {
+    icon: '🌙',
+    problem: 'Missing Fajr — again',
+    detail: 'Most Muslims wake up with the intention to pray Fajr but consistently miss it, then carry guilt for the rest of the day.',
+    accent: '#1D9E75',
+  },
+  {
+    icon: '📱',
+    problem: 'Phone before prayer',
+    detail: 'Scrolling social media the moment you wake up instead of starting the day with dhikr and salah — a habit most struggle to break.',
+    accent: '#C9952A',
+  },
+  {
+    icon: '😔',
+    problem: '"I\'ll start being consistent next Ramadan"',
+    detail: 'The cycle of starting strong, losing momentum, and promising to restart — repeating year after year without real change.',
+    accent: '#1D9E75',
+  },
+  {
+    icon: '🤷',
+    problem: 'Not knowing where to start',
+    detail: 'Wanting to improve your deen but feeling overwhelmed about which habits to build first and how to stay on track.',
+    accent: '#C9952A',
+  },
+  {
+    icon: '💭',
+    problem: 'Islamic questions with no one to ask',
+    detail: 'Having genuine questions about your deen but not having a scholar or knowledgeable person to ask without feeling judged.',
+    accent: '#1D9E75',
+  },
+  {
+    icon: '🔁',
+    problem: 'The same sins, over and over',
+    detail: 'Making tawbah sincerely, then falling back into the same patterns — feeling stuck and wondering if real change is even possible.',
+    accent: '#C9952A',
+  },
 ];
-
-function Stars({ gold }) {
-  return (
-    <div className="flex gap-0.5">
-      {Array.from({ length: 5 }).map((_, i) => (
-        <svg key={i} width="13" height="13" viewBox="0 0 24 24" fill={gold ? '#C9952A' : '#1D9E75'}>
-          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-        </svg>
-      ))}
-    </div>
-  );
-}
-
-function hl(quote, word) {
-  const parts = quote.split(word);
-  if (parts.length < 2) return quote;
-  return <>{parts[0]}<mark className="bg-[#C9952A]/20 text-[#C9952A] not-italic font-semibold rounded px-0.5">{word}</mark>{parts[1]}</>;
-}
 
 export default function SocialProof() {
   return (
@@ -31,58 +46,37 @@ export default function SocialProof() {
       <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
 
         <div className="text-center mb-10 sm:mb-14">
-          <p className="section-label text-[#C9952A] mb-3">Community</p>
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white tracking-tight mb-3 sm:mb-4">You are not alone in this</h2>
-          <p className="text-white/45 max-w-md mx-auto text-sm sm:text-base">Muslims across the UK are already on the waitlist. Here's what they're saying.</p>
+          <p className="section-label text-[#C9952A] mb-3">Sound Familiar?</p>
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white tracking-tight mb-3 sm:mb-4">
+            What most Muslims are going through
+          </h2>
+          <p className="text-white/45 max-w-md mx-auto text-sm sm:text-base">
+            You are not alone. These are the struggles we built Path of Sabr to solve.
+          </p>
         </div>
 
-        {/* Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
-          {testimonials.map((t, i) => (
+        {/* Struggle cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {struggles.map((s) => (
             <div
-              key={t.name}
-              className="flex flex-col rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1"
-              style={{ background: 'linear-gradient(145deg, #0d3320 0%, #0a2318 100%)', border: '1px solid rgba(29,158,117,0.2)', boxShadow: '0 4px 24px rgba(0,0,0,0.3)' }}
+              key={s.problem}
+              className="rounded-2xl p-5 sm:p-6 flex flex-col gap-3 transition-all duration-300 hover:-translate-y-1"
+              style={{
+                background: 'linear-gradient(145deg, #0d3320 0%, #0a2318 100%)',
+                border: `1px solid ${s.accent === '#1D9E75' ? 'rgba(29,158,117,0.2)' : 'rgba(201,149,42,0.2)'}`,
+                boxShadow: '0 4px 24px rgba(0,0,0,0.3)',
+              }}
             >
-              <div className="h-[2px]" style={{ background: i === 1 ? 'linear-gradient(90deg,#C9952A,#1D9E75)' : 'linear-gradient(90deg,#1D9E75,#085041)' }} />
-
-              <div className="p-5 sm:p-6 flex flex-col gap-3 sm:gap-4 flex-1">
-                <div className="flex items-center justify-between">
-                  <Stars gold={i === 1} />
-                  <span className="text-[10px] font-bold text-[#1D9E75] bg-[#1D9E75]/15 px-2 py-0.5 rounded-full">Verified</span>
-                </div>
-
-                <p className="text-white/75 text-sm leading-relaxed italic flex-1">"{hl(t.quote, t.highlight)}"</p>
-
-                <div className="flex items-center gap-3 pt-3 border-t border-white/10">
-                  <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0" style={{ background: t.gradient }}>
-                    {t.initials}
-                  </div>
-                  <div>
-                    <p className="text-white font-bold text-sm">{t.name}</p>
-                    <p className="text-white/35 text-xs">{t.location}</p>
-                  </div>
-                </div>
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">{s.icon}</span>
+                <h3 className="text-white font-bold text-sm sm:text-base">{s.problem}</h3>
               </div>
+              <p className="text-white/50 text-xs sm:text-sm leading-relaxed">{s.detail}</p>
+              <p className="text-xs font-semibold mt-auto" style={{ color: s.accent }}>
+                Path of Sabr helps with this →
+              </p>
             </div>
           ))}
-        </div>
-
-        {/* Trust bar */}
-        <div className="mt-8 sm:mt-10 flex flex-wrap items-center justify-center gap-4 sm:gap-5 text-xs sm:text-sm text-white/45">
-          <div className="flex items-center gap-2">
-            <div className="flex -space-x-2">
-              {['FA','OR','AM','ZK','NR'].map((ini, i) => (
-                <div key={i} className="w-7 h-7 rounded-full border-2 flex items-center justify-center text-white text-[9px] font-bold" style={{ background: testimonials[i % 3].gradient, borderColor: '#051a10' }}>{ini}</div>
-              ))}
-            </div>
-            <span><strong className="text-white">500+</strong> Muslims on the waitlist</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <Stars />
-            <span><strong className="text-white">4.9/5</strong> rating</span>
-          </div>
-          <span>🇬🇧 Built in the UK</span>
         </div>
 
         {/* CTA strip */}
@@ -91,8 +85,8 @@ export default function SocialProof() {
           style={{ background: 'linear-gradient(145deg, #0d3320, #0a2318)', border: '1px solid rgba(29,158,117,0.25)' }}
         >
           <div>
-            <p className="text-white font-bold text-lg sm:text-xl mb-1">Ready to start your journey?</p>
-            <p className="text-white/45 text-sm">Join Muslims across the UK building consistency in their deen.</p>
+            <p className="text-white font-bold text-lg sm:text-xl mb-1">Ready to actually change?</p>
+            <p className="text-white/45 text-sm">Join Muslims who are done making excuses and ready to build their deen.</p>
           </div>
           <a href="#waitlist" className="btn-primary text-white font-semibold px-8 py-4 rounded-xl text-center text-sm whitespace-nowrap">
             Join the Waitlist →
