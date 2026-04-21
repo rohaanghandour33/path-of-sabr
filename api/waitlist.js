@@ -3,6 +3,29 @@ import { google } from 'googleapis';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
+async function addToBeehiiv(email) {
+  const res = await fetch(
+    `https://api.beehiiv.com/v2/publications/${process.env.BEEHIIV_PUBLICATION_ID}/subscriptions`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${process.env.BEEHIIV_API_KEY}`,
+      },
+      body: JSON.stringify({
+        email,
+        reactivate_existing: false,
+        send_welcome_email: false,
+      }),
+    }
+  );
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Beehiiv error: ${err}`);
+  }
+  return res.json();
+}
+
 async function appendToSheet(email) {
   const privateKey = process.env.GOOGLE_PRIVATE_KEY
     .replace(/\\n/g, '\n')
@@ -42,8 +65,8 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Valid email required' });
   }
 
-  // Run both in parallel — email notification + sheet logging
-  const [emailResult, sheetResult] = await Promise.allSettled([
+  // Run all three in parallel — email notification + sheet logging + Beehiiv
+  const [emailResult, sheetResult, beehiivResult] = await Promise.allSettled([
     resend.emails.send({
       from: 'Path of Sabr <onboarding@resend.dev>',
       to: 'rohaanghandour33@gmail.com',
@@ -60,6 +83,7 @@ export default async function handler(req, res) {
       `,
     }),
     appendToSheet(email),
+    addToBeehiiv(email),
   ]);
 
   if (emailResult.status === 'rejected') {
@@ -68,9 +92,12 @@ export default async function handler(req, res) {
   if (sheetResult.status === 'rejected') {
     console.error('Google Sheets error:', sheetResult.reason);
   }
+  if (beehiivResult.status === 'rejected') {
+    console.error('Beehiiv error:', beehiivResult.reason);
+  }
 
   // Still return success as long as at least one succeeded
-  if (emailResult.status === 'rejected' && sheetResult.status === 'rejected') {
+  if (emailResult.status === 'rejected' && sheetResult.status === 'rejected' && beehiivResult.status === 'rejected') {
     return res.status(500).json({ error: 'Failed to process signup' });
   }
 

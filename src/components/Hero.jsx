@@ -84,8 +84,8 @@ export default function Hero() {
             <div className="flex items-center gap-3 bg-white/10 backdrop-blur-sm border border-white/25 text-white px-5 py-4 rounded-2xl w-full max-w-md">
               <CheckCircle2 className="text-[#1D9E75] shrink-0" size={22} />
               <div className="text-left">
-                <p className="font-semibold text-sm sm:text-base">You're on the list!</p>
-                <p className="text-white/70 text-xs sm:text-sm">We'll be in touch when Path of Sabr opens.</p>
+                <p className="font-semibold text-sm sm:text-base">You're on the list.</p>
+                <p className="text-white/70 text-xs sm:text-sm">We'll be in touch when Path of Sabr launches.</p>
               </div>
             </div>
           </div>
