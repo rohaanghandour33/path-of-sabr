@@ -4,26 +4,38 @@ import { google } from 'googleapis';
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 async function addToBeehiiv(email) {
-  const res = await fetch(
-    `https://api.beehiiv.com/v2/publications/${process.env.BEEHIIV_PUBLICATION_ID}/subscriptions`,
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${process.env.BEEHIIV_API_KEY}`,
-      },
-      body: JSON.stringify({
-        email,
-        reactivate_existing: false,
-        send_welcome_email: false,
-      }),
-    }
-  );
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`Beehiiv error: ${err}`);
+  const pubId = process.env.BEEHIIV_PUBLICATION_ID;
+  const apiKey = process.env.BEEHIIV_API_KEY;
+
+  if (!pubId || !apiKey) {
+    throw new Error(`Beehiiv env vars missing — pubId: ${!!pubId}, apiKey: ${!!apiKey}`);
   }
-  return res.json();
+
+  const url = `https://api.beehiiv.com/v2/publications/${pubId}/subscriptions`;
+  console.log('Calling Beehiiv URL:', url);
+
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      email,
+      reactivate_existing: true,
+      send_welcome_email: false,
+    }),
+  });
+
+  const body = await res.text();
+  console.log('Beehiiv response status:', res.status);
+  console.log('Beehiiv response body:', body);
+
+  if (!res.ok) {
+    throw new Error(`Beehiiv ${res.status}: ${body}`);
+  }
+
+  return JSON.parse(body);
 }
 
 async function appendToSheet(email) {
