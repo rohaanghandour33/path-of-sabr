@@ -33,12 +33,11 @@ export default function Footer() {
           {/* Brand column */}
           <div className="sm:col-span-2 lg:col-span-1">
             <a href="#" className="flex items-center gap-2.5 mb-4">
-              <div className="w-9 h-9 rounded-full bg-[#1D9E75] flex items-center justify-center shadow-md shrink-0">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                  <path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9z" fill="white" opacity="0.95"/>
-                  <circle cx="17.5" cy="6.5" r="1.5" fill="white"/>
-                </svg>
-              </div>
+              <img
+                src="/image-1777032189455.png"
+                alt="Path of Sabr Logo"
+                className="h-10 w-10 rounded-full object-cover shrink-0"
+              />
               <span className="font-bold text-lg tracking-tight">Path of Sabr</span>
             </a>
             <p className="text-white/60 text-sm leading-relaxed mb-5">

@@ -35,12 +35,11 @@ export default function Navbar() {
           <div className="flex items-center justify-between h-14 sm:h-16">
             {/* Logo */}
             <a href="#" className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#1D9E75] to-[#085041] flex items-center justify-center shadow-md shrink-0">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                  <path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9z" fill="white" opacity="0.95"/>
-                  <circle cx="17.5" cy="6.5" r="1.5" fill="white"/>
-                </svg>
-              </div>
+              <img
+                src="/image-1777032189455.png"
+                alt="Path of Sabr Logo"
+                className="h-10 w-10 rounded-full object-cover shrink-0"
+              />
               <span className="font-bold text-base sm:text-lg tracking-tight text-white">
                 Path of Sabr
               </span>
