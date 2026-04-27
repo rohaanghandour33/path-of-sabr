@@ -34,7 +34,7 @@ export default function Footer() {
           <div className="sm:col-span-2 lg:col-span-1">
             <a href="#" className="flex items-center gap-2.5 mb-4">
               <img
-                src="/image-1777032189455.png"
+                src="/logo.png"
                 alt="Path of Sabr Logo"
                 className="h-10 w-10 rounded-full object-cover shrink-0"
               />

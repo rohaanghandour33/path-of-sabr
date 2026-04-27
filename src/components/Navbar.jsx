@@ -36,7 +36,7 @@ export default function Navbar() {
             {/* Logo */}
             <a href="#" className="flex items-center gap-2.5">
               <img
-                src="/image-1777032189455.png"
+                src="/logo.png"
                 alt="Path of Sabr Logo"
                 className="h-10 w-10 rounded-full object-cover shrink-0"
               />
