@@ -51,7 +51,7 @@ export default function Features() {
             Everything you need on your deen journey
           </h2>
           <p className="text-white/45 max-w-xl mx-auto text-sm sm:text-base leading-relaxed">
-            Built for Muslims navigating faith in a modern world — not a generic habit tracker with an Islamic skin.
+            Built for Muslims navigating faith in a modern world. Not a generic habit tracker with an Islamic skin.
           </p>
         </div>
 

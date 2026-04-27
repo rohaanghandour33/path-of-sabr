@@ -142,7 +142,7 @@ export default function Pricing() {
           <p className="section-label text-[#C9952A] mb-3">Pricing</p>
           <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white mb-3 sm:mb-4 tracking-tight">Simple, transparent pricing</h2>
           <p className="text-white/50 max-w-lg mx-auto text-sm sm:text-base leading-relaxed">
-            Pricing is revealed at launch. Join the waitlist now to lock in founding member rates — before they go up.
+            Pricing is revealed at launch. Join the waitlist now to lock in founding member rates, before they go up.
           </p>
         </div>
 

@@ -68,8 +68,8 @@ export default function Hero() {
         {/* Subheading */}
         <p className="animate-fade-in-up delay-300 text-base sm:text-xl text-white/70 leading-relaxed max-w-2xl mx-auto mb-4">
           Meet the AI companion that holds you accountable like no one else can.
-          Track your prayers, break your patterns, and take the steps you've been putting off —
-          until full submission to Allah isn't a distant goal, it's your daily reality.
+          Track your prayers, break your patterns, and take the steps you've been putting off.
+          Full submission to Allah doesn't have to be a distant goal. It can be your daily reality.
         </p>
 
         {/* Sadaqah callout */}
