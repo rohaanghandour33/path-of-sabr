@@ -1,7 +1,7 @@
 -- Onboarding responses table
 create table if not exists public.onboarding_responses (
   id uuid default gen_random_uuid() primary key,
-  user_id uuid references public.profiles(id) on delete cascade not null unique,
+  user_id uuid references auth.users(id) on delete cascade not null unique,
   q1 text,
   q2 text,
   q2b text[],

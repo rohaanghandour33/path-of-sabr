@@ -115,7 +115,12 @@ export default function Dashboard() {
       .select('id')
       .eq('user_id', user.id)
       .maybeSingle()
-      .then(({ data }) => {
+      .then(({ data, error }) => {
+        if (error) {
+          // DB error (table may not exist yet) — allow through rather than redirect loop
+          setCheckingOnboarding(false);
+          return;
+        }
         if (data) {
           localStorage.setItem(`onboarding_done_${user.id}`, 'true');
           setCheckingOnboarding(false);

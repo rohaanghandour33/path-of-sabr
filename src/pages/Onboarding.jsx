@@ -217,16 +217,14 @@ export default function Onboarding() {
       return;
     }
     setSaving(true);
-    const { error } = await supabase.from('onboarding_responses').insert({
-      user_id: user.id,
-      ...responses,
-      completed_at: new Date().toISOString(),
-    });
+    // Mark done locally first — user reaches dashboard even if DB save fails
+    localStorage.setItem(`onboarding_done_${user.id}`, 'true');
+    await supabase.from('onboarding_responses').upsert(
+      { user_id: user.id, ...responses, completed_at: new Date().toISOString() },
+      { onConflict: 'user_id' }
+    );
     setSaving(false);
-    if (!error) {
-      localStorage.setItem(`onboarding_done_${user.id}`, 'true');
-      setStep(8);
-    }
+    setStep(8);
   };
 
   if (checking) {
