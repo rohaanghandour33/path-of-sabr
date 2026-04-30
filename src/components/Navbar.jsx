@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 
 export default function Navbar() {
@@ -53,10 +54,14 @@ export default function Navbar() {
                   {l.label}
                 </a>
               ))}
-              <a href="#waitlist"
+              <Link to="/login"
+                className="text-sm font-medium text-white/80 hover:text-white transition-colors">
+                Login
+              </Link>
+              <Link to="/signup"
                 className="btn-primary text-white text-sm font-semibold px-5 py-2.5 rounded-full shadow">
-                Join Waitlist
-              </a>
+                Get Started
+              </Link>
             </nav>
 
             {/* Mobile hamburger */}
@@ -85,11 +90,16 @@ export default function Navbar() {
             {l.label}
           </a>
         ))}
-        <a href="#waitlist"
+        <Link to="/login"
+          onClick={() => setMenuOpen(false)}
+          className="text-2xl font-bold text-white/80 hover:text-white transition-colors">
+          Login
+        </Link>
+        <Link to="/signup"
           onClick={() => setMenuOpen(false)}
           className="btn-primary text-white font-bold px-10 py-4 rounded-2xl text-lg mt-2">
-          Join Waitlist
-        </a>
+          Get Started
+        </Link>
         <p className="text-white/25 text-xs mt-6 arabic-text text-xl">
           بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
         </p>

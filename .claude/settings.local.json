@@ -12,7 +12,8 @@
       "WebFetch(domain:tracxn.com)",
       "WebFetch(domain:halodigital.co)",
       "WebFetch(domain:deenwebworks.com)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" -X POST \"https://api.beehiiv.com/v2/publications/pub_90cf19d0-75e8-474c-823d-e3014585d738/subscriptions\" -H \"Content-Type: application/json\" -H \"Authorization: Bearer abEnGaLhqPU4zVmdOKI4Logf7obRCmpt35pkk4pfOZnNft8CqLymV5k10V6HrbC8\" -d \"{\\\\\"email\\\\\":\\\\\"test-debug@pathofsabr.com\\\\\",\\\\\"reactivate_existing\\\\\":true,\\\\\"send_welcome_email\\\\\":false}\")"
     ]
   }
 }
