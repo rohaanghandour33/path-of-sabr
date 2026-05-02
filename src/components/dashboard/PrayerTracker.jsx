@@ -2,32 +2,36 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 
 const PRAYERS = [
-  { key: 'fajr', label: 'Fajr' },
-  { key: 'dhuhr', label: 'Dhuhr' },
-  { key: 'asr', label: 'Asr' },
+  { key: 'fajr',    label: 'Fajr' },
+  { key: 'dhuhr',   label: 'Dhuhr' },
+  { key: 'asr',     label: 'Asr' },
   { key: 'maghrib', label: 'Maghrib' },
-  { key: 'isha', label: 'Isha' },
+  { key: 'isha',    label: 'Isha' },
 ];
 
 const STATUSES = [
-  { key: 'on_time', label: 'On Time' },
-  { key: 'late', label: 'Late' },
-  { key: 'missed', label: 'Missed' },
+  {
+    key: 'on_time',
+    label: 'On Time',
+    activeStyle: { background: 'rgba(29,158,117,0.2)', borderColor: 'rgba(29,158,117,0.6)', color: '#1D9E75' },
+  },
+  {
+    key: 'late',
+    label: 'Late',
+    activeStyle: { background: 'rgba(201,149,42,0.2)', borderColor: 'rgba(201,149,42,0.6)', color: '#C9952A' },
+  },
+  {
+    key: 'missed',
+    label: 'Missed',
+    activeStyle: { background: 'rgba(192,57,43,0.2)', borderColor: 'rgba(192,57,43,0.5)', color: '#e57368' },
+  },
 ];
 
-function buttonStyle(statusKey, isActive) {
-  if (!isActive) return {
-    background: 'rgba(255,255,255,0.04)',
-    borderColor: 'rgba(255,255,255,0.08)',
-    color: 'rgba(255,255,255,0.3)',
-  };
-  // All active states use gold
-  return {
-    background: 'rgba(201,149,42,0.18)',
-    borderColor: 'rgba(201,149,42,0.6)',
-    color: '#C9952A',
-  };
-}
+const INACTIVE_STYLE = {
+  background: 'rgba(255,255,255,0.04)',
+  borderColor: 'rgba(255,255,255,0.08)',
+  color: 'rgba(255,255,255,0.3)',
+};
 
 function calculateStreak(records) {
   const prayerOrder = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
@@ -90,16 +94,15 @@ export default function PrayerTracker({ userId }) {
       className="rounded-3xl p-6 mb-4"
       style={{
         background: 'rgba(255,255,255,0.05)',
-        border: '1px solid rgba(201,149,42,0.25)',
-        boxShadow: '0 0 30px rgba(201,149,42,0.06)',
+        border: '1px solid rgba(201,149,42,0.18)',
       }}
     >
-      <h2 className="font-semibold text-sm mb-5" style={{ color: '#C9952A' }}>Today's Prayers</h2>
+      <h2 className="font-semibold text-sm mb-5 text-white">Today's Prayers</h2>
 
       <div className="space-y-3.5">
         {PRAYERS.map(({ key, label }) => (
           <div key={key} className="flex items-center justify-between gap-3">
-            <span className="text-white/60 text-sm w-16 flex-shrink-0">{label}</span>
+            <span className="text-white/55 text-sm w-16 flex-shrink-0">{label}</span>
             <div className="flex gap-1.5 flex-1 justify-end">
               {STATUSES.map((s) => {
                 const isActive = prayers[key] === s.key;
@@ -108,7 +111,7 @@ export default function PrayerTracker({ userId }) {
                     key={s.key}
                     onClick={() => updatePrayer(key, s.key)}
                     className="px-2.5 py-1.5 rounded-xl border text-xs font-medium transition-all duration-150"
-                    style={buttonStyle(s.key, isActive)}
+                    style={isActive ? s.activeStyle : INACTIVE_STYLE}
                   >
                     {s.label}
                   </button>
@@ -120,8 +123,8 @@ export default function PrayerTracker({ userId }) {
       </div>
 
       {streak > 0 && (
-        <p className="mt-5 text-xs font-medium" style={{ color: '#C9952A' }}>
-          {streak} prayers in a row
+        <p className="mt-5 text-xs text-white/40">
+          <span style={{ color: '#C9952A' }} className="font-semibold">{streak}</span> prayers in a row
         </p>
       )}
     </div>

@@ -5,14 +5,15 @@ import { supabase } from '../lib/supabase';
 import PrayerTracker from '../components/dashboard/PrayerTracker';
 import DailyCheckIn from '../components/dashboard/DailyCheckIn';
 import BottomNav from '../components/dashboard/BottomNav';
+import ProgressZone from '../components/dashboard/ProgressZone';
 
 const PRAYER_KEYS = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
 
 function statusDot(s) {
-  if (s === 'on_time') return { background: '#C9952A' };
-  if (s === 'late') return { background: '#d97706' };
-  if (s === 'missed') return { background: '#991b1b' };
-  return { background: 'rgba(255,255,255,0.12)' };
+  if (s === 'on_time') return { background: '#1D9E75' };
+  if (s === 'late')    return { background: '#C9952A' };
+  if (s === 'missed')  return { background: '#C0392B' };
+  return { background: 'rgba(255,255,255,0.1)' };
 }
 
 function PrayerHistory({ userId }) {
@@ -20,11 +21,8 @@ function PrayerHistory({ userId }) {
 
   useEffect(() => {
     supabase
-      .from('prayers')
-      .select('*')
-      .eq('user_id', userId)
-      .order('date', { ascending: false })
-      .limit(14)
+      .from('prayers').select('*').eq('user_id', userId)
+      .order('date', { ascending: false }).limit(14)
       .then(({ data }) => setRecords(data || []));
   }, [userId]);
 
@@ -39,7 +37,7 @@ function PrayerHistory({ userId }) {
 
   return (
     <div className="space-y-2">
-      <p className="text-xs font-semibold px-1 mb-3" style={{ color: '#C9952A' }}>Last 14 days</p>
+      <p className="text-white text-xs font-semibold px-1 mb-3">Last 14 days</p>
       {records.map((r) => (
         <div key={r.id} className="border border-white/10 rounded-2xl px-4 py-3" style={{ background: 'rgba(255,255,255,0.04)' }}>
           <p className="text-white/50 text-xs mb-2.5">
@@ -66,8 +64,8 @@ function ProfileView({ user, onSignOut }) {
   return (
     <div>
       <div className="border border-white/10 rounded-3xl p-6 mb-4 text-center" style={{ background: 'rgba(255,255,255,0.05)' }}>
-        <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-3" style={{ background: 'rgba(201,149,42,0.15)' }}>
-          <span className="font-bold text-xl" style={{ color: '#C9952A' }}>{displayName[0].toUpperCase()}</span>
+        <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-3" style={{ background: 'rgba(29,158,117,0.15)' }}>
+          <span className="font-bold text-xl" style={{ color: '#1D9E75' }}>{displayName[0].toUpperCase()}</span>
         </div>
         <p className="text-white font-semibold">{displayName}</p>
         <p className="text-white/35 text-sm mt-1">{user?.email}</p>
@@ -104,10 +102,7 @@ export default function Dashboard() {
     if (cached) { setCheckingOnboarding(false); return; }
 
     supabase
-      .from('onboarding_responses')
-      .select('id')
-      .eq('user_id', user.id)
-      .maybeSingle()
+      .from('onboarding_responses').select('id').eq('user_id', user.id).maybeSingle()
       .then(({ data, error }) => {
         if (error) { setCheckingOnboarding(false); return; }
         if (data) {
@@ -126,7 +121,7 @@ export default function Dashboard() {
 
   if (checkingOnboarding) return (
     <div className="min-h-screen flex items-center justify-center" style={{ background: '#051a10' }}>
-      <div className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: '#C9952A', borderTopColor: 'transparent' }} />
+      <div className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: '#1D9E75', borderTopColor: 'transparent' }} />
     </div>
   );
 
@@ -148,20 +143,21 @@ export default function Dashboard() {
         {activeTab === 'home' && (
           <>
             <div className="mb-6">
-              <h1 className="text-2xl font-bold leading-tight" style={{ color: '#C9952A' }}>
+              <h1 className="text-2xl font-bold text-white leading-tight">
                 Assalamu Alaykum, {displayName}
               </h1>
-              <p className="text-white text-sm mt-1">{todayStr}</p>
+              <p className="text-white/45 text-sm mt-1">{todayStr}</p>
             </div>
             <PrayerTracker userId={user?.id} />
             <DailyCheckIn userId={user?.id} />
+            <ProgressZone userId={user?.id} />
           </>
         )}
 
         {activeTab === 'prayers' && (
           <>
             <div className="mb-6">
-              <h1 className="text-xl font-bold" style={{ color: '#C9952A' }}>Prayers</h1>
+              <h1 className="text-xl font-bold text-white">Prayers</h1>
             </div>
             <PrayerTracker userId={user?.id} />
             <PrayerHistory userId={user?.id} />
@@ -171,7 +167,7 @@ export default function Dashboard() {
         {activeTab === 'profile' && (
           <>
             <div className="mb-6">
-              <h1 className="text-xl font-bold" style={{ color: '#C9952A' }}>Profile</h1>
+              <h1 className="text-xl font-bold text-white">Profile</h1>
             </div>
             <ProfileView user={user} onSignOut={handleSignOut} />
           </>
