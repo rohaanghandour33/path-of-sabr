@@ -18,7 +18,7 @@ html {
 body {
   margin: 0;
   font-family: var(--font-sans);
-  background: #051a10;
+  background: #020c07;
   color: #111827;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -36,7 +36,7 @@ body::before {
   inset: 0;
   pointer-events: none;
   z-index: 0;
-  opacity: 0.09;
+  opacity: 0.14;
   background-image: url("data:image/svg+xml,%3Csvg width='160' height='160' viewBox='0 0 160 160' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23085041'%3E%3Cpath d='M20 8 L21.8 16.2 L30 18 L21.8 19.8 L20 28 L18.2 19.8 L10 18 L18.2 16.2 Z'/%3E%3Cpath d='M130 55 L131.4 61.6 L138 63 L131.4 64.4 L130 71 L128.6 64.4 L122 63 L128.6 61.6 Z'/%3E%3Cpath d='M55 120 L56.4 126.6 L63 128 L56.4 129.4 L55 136 L53.6 129.4 L47 128 L53.6 126.6 Z'/%3E%3Cpath d='M110 110 L111 114.5 L116 115.5 L111 116.5 L110 121 L109 116.5 L104 115.5 L109 114.5 Z'/%3E%3Cpath d='M75 30 L76 33.5 L80 34.5 L76 35.5 L75 39 L74 35.5 L70 34.5 L74 33.5 Z'/%3E%3Cpath d='M140 130 L141 133.5 L145 134.5 L141 135.5 L140 139 L139 135.5 L135 134.5 L139 133.5 Z'/%3E%3C/g%3E%3C/svg%3E");
   background-size: 160px 160px;
 }
@@ -113,7 +113,7 @@ body::before {
 .delay-700 { animation-delay: 0.7s; }
 
 .gradient-hero {
-  background: #051a10;
+  background: #020c07;
 }
 
 .gradient-feature-card {
@@ -185,5 +185,5 @@ body::before {
 
 /* Scrollbar */
 ::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: #051a10; }
+::-webkit-scrollbar-track { background: #020c07; }
 ::-webkit-scrollbar-thumb { background: #1D9E75; border-radius: 3px; }

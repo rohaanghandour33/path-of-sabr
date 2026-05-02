@@ -295,7 +295,7 @@ export default function Dashboard() {
   const handleSignOut = async () => { await signOut(); navigate('/'); };
 
   if (checkingOnboarding) return (
-    <div className="min-h-screen flex items-center justify-center" style={{ background: '#051a10' }}>
+    <div className="min-h-screen flex items-center justify-center" style={{ background: '#020c07' }}>
       <div className="w-8 h-8 border-2 rounded-full animate-spin" style={{ borderColor: 'rgba(29,158,117,0.3)', borderTopColor: '#1D9E75' }} />
     </div>
   );
@@ -304,7 +304,7 @@ export default function Dashboard() {
   const navProps = { weekOffset, setWeekOffset, showRangePicker, setShowRangePicker, rangeInput, setRangeInput, appliedRange, setAppliedRange };
 
   return (
-    <div className="min-h-screen relative" style={{ background: '#051a10' }}>
+    <div className="min-h-screen relative" style={{ background: '#020c07' }}>
 
       {/* Atmospheric page glow */}
       <div className="fixed inset-0 pointer-events-none" style={{

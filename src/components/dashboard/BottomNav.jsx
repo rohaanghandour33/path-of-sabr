@@ -9,7 +9,7 @@ const TABS = [
 
 export default function BottomNav({ activeTab, setActiveTab }) {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-white/10" style={{ background: '#051a10' }}>
+    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-white/10" style={{ background: '#020c07' }}>
       <div className="max-w-md mx-auto flex relative">
         {TABS.map(({ id, label, Icon, disabled }) => {
           const isActive = activeTab === id;

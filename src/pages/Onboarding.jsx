@@ -195,13 +195,13 @@ export default function Onboarding() {
   };
 
   if (checking) return (
-    <div className="min-h-screen flex items-center justify-center" style={{ background: '#051a10' }}>
+    <div className="min-h-screen flex items-center justify-center" style={{ background: '#020c07' }}>
       <div className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: '#C9952A', borderTopColor: 'transparent' }} />
     </div>
   );
 
   if (step === 8) return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-6 text-center" style={{ background: '#051a10' }}>
+    <div className="min-h-screen flex flex-col items-center justify-center px-6 text-center" style={{ background: '#020c07' }}>
       <div className="w-16 h-16 rounded-full flex items-center justify-center mb-6" style={{ background: 'rgba(201,149,42,0.15)' }}>
         <Check size={28} style={{ color: '#C9952A' }} />
       </div>
@@ -218,7 +218,7 @@ export default function Onboarding() {
   const q2onChange = (v) => setResponses((r) => ({ ...r, q2: v, q2b: v === 'No' ? [] : r.q2b }));
 
   return (
-    <div className="fixed inset-0 flex flex-col" style={{ background: '#051a10' }}>
+    <div className="fixed inset-0 flex flex-col" style={{ background: '#020c07' }}>
       {/* Fixed progress bar */}
       <div className="flex-shrink-0">
         <ProgressBar step={step} />
@@ -275,7 +275,7 @@ export default function Onboarding() {
       </div>
 
       {/* Fixed bottom button — never moves */}
-      <div className="flex-shrink-0 px-5 pb-10 pt-4" style={{ background: 'linear-gradient(to top, #051a10 70%, transparent)' }}>
+      <div className="flex-shrink-0 px-5 pb-10 pt-4" style={{ background: 'linear-gradient(to top, #020c07 70%, transparent)' }}>
         <button
           onClick={handleNext}
           disabled={!canContinue() || saving}
