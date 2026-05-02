@@ -57,7 +57,7 @@ function MetricCard({ title, value, unit, trend, trendLabel, message }) {
 
   return (
     <div
-      className="rounded-2xl p-5 flex flex-col flex-1 min-w-[160px]"
+      className="dash-card rounded-2xl p-5 flex flex-col flex-1 min-w-[160px]"
       style={{
         background: 'linear-gradient(145deg, rgba(201,149,42,0.07) 0%, rgba(255,255,255,0.02) 100%)',
         border: '1px solid rgba(201,149,42,0.12)',

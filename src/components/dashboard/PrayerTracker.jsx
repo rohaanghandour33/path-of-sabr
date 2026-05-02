@@ -65,7 +65,7 @@ function PrayerSummaryCard({ records, title, subtitle }) {
   const pct = total > 0 ? Math.round((onTime / total) * 100) : 0;
 
   return (
-    <div className="rounded-3xl p-6 h-full flex flex-col" style={CARD_STYLE}>
+    <div className="dash-card rounded-3xl p-6 h-full flex flex-col" style={CARD_STYLE}>
       <div className="flex items-start justify-between mb-5">
         <div>
           <p className="text-[10px] font-bold tracking-[0.12em] uppercase mb-1" style={{ color: 'rgba(255,255,255,0.3)' }}>
@@ -170,7 +170,7 @@ export default function PrayerTracker({ userId, weekOffset = 0, customRange = nu
   }
 
   return (
-    <div className="rounded-3xl p-6 h-full flex flex-col" style={CARD_STYLE}>
+    <div className="dash-card rounded-3xl p-6 h-full flex flex-col" style={CARD_STYLE}>
       <p className="text-[10px] font-bold tracking-[0.12em] uppercase mb-5" style={{ color: 'rgba(255,255,255,0.3)' }}>
         Today's Prayers
       </p>

@@ -84,7 +84,7 @@ export default function DailyCheckIn({ userId, weekOffset = 0, customRange = nul
       : '7 day week';
 
     return (
-      <div className="rounded-3xl p-6 h-full flex flex-col" style={CARD_STYLE}>
+      <div className="dash-card rounded-3xl p-6 h-full flex flex-col" style={CARD_STYLE}>
         <div className="flex items-start justify-between mb-5">
           <div>
             <p className="text-[10px] font-bold tracking-[0.12em] uppercase mb-1" style={{ color: 'rgba(255,255,255,0.3)' }}>Daily Check-in</p>
@@ -118,7 +118,7 @@ export default function DailyCheckIn({ userId, weekOffset = 0, customRange = nul
   // ── Check-in done ──────────────────────────────────────────────────────────
   if (done) {
     return (
-      <div className="rounded-3xl p-6 h-full flex flex-col justify-center" style={CARD_STYLE}>
+      <div className="dash-card rounded-3xl p-6 h-full flex flex-col justify-center" style={CARD_STYLE}>
         <div className="flex items-center gap-4">
           <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(29,158,117,0.15)' }}>
             <Check size={18} style={{ color: '#1D9E75' }} />
@@ -136,7 +136,7 @@ export default function DailyCheckIn({ userId, weekOffset = 0, customRange = nul
   const q = QUESTIONS[qStep];
 
   return (
-    <div className="rounded-3xl p-6 h-full flex flex-col" style={CARD_STYLE}>
+    <div className="dash-card rounded-3xl p-6 h-full flex flex-col" style={CARD_STYLE}>
       {/* Header */}
       <div className="flex items-center justify-between mb-1">
         <p className="text-[10px] font-bold tracking-[0.12em] uppercase" style={{ color: 'rgba(255,255,255,0.3)' }}>Daily Check-in</p>

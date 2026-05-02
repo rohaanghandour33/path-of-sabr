@@ -172,6 +172,17 @@ body::before {
   animation: marquee 30s linear infinite;
 }
 
+/* Dashboard card hover — gold outline + glow */
+.dash-card {
+  transition: box-shadow 0.22s ease;
+}
+.dash-card:hover {
+  box-shadow:
+    0 0 0 1px rgba(201, 149, 42, 0.55),
+    0 0 28px rgba(201, 149, 42, 0.12),
+    0 12px 40px rgba(0, 0, 0, 0.28) !important;
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: #051a10; }

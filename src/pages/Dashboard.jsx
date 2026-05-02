@@ -161,7 +161,7 @@ function PrayerHistory({ userId, weekOffset, customRange }) {
     const days = Math.round((new Date(customRange.end + 'T12:00:00') - new Date(customRange.start + 'T12:00:00')) / 86400000) + 1;
 
     return (
-      <div className="rounded-3xl p-6 h-full flex flex-col" style={CARD_STYLE}>
+      <div className="dash-card rounded-3xl p-6 h-full flex flex-col" style={CARD_STYLE}>
         <div className="flex items-start justify-between mb-5">
           <div>
             <p className="text-[10px] font-bold tracking-[0.12em] uppercase mb-1" style={{ color: 'rgba(255,255,255,0.3)' }}>Prayer Log</p>
@@ -209,7 +209,7 @@ function PrayerHistory({ userId, weekOffset, customRange }) {
 
   if (records.length === 0) {
     return (
-      <div className="rounded-3xl p-6 h-full flex flex-col items-center justify-center" style={CARD_STYLE}>
+      <div className="dash-card rounded-3xl p-6 h-full flex flex-col items-center justify-center" style={CARD_STYLE}>
         <p className="text-white/25 text-sm">No prayer records yet</p>
         <p className="text-white/15 text-xs mt-1">Log today's prayers to get started</p>
       </div>
@@ -217,7 +217,7 @@ function PrayerHistory({ userId, weekOffset, customRange }) {
   }
 
   return (
-    <div className="rounded-3xl p-6 h-full flex flex-col" style={CARD_STYLE}>
+    <div className="dash-card rounded-3xl p-6 h-full flex flex-col" style={CARD_STYLE}>
       <p className="text-[10px] font-bold tracking-[0.12em] uppercase mb-4" style={{ color: 'rgba(255,255,255,0.3)' }}>
         {label}
       </p>
@@ -247,14 +247,14 @@ function ProfileView({ user, onSignOut }) {
   const displayName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Friend';
   return (
     <div className="max-w-lg mx-auto">
-      <div className="rounded-3xl p-8 mb-3 text-center" style={CARD_STYLE}>
+      <div className="dash-card rounded-3xl p-8 mb-3 text-center" style={CARD_STYLE}>
         <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: 'rgba(29,158,117,0.12)', border: '1px solid rgba(29,158,117,0.2)' }}>
           <span className="font-bold text-2xl" style={{ color: '#1D9E75' }}>{displayName[0].toUpperCase()}</span>
         </div>
         <p className="text-white font-semibold text-lg">{displayName}</p>
         <p className="text-white/35 text-sm mt-1">{user?.email}</p>
       </div>
-      <div className="rounded-3xl overflow-hidden mb-3" style={CARD_STYLE}>
+      <div className="dash-card rounded-3xl overflow-hidden mb-3" style={CARD_STYLE}>
         <div className="px-5 py-3 border-b border-white/5">
           <p className="text-[10px] font-bold tracking-[0.14em] uppercase" style={{ color: 'rgba(255,255,255,0.25)' }}>Account</p>
         </div>
