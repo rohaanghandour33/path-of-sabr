@@ -8,11 +8,7 @@ function fmt(d) { return d.toISOString().split('T')[0]; }
 
 function onTimeRate(records) {
   let total = 0, onTime = 0;
-  records.forEach(r => {
-    PRAYER_KEYS.forEach(p => {
-      if (r[p]) { total++; if (r[p] === 'on_time') onTime++; }
-    });
-  });
+  records.forEach(r => { PRAYER_KEYS.forEach(p => { if (r[p]) { total++; if (r[p] === 'on_time') onTime++; } }); });
   return total > 0 ? Math.round((onTime / total) * 100) : null;
 }
 
@@ -21,36 +17,29 @@ function avgScore(moods) {
   return scores.length > 0 ? +(scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(1) : null;
 }
 
-// Consecutive streak ending at referenceDate
 function calcCheckInStreak(moods, referenceDate) {
   const moodDates = new Set(moods.map(m => m.date));
   let streak = 0;
   for (let i = 0; i < 30; i++) {
-    const d = new Date(referenceDate);
-    d.setDate(referenceDate.getDate() - i);
-    if (moodDates.has(fmt(d))) streak++;
-    else break;
+    const d = new Date(referenceDate); d.setDate(referenceDate.getDate() - i);
+    if (moodDates.has(fmt(d))) streak++; else break;
   }
   return streak;
 }
 
-// Longest consecutive streak within a date range
 function calcLongestStreak(moods, startStr, endStr) {
   const moodDates = new Set(moods.map(m => m.date));
   let max = 0, cur = 0;
   const d = new Date(startStr + 'T12:00:00');
   const end = new Date(endStr + 'T12:00:00');
   while (d <= end) {
-    if (moodDates.has(fmt(d))) { cur++; if (cur > max) max = cur; }
-    else cur = 0;
+    if (moodDates.has(fmt(d))) { cur++; if (cur > max) max = cur; } else cur = 0;
     d.setDate(d.getDate() + 1);
   }
   return max;
 }
 
-function calcEngagement(prayers, moods) {
-  return prayers.length + moods.length;
-}
+function calcEngagement(prayers, moods) { return prayers.length + moods.length; }
 
 function calcRecovery(recs) {
   let missed = 0, recovered = 0;
@@ -64,23 +53,29 @@ function calcRecovery(recs) {
 
 function MetricCard({ title, value, unit, trend, trendLabel, message }) {
   const TrendIcon = trend === 'up' ? TrendingUp : Minus;
-  const trendColor = trend === 'up' ? '#1D9E75' : 'rgba(255,255,255,0.3)';
+  const trendColor = trend === 'up' ? '#1D9E75' : 'rgba(255,255,255,0.25)';
 
   return (
     <div
-      className="rounded-2xl p-4 flex flex-col gap-2 flex-1 min-w-0"
-      style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(201,149,42,0.15)' }}
+      className="rounded-2xl p-5 flex flex-col flex-1 min-w-[160px]"
+      style={{
+        background: 'linear-gradient(145deg, rgba(201,149,42,0.07) 0%, rgba(255,255,255,0.02) 100%)',
+        border: '1px solid rgba(201,149,42,0.12)',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.12)',
+      }}
     >
-      <p className="text-white/50 text-xs font-medium leading-snug">{title}</p>
-      <div className="flex items-end gap-1.5">
-        <span className="text-2xl font-bold" style={{ color: '#C9952A' }}>{value}</span>
-        {unit && <span className="text-white/40 text-xs mb-0.5">{unit}</span>}
+      <p className="text-[9px] font-bold tracking-[0.14em] uppercase mb-4" style={{ color: 'rgba(255,255,255,0.28)' }}>
+        {title}
+      </p>
+      <div className="flex items-baseline gap-1.5 mb-auto">
+        <span className="font-bold leading-none tracking-tight" style={{ fontSize: '2rem', color: '#C9952A' }}>{value}</span>
+        {unit && <span className="text-xs font-medium" style={{ color: 'rgba(255,255,255,0.28)' }}>{unit}</span>}
       </div>
-      <div className="flex items-center gap-1">
-        <TrendIcon size={12} style={{ color: trendColor }} strokeWidth={2.5} />
-        <span className="text-xs" style={{ color: trendColor }}>{trendLabel}</span>
+      <div className="flex items-center gap-1.5 mt-4 mb-2">
+        <TrendIcon size={11} style={{ color: trendColor }} strokeWidth={2.5} />
+        <span className="text-[10px] font-medium" style={{ color: trendColor }}>{trendLabel}</span>
       </div>
-      <p className="text-white/30 text-xs leading-snug mt-0.5">{message}</p>
+      <p className="text-[11px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.25)' }}>{message}</p>
     </div>
   );
 }
@@ -91,102 +86,42 @@ export default function ProgressZone({ userId, weekOffset = 0, customRange = nul
 
   useEffect(() => {
     if (!userId) return;
-    setMetrics(null);
-    setLoading(true);
-    fetchData();
+    setMetrics(null); setLoading(true); fetchData();
   }, [userId, weekOffset, customRange?.start, customRange?.end]);
 
   const fetchData = async () => {
-    // ── Custom date range ────────────────────────────────────────────────────
     if (customRange) {
       const [{ data: prayers }, { data: moods }] = await Promise.all([
-        supabase.from('prayers').select('*').eq('user_id', userId)
-          .gte('date', customRange.start).lte('date', customRange.end)
-          .order('date', { ascending: true }),
-        supabase.from('moods').select('*').eq('user_id', userId)
-          .gte('date', customRange.start).lte('date', customRange.end)
-          .order('date', { ascending: true }),
+        supabase.from('prayers').select('*').eq('user_id', userId).gte('date', customRange.start).lte('date', customRange.end).order('date', { ascending: true }),
+        supabase.from('moods').select('*').eq('user_id', userId).gte('date', customRange.start).lte('date', customRange.end).order('date', { ascending: true }),
       ]);
-
-      const days = Math.round(
-        (new Date(customRange.end + 'T12:00:00') - new Date(customRange.start + 'T12:00:00')) / 86400000
-      ) + 1;
-      const acrossLabel = `across ${days} days`;
-
-      // 1. Prayer consistency
+      const days = Math.round((new Date(customRange.end + 'T12:00:00') - new Date(customRange.start + 'T12:00:00')) / 86400000) + 1;
+      const across = `across ${days} days`;
       const rate = onTimeRate(prayers || []);
-      const consistencyValue    = rate !== null ? String(rate) : '—';
-      const consistencyTrend    = rate !== null ? 'up' : 'flat';
-      const consistencyUnit     = rate !== null ? '%' : '';
-      const consistencyLabel    = rate !== null ? acrossLabel : 'No prayer data';
-      const consistencyMsg      = rate === null ? 'Log prayers to see consistency'
-        : rate === 100 ? 'Alhamdulillah — every logged prayer was on time'
-        : rate >= 70 ? `${rate}% of logged prayers on time — strong effort`
-        : 'Keep showing up — every prayer is a step forward';
-
-      // 2. Longest streak
       const streak = calcLongestStreak(moods || [], customRange.start, customRange.end);
-      const streakMsg = streak === 0 ? 'No check-in streak during this period'
-        : streak < 3 ? 'A streak started — keep going'
-        : streak < 7 ? 'Building momentum'
-        : 'Alhamdulillah — strong consistency';
-
-      // 3. Connection score
       const conn = avgScore(moods || []);
-      const connValue = conn !== null ? String(conn) : '—';
-      const connUnit  = conn !== null ? '/ 5' : '';
-      const connLabel = conn !== null ? acrossLabel : 'No check-ins';
-      const connMsg   = conn === null ? 'Complete check-ins to track connection'
-        : conn >= 4 ? 'Feeling close to Allah during this period'
-        : conn >= 3 ? 'A steady connection — keep nurturing it'
-        : 'Your heart is reaching — Allah sees every effort';
-
-      // 4. Recovery speed
       const rec = calcRecovery(prayers || []);
-      const recValue = rec !== null ? String(rec) : '—';
-      const recUnit  = rec !== null ? '%' : '';
-      const recLabel = rec !== null ? acrossLabel : (prayers || []).length > 0 ? 'No misses logged' : 'No prayer data';
-      const recMsg   = rec === null
-        ? ((prayers || []).length > 0 ? 'Alhamdulillah — no missed prayers logged' : 'Log prayers to track recovery')
-        : rec >= 80 ? 'You bounce back quickly — that\'s real sabr'
-        : 'After every miss, come back stronger';
-
-      // 5. Engagement
       const eng = calcEngagement(prayers || [], moods || []);
-      const engMsg = eng === 0 ? 'No activity logged in this period'
-        : `${eng} total actions over ${days} days`;
-
       setMetrics({
-        consistency: { value: consistencyValue, unit: consistencyUnit, trend: consistencyTrend, trendLabel: consistencyLabel, msg: consistencyMsg },
-        streak:      { value: String(streak), unit: streak === 1 ? 'day' : 'days', trend: streak > 0 ? 'up' : 'flat', trendLabel: 'longest streak', msg: streakMsg },
-        connection:  { value: connValue, unit: connUnit, trend: conn !== null ? 'up' : 'flat', trendLabel: connLabel, msg: connMsg },
-        recovery:    { value: recValue, unit: recUnit, trend: rec !== null ? 'up' : 'flat', trendLabel: recLabel, msg: recMsg },
-        engagement:  { value: String(eng), unit: 'actions', trend: eng > 0 ? 'up' : 'flat', trendLabel: acrossLabel, msg: engMsg },
+        consistency: { value: rate !== null ? String(rate) : '—', unit: rate !== null ? '%' : '', trend: rate !== null ? 'up' : 'flat', trendLabel: rate !== null ? across : 'No prayer data', msg: rate === null ? 'Log prayers to see consistency' : rate >= 70 ? `${rate}% of logged prayers on time` : 'Keep showing up — every prayer counts' },
+        streak:      { value: String(streak), unit: streak === 1 ? 'day' : 'days', trend: streak > 0 ? 'up' : 'flat', trendLabel: 'longest streak', msg: streak === 0 ? 'No check-in streak this period' : streak < 7 ? 'Building consistency' : 'Alhamdulillah — strong consistency' },
+        connection:  { value: conn !== null ? String(conn) : '—', unit: conn !== null ? '/ 5' : '', trend: conn !== null ? 'up' : 'flat', trendLabel: conn !== null ? across : 'No check-ins', msg: conn === null ? 'Complete check-ins to track connection' : conn >= 4 ? 'Feeling close to Allah' : 'Your heart is reaching — keep going' },
+        recovery:    { value: rec !== null ? String(rec) : '—', unit: rec !== null ? '%' : '', trend: rec !== null ? 'up' : 'flat', trendLabel: rec !== null ? across : (prayers || []).length > 0 ? 'No misses logged' : 'No data', msg: rec === null ? ((prayers || []).length > 0 ? 'Alhamdulillah — no missed prayers' : 'Log prayers to track recovery') : rec >= 80 ? 'You bounce back quickly — real sabr' : 'After every miss, come back stronger' },
+        engagement:  { value: String(eng), unit: 'actions', trend: eng > 0 ? 'up' : 'flat', trendLabel: across, msg: eng === 0 ? 'No activity logged this period' : `${eng} total actions over ${days} days` },
       });
       setLoading(false);
       return;
     }
 
-    // ── Week-based (current or past) ─────────────────────────────────────────
-    const anchor = new Date();
-    anchor.setHours(0, 0, 0, 0);
-    anchor.setDate(anchor.getDate() - weekOffset * 7);
-
-    const thisWeekEnd   = new Date(anchor);
-    const thisWeekStart = new Date(anchor);
-    thisWeekStart.setDate(anchor.getDate() - 6);
-    const lastWeekStart = new Date(anchor);
-    lastWeekStart.setDate(anchor.getDate() - 13);
-    const streakStart   = new Date(anchor);
-    streakStart.setDate(anchor.getDate() - 30);
+    const anchor = new Date(); anchor.setHours(0, 0, 0, 0); anchor.setDate(anchor.getDate() - weekOffset * 7);
+    const thisWeekEnd = new Date(anchor);
+    const thisWeekStart = new Date(anchor); thisWeekStart.setDate(anchor.getDate() - 6);
+    const lastWeekStart = new Date(anchor); lastWeekStart.setDate(anchor.getDate() - 13);
+    const streakStart = new Date(anchor); streakStart.setDate(anchor.getDate() - 30);
 
     const [{ data: prayers }, { data: moods }] = await Promise.all([
-      supabase.from('prayers').select('*').eq('user_id', userId)
-        .gte('date', fmt(lastWeekStart)).lte('date', fmt(thisWeekEnd))
-        .order('date', { ascending: true }),
-      supabase.from('moods').select('*').eq('user_id', userId)
-        .gte('date', fmt(streakStart)).lte('date', fmt(thisWeekEnd))
-        .order('date', { ascending: true }),
+      supabase.from('prayers').select('*').eq('user_id', userId).gte('date', fmt(lastWeekStart)).lte('date', fmt(thisWeekEnd)).order('date', { ascending: true }),
+      supabase.from('moods').select('*').eq('user_id', userId).gte('date', fmt(streakStart)).lte('date', fmt(thisWeekEnd)).order('date', { ascending: true }),
     ]);
 
     const thisWeekP = (prayers || []).filter(r => r.date >= fmt(thisWeekStart) && r.date <= fmt(thisWeekEnd));
@@ -194,88 +129,36 @@ export default function ProgressZone({ userId, weekOffset = 0, customRange = nul
     const thisWeekM = (moods || []).filter(r => r.date >= fmt(thisWeekStart) && r.date <= fmt(thisWeekEnd));
     const lastWeekM = (moods || []).filter(r => r.date < fmt(thisWeekStart) && r.date >= fmt(lastWeekStart));
 
-    // 1. Prayer consistency
-    const thisRate = onTimeRate(thisWeekP);
-    const lastRate = onTimeRate(lastWeekP);
-    let consistencyValue, consistencyTrend, consistencyTrendLabel, consistencyMsg;
-    if (thisRate === null) {
-      consistencyValue = '—'; consistencyTrend = 'flat';
-      consistencyTrendLabel = 'No data yet';
-      consistencyMsg = 'Start logging prayers to track consistency';
-    } else if (thisRate === 100) {
-      consistencyValue = '100'; consistencyTrend = 'up';
-      consistencyTrendLabel = 'Perfect week';
-      consistencyMsg = 'Alhamdulillah — every prayer on time this week';
-    } else {
-      const diff = lastRate !== null ? thisRate - lastRate : 0;
-      consistencyValue = String(thisRate);
-      consistencyTrend = diff >= 0 ? 'up' : 'flat';
-      consistencyTrendLabel = diff > 0 ? `+${diff}% vs prev week` : diff < 0 ? `${diff}% vs prev week` : 'Same as prev week';
-      consistencyMsg = diff > 0 ? 'Alhamdulillah — on-time prayers improving' : diff < 0 ? 'Keep going — every prayer counts' : 'Steady — aim to push higher this week';
-    }
+    const thisRate = onTimeRate(thisWeekP), lastRate = onTimeRate(lastWeekP);
+    let cV, cT, cL, cM;
+    if (thisRate === null) { cV = '—'; cT = 'flat'; cL = 'No data yet'; cM = 'Start logging prayers'; }
+    else if (thisRate === 100) { cV = '100'; cT = 'up'; cL = 'Perfect week'; cM = 'Alhamdulillah — every prayer on time'; }
+    else { const d = lastRate !== null ? thisRate - lastRate : 0; cV = String(thisRate); cT = d >= 0 ? 'up' : 'flat'; cL = d > 0 ? `+${d}% vs prev week` : d < 0 ? `${d}% vs prev week` : 'Same as prev week'; cM = d > 0 ? 'On-time prayers improving' : d < 0 ? 'Keep going — every prayer counts' : 'Steady — push a little higher'; }
 
-    // 2. Check-in streak
     const streak = calcCheckInStreak(moods || [], anchor);
-    let streakMsg;
-    if (streak === 0) streakMsg = weekOffset === 0 ? 'Complete your first check-in today' : 'No streak at this point';
-    else if (streak === 1) streakMsg = 'Good start — keep it going tomorrow';
-    else if (streak < 5) streakMsg = 'Building momentum, keep showing up';
-    else streakMsg = 'Alhamdulillah — your consistency is beautiful';
+    const streakMsg = streak === 0 ? (weekOffset === 0 ? 'Complete your first check-in today' : 'No streak at this point') : streak < 5 ? 'Building momentum' : 'Alhamdulillah — beautiful consistency';
 
-    // 3. Connection score
-    const thisConn = avgScore(thisWeekM);
-    const lastConn = avgScore(lastWeekM);
-    let connValue, connTrend, connTrendLabel, connMsg;
-    if (thisConn === null) {
-      connValue = '—'; connTrend = 'flat';
-      connTrendLabel = 'No check-ins yet';
-      connMsg = 'Complete a daily check-in to track your connection';
-    } else {
-      const diff = lastConn !== null ? +(thisConn - lastConn).toFixed(1) : 0;
-      connValue = String(thisConn);
-      connTrend = diff >= 0 ? 'up' : 'flat';
-      connTrendLabel = diff > 0 ? `+${diff} vs prev week` : diff < 0 ? `${diff} vs prev week` : 'Stable';
-      connMsg = diff > 0 ? 'Feeling more connected to Allah — keep nurturing this' : diff < 0 ? 'Your heart is still reaching — Allah sees your effort' : 'Your connection is holding steady this week';
-    }
+    const thisConn = avgScore(thisWeekM), lastConn = avgScore(lastWeekM);
+    let connV, connT, connL, connM;
+    if (thisConn === null) { connV = '—'; connT = 'flat'; connL = 'No check-ins'; connM = 'Complete a check-in to track connection'; }
+    else { const d = lastConn !== null ? +(thisConn - lastConn).toFixed(1) : 0; connV = String(thisConn); connT = d >= 0 ? 'up' : 'flat'; connL = d > 0 ? `+${d} vs prev week` : d < 0 ? `${d} vs prev week` : 'Stable'; connM = d > 0 ? 'Feeling more connected — keep going' : d < 0 ? 'Your heart is still reaching' : 'Holding steady this week'; }
 
-    // 4. Recovery speed
-    const thisRec = calcRecovery(thisWeekP);
-    const lastRec = calcRecovery(lastWeekP);
-    let recValue, recTrend, recTrendLabel, recMsg;
-    if (thisRec === null) {
-      recValue = '—'; recTrend = 'flat';
-      recTrendLabel = 'No misses this week';
-      recMsg = thisWeekP.length > 0 ? 'Alhamdulillah — no missed prayers logged' : 'Log your prayers to track recovery';
-    } else {
-      const diff = lastRec !== null ? thisRec - lastRec : 0;
-      recValue = String(thisRec);
-      recTrend = diff >= 0 ? 'up' : 'flat';
-      recTrendLabel = diff > 0 ? `+${diff}% faster` : diff < 0 ? 'Keep bouncing back' : 'Consistent recovery';
-      recMsg = thisRec >= 80 ? 'You get back on track quickly — that\'s real sabr' : 'After every miss, come back stronger';
-    }
+    const thisRec = calcRecovery(thisWeekP), lastRec = calcRecovery(lastWeekP);
+    let rV, rT, rL, rM;
+    if (thisRec === null) { rV = '—'; rT = 'flat'; rL = 'No misses this week'; rM = thisWeekP.length > 0 ? 'Alhamdulillah — no missed prayers' : 'Log prayers to track recovery'; }
+    else { const d = lastRec !== null ? thisRec - lastRec : 0; rV = String(thisRec); rT = d >= 0 ? 'up' : 'flat'; rL = d > 0 ? `+${d}% faster` : d < 0 ? 'Keep bouncing back' : 'Consistent recovery'; rM = thisRec >= 80 ? 'You recover quickly — real sabr' : 'After every miss, come back stronger'; }
 
-    // 5. Overall engagement
-    const thisEng = calcEngagement(thisWeekP, thisWeekM);
-    const lastEng = calcEngagement(lastWeekP, lastWeekM);
-    let engValue, engTrend, engTrendLabel, engMsg;
-    if (thisEng === 0) {
-      engValue = '0'; engTrend = 'flat';
-      engTrendLabel = 'No activity yet';
-      engMsg = 'Open the app daily — small steps lead to big change';
-    } else {
-      const diff = thisEng - lastEng;
-      engValue = String(thisEng);
-      engTrend = diff >= 0 ? 'up' : 'flat';
-      engTrendLabel = diff > 0 ? `+${diff} more than prev week` : diff < 0 ? 'Keep coming back' : 'Same as prev week';
-      engMsg = diff > 0 ? 'More active this week than last — keep going' : diff < 0 ? 'Come back a little more this week' : 'Steady engagement — push a little harder';
-    }
+    const thisEng = calcEngagement(thisWeekP, thisWeekM), lastEng = calcEngagement(lastWeekP, lastWeekM);
+    let eV, eT, eL, eM;
+    if (thisEng === 0) { eV = '0'; eT = 'flat'; eL = 'No activity yet'; eM = 'Open the app daily — small steps matter'; }
+    else { const d = thisEng - lastEng; eV = String(thisEng); eT = d >= 0 ? 'up' : 'flat'; eL = d > 0 ? `+${d} vs prev week` : d < 0 ? 'Keep coming back' : 'Same as prev week'; eM = d > 0 ? 'More active this week — keep going' : d < 0 ? 'Come back a little more' : 'Steady — push a little harder'; }
 
     setMetrics({
-      consistency: { value: consistencyValue, unit: '%', trend: consistencyTrend, trendLabel: consistencyTrendLabel, msg: consistencyMsg },
+      consistency: { value: cV, unit: cV !== '—' ? '%' : '', trend: cT, trendLabel: cL, msg: cM },
       streak:      { value: String(streak), unit: streak === 1 ? 'day' : 'days', trend: streak > 0 ? 'up' : 'flat', trendLabel: streak > 0 ? `${streak} day streak` : 'No streak yet', msg: streakMsg },
-      connection:  { value: connValue, unit: connValue !== '—' ? '/ 5' : '', trend: connTrend, trendLabel: connTrendLabel, msg: connMsg },
-      recovery:    { value: recValue, unit: recValue !== '—' ? '%' : '', trend: recTrend, trendLabel: recTrendLabel, msg: recMsg },
-      engagement:  { value: engValue, unit: 'actions', trend: engTrend, trendLabel: engTrendLabel, msg: engMsg },
+      connection:  { value: connV, unit: connV !== '—' ? '/ 5' : '', trend: connT, trendLabel: connL, msg: connM },
+      recovery:    { value: rV, unit: rV !== '—' ? '%' : '', trend: rT, trendLabel: rL, msg: rM },
+      engagement:  { value: eV, unit: 'actions', trend: eT, trendLabel: eL, msg: eM },
     });
     setLoading(false);
   };
@@ -284,8 +167,8 @@ export default function ProgressZone({ userId, weekOffset = 0, customRange = nul
   if (!metrics) return null;
 
   const CARDS = [
-    { title: customRange ? 'Prayer Consistency' : 'Prayer Consistency', ...metrics.consistency },
-    { title: customRange ? 'Longest Streak'      : 'Check-in Streak',    ...metrics.streak },
+    { title: 'Prayer Consistency', ...metrics.consistency },
+    { title: customRange ? 'Longest Streak' : 'Check-in Streak', ...metrics.streak },
     { title: 'Connection Score',   ...metrics.connection },
     { title: 'Recovery Speed',     ...metrics.recovery },
     { title: 'Engagement',         ...metrics.engagement },
@@ -293,18 +176,14 @@ export default function ProgressZone({ userId, weekOffset = 0, customRange = nul
 
   return (
     <div className="mt-6 mb-4">
-      <h2 className="text-white font-semibold text-sm mb-3">Your Progress</h2>
+      <p className="text-[10px] font-bold tracking-[0.14em] uppercase mb-3" style={{ color: 'rgba(255,255,255,0.25)' }}>
+        Your Progress
+      </p>
       <div className="hidden lg:grid lg:grid-cols-5 gap-3">
-        {CARDS.map((card) => (
-          <MetricCard key={card.title} title={card.title} value={card.value} unit={card.unit}
-            trend={card.trend} trendLabel={card.trendLabel} message={card.msg} />
-        ))}
+        {CARDS.map((c) => <MetricCard key={c.title} title={c.title} value={c.value} unit={c.unit} trend={c.trend} trendLabel={c.trendLabel} message={c.msg} />)}
       </div>
       <div className="flex lg:hidden gap-2.5 overflow-x-auto pb-1 -mx-1 px-1" style={{ scrollbarWidth: 'none' }}>
-        {CARDS.map((card) => (
-          <MetricCard key={card.title} title={card.title} value={card.value} unit={card.unit}
-            trend={card.trend} trendLabel={card.trendLabel} message={card.msg} />
-        ))}
+        {CARDS.map((c) => <MetricCard key={c.title} title={c.title} value={c.value} unit={c.unit} trend={c.trend} trendLabel={c.trendLabel} message={c.msg} />)}
       </div>
     </div>
   );
