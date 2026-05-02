@@ -21,13 +21,12 @@ function avgScore(moods) {
   return scores.length > 0 ? +(scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(1) : null;
 }
 
-function calcCheckInStreak(moods) {
-  const today = new Date();
+function calcCheckInStreak(moods, referenceDate) {
   const moodDates = new Set(moods.map(m => m.date));
   let streak = 0;
   for (let i = 0; i < 30; i++) {
-    const d = new Date(today);
-    d.setDate(today.getDate() - i);
+    const d = new Date(referenceDate);
+    d.setDate(referenceDate.getDate() - i);
     if (moodDates.has(fmt(d))) streak++;
     else break;
   }
@@ -40,7 +39,7 @@ function calcEngagement(prayers, moods) {
 
 function MetricCard({ title, value, unit, trend, trendLabel, message }) {
   const TrendIcon = trend === 'up' ? TrendingUp : trend === 'down' ? TrendingDown : Minus;
-  const trendColor = trend === 'up' ? '#1D9E75' : trend === 'flat' ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.3)';
+  const trendColor = trend === 'up' ? '#1D9E75' : 'rgba(255,255,255,0.3)';
 
   return (
     <div
@@ -64,31 +63,49 @@ function MetricCard({ title, value, unit, trend, trendLabel, message }) {
   );
 }
 
-export default function ProgressZone({ userId }) {
+export default function ProgressZone({ userId, weekOffset = 0 }) {
   const [metrics, setMetrics] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!userId) return;
+    setMetrics(null);
+    setLoading(true);
     fetchData();
-  }, [userId]);
+  }, [userId, weekOffset]);
 
   const fetchData = async () => {
-    const today = new Date();
-    const thisWeekStart = new Date(today); thisWeekStart.setDate(today.getDate() - 6);
-    const lastWeekStart = new Date(today); lastWeekStart.setDate(today.getDate() - 13);
+    // Anchor = last day of the selected week
+    const anchor = new Date();
+    anchor.setHours(0, 0, 0, 0);
+    anchor.setDate(anchor.getDate() - weekOffset * 7);
+
+    const thisWeekEnd   = new Date(anchor);
+    const thisWeekStart = new Date(anchor);
+    thisWeekStart.setDate(anchor.getDate() - 6);
+
+    const lastWeekStart = new Date(anchor);
+    lastWeekStart.setDate(anchor.getDate() - 13);
+
+    // For streak we need ~30 days before the anchor
+    const streakStart = new Date(anchor);
+    streakStart.setDate(anchor.getDate() - 30);
 
     const [{ data: prayers }, { data: moods }] = await Promise.all([
       supabase.from('prayers').select('*').eq('user_id', userId)
-        .gte('date', fmt(lastWeekStart)).order('date', { ascending: true }),
+        .gte('date', fmt(lastWeekStart))
+        .lte('date', fmt(thisWeekEnd))
+        .order('date', { ascending: true }),
       supabase.from('moods').select('*').eq('user_id', userId)
-        .gte('date', fmt(lastWeekStart)).order('date', { ascending: true }),
+        .gte('date', fmt(streakStart))
+        .lte('date', fmt(thisWeekEnd))
+        .order('date', { ascending: true }),
     ]);
 
-    const thisWeekP = (prayers || []).filter(r => r.date >= fmt(thisWeekStart));
+    const thisWeekP = (prayers || []).filter(r => r.date >= fmt(thisWeekStart) && r.date <= fmt(thisWeekEnd));
     const lastWeekP = (prayers || []).filter(r => r.date < fmt(thisWeekStart));
-    const thisWeekM = (moods || []).filter(r => r.date >= fmt(thisWeekStart));
-    const lastWeekM = (moods || []).filter(r => r.date < fmt(thisWeekStart));
+    const thisWeekM = (moods || []).filter(r => r.date >= fmt(thisWeekStart) && r.date <= fmt(thisWeekEnd));
+    const lastWeekM = (moods || []).filter(r => r.date < fmt(thisWeekStart) && r.date >= fmt(lastWeekStart));
 
     // 1. Prayer consistency
     const thisRate = onTimeRate(thisWeekP);
@@ -106,14 +123,14 @@ export default function ProgressZone({ userId }) {
       const diff = lastRate !== null ? thisRate - lastRate : 0;
       consistencyValue = String(thisRate);
       consistencyTrend = diff >= 0 ? 'up' : 'flat';
-      consistencyTrendLabel = diff > 0 ? `+${diff}% vs last week` : diff < 0 ? `${diff}% vs last week` : 'Same as last week';
+      consistencyTrendLabel = diff > 0 ? `+${diff}% vs prev week` : diff < 0 ? `${diff}% vs prev week` : 'Same as prev week';
       consistencyMsg = diff > 0 ? 'Alhamdulillah — on-time prayers improving' : diff < 0 ? 'Keep going — every prayer counts' : 'Steady — aim to push higher this week';
     }
 
-    // 2. Check-in streak
-    const streak = calcCheckInStreak(moods || []);
+    // 2. Check-in streak (as of the anchor date)
+    const streak = calcCheckInStreak(moods || [], anchor);
     let streakMsg;
-    if (streak === 0) streakMsg = 'Complete your first check-in today';
+    if (streak === 0) streakMsg = weekOffset === 0 ? 'Complete your first check-in today' : 'No streak at this point';
     else if (streak === 1) streakMsg = 'Good start — keep it going tomorrow';
     else if (streak < 5) streakMsg = 'Building momentum, keep showing up';
     else streakMsg = 'Alhamdulillah — your consistency is beautiful';
@@ -130,11 +147,11 @@ export default function ProgressZone({ userId }) {
       const diff = lastConn !== null ? +(thisConn - lastConn).toFixed(1) : 0;
       connValue = String(thisConn);
       connTrend = diff >= 0 ? 'up' : 'flat';
-      connTrendLabel = diff > 0 ? `+${diff} vs last week` : diff < 0 ? `${diff} vs last week` : 'Stable';
+      connTrendLabel = diff > 0 ? `+${diff} vs prev week` : diff < 0 ? `${diff} vs prev week` : 'Stable';
       connMsg = diff > 0 ? 'Feeling more connected to Allah — keep nurturing this' : diff < 0 ? 'Your heart is still reaching — Allah sees your effort' : 'Your connection is holding steady this week';
     }
 
-    // 4. Recovery speed — % of days with a missed prayer where they still logged another
+    // 4. Recovery speed
     const calcRecovery = (recs) => {
       let missed = 0, recovered = 0;
       recs.forEach(r => {
@@ -171,7 +188,7 @@ export default function ProgressZone({ userId }) {
       const diff = thisEng - lastEng;
       engValue = String(thisEng);
       engTrend = diff >= 0 ? 'up' : 'flat';
-      engTrendLabel = diff > 0 ? `+${diff} more than last week` : diff < 0 ? 'Keep coming back' : 'Same as last week';
+      engTrendLabel = diff > 0 ? `+${diff} more than prev week` : diff < 0 ? 'Keep coming back' : 'Same as prev week';
       engMsg = diff > 0 ? 'More active this week than last — keep going' : diff < 0 ? 'Come back a little more this week' : 'Steady engagement — push a little harder';
     }
 
@@ -199,7 +216,7 @@ export default function ProgressZone({ userId }) {
   return (
     <div className="mt-6 mb-4">
       <h2 className="text-white font-semibold text-sm mb-3">Your Progress</h2>
-      {/* 5-column grid on desktop, horizontal scroll on mobile */}
+      {/* 5-column grid on desktop */}
       <div className="hidden lg:grid lg:grid-cols-5 gap-3">
         {CARDS.map((card) => (
           <MetricCard
@@ -213,6 +230,7 @@ export default function ProgressZone({ userId }) {
           />
         ))}
       </div>
+      {/* Horizontal scroll on mobile */}
       <div className="flex lg:hidden gap-2.5 overflow-x-auto pb-1 -mx-1 px-1" style={{ scrollbarWidth: 'none' }}>
         {CARDS.map((card) => (
           <MetricCard

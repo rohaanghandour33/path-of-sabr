@@ -40,7 +40,7 @@ const QUESTIONS = [
   },
 ];
 
-export default function DailyCheckIn({ userId }) {
+export default function DailyCheckIn({ userId, weekOffset = 0 }) {
   const [qStep, setQStep] = useState(0);
   const [data, setData] = useState({
     connection: 0,
@@ -53,21 +53,50 @@ export default function DailyCheckIn({ userId }) {
   const [done, setDone] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+
+  // Past week state
+  const [pastCheckIns, setPastCheckIns] = useState(null);
+
   const today = new Date().toISOString().split('T')[0];
 
   useEffect(() => {
     if (!userId) return;
-    supabase
-      .from('moods')
-      .select('id')
-      .eq('user_id', userId)
-      .eq('date', today)
-      .maybeSingle()
-      .then(({ data: existing }) => {
-        if (existing) setDone(true);
-        setLoading(false);
-      });
-  }, [userId]);
+    setLoading(true);
+    setPastCheckIns(null);
+    setDone(false);
+
+    if (weekOffset === 0) {
+      supabase
+        .from('moods')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('date', today)
+        .maybeSingle()
+        .then(({ data: existing }) => {
+          if (existing) setDone(true);
+          setLoading(false);
+        });
+    } else {
+      // Fetch past week's check-ins
+      const end = new Date();
+      end.setHours(0, 0, 0, 0);
+      end.setDate(end.getDate() - weekOffset * 7);
+      const start = new Date(end);
+      start.setDate(end.getDate() - 6);
+      const fmt = (d) => d.toISOString().split('T')[0];
+
+      supabase
+        .from('moods')
+        .select('*')
+        .eq('user_id', userId)
+        .gte('date', fmt(start))
+        .lte('date', fmt(end))
+        .then(({ data: rows }) => {
+          setPastCheckIns(rows || []);
+          setLoading(false);
+        });
+    }
+  }, [userId, weekOffset]);
 
   const update = (field, val) => setData((d) => ({ ...d, [field]: val }));
 
@@ -111,6 +140,59 @@ export default function DailyCheckIn({ userId }) {
 
   if (loading) return null;
 
+  // ── Past week: read-only summary ──────────────────────────────────────────
+  if (weekOffset > 0) {
+    const count = pastCheckIns?.length ?? 0;
+    const avgConn = count > 0
+      ? (pastCheckIns.reduce((a, b) => a + (b.mood_score || 0), 0) / count).toFixed(1)
+      : null;
+
+    return (
+      <div className="bg-white/5 border border-white/10 rounded-2xl p-5 mb-4">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-white font-semibold text-sm">Daily Check-in</h2>
+          <span
+            className="text-[10px] px-2.5 py-1 rounded-full"
+            style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.3)', border: '1px solid rgba(255,255,255,0.07)' }}
+          >
+            View only
+          </span>
+        </div>
+
+        {count === 0 ? (
+          <p className="text-white/30 text-sm text-center py-4">No check-ins this week</p>
+        ) : (
+          <div className="space-y-2.5">
+            <div
+              className="flex items-center justify-between rounded-xl px-4 py-3"
+              style={{ background: 'rgba(255,255,255,0.03)' }}
+            >
+              <p className="text-white/50 text-sm">Check-ins</p>
+              <p className="text-white font-semibold">
+                {count}
+                <span className="text-white/30 text-xs font-normal"> / 7 days</span>
+              </p>
+            </div>
+
+            {avgConn && (
+              <div
+                className="flex items-center justify-between rounded-xl px-4 py-3"
+                style={{ background: 'rgba(255,255,255,0.03)' }}
+              >
+                <p className="text-white/50 text-sm">Avg connection</p>
+                <p className="font-semibold" style={{ color: '#1D9E75' }}>
+                  {avgConn}
+                  <span className="text-white/30 text-xs font-normal"> / 5</span>
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ── Current week: check-in complete ──────────────────────────────────────
   if (done) {
     return (
       <div className="bg-white/5 border border-white/10 rounded-2xl p-5 mb-4">
@@ -127,6 +209,7 @@ export default function DailyCheckIn({ userId }) {
     );
   }
 
+  // ── Current week: interactive check-in ───────────────────────────────────
   const q = QUESTIONS[qStep];
 
   return (
