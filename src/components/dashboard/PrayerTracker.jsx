@@ -67,7 +67,7 @@ function PrayerSummaryCard({ records, title, subtitle }) {
 
   return (
     <div
-      className="rounded-3xl p-6 mb-4"
+      className="rounded-3xl p-6 h-full flex flex-col"
       style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(201,149,42,0.18)' }}
     >
       <div className="flex items-center justify-between mb-1">
@@ -79,8 +79,7 @@ function PrayerSummaryCard({ records, title, subtitle }) {
           View only
         </span>
       </div>
-      {subtitle && <p className="text-white/30 text-xs mb-5">{subtitle}</p>}
-      {!subtitle && <div className="mb-5" />}
+      <p className="text-white/30 text-xs mb-5">{subtitle || '\u00A0'}</p>
 
       {records.length === 0 ? (
         <p className="text-white/30 text-sm text-center py-4">No prayers logged</p>
@@ -221,7 +220,7 @@ export default function PrayerTracker({ userId, weekOffset = 0, customRange = nu
   // ── Current week: interactive tracker ─────────────────────────────────────
   return (
     <div
-      className="rounded-3xl p-6 mb-4"
+      className="rounded-3xl p-6 h-full flex flex-col"
       style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(201,149,42,0.18)' }}
     >
       <h2 className="font-semibold text-sm mb-5 text-white">Today's Prayers</h2>

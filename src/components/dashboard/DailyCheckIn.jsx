@@ -133,7 +133,7 @@ export default function DailyCheckIn({ userId, weekOffset = 0, customRange = nul
       : '7 day week';
 
     return (
-      <div className="bg-white/5 border border-white/10 rounded-2xl p-5 mb-4">
+      <div className="rounded-3xl p-6 h-full flex flex-col" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(201,149,42,0.18)' }}>
         <div className="flex items-center justify-between mb-1">
           <h2 className="text-white font-semibold text-sm">Daily Check-in</h2>
           <span
@@ -177,7 +177,7 @@ export default function DailyCheckIn({ userId, weekOffset = 0, customRange = nul
   // ── Current week: check-in complete ───────────────────────────────────────
   if (done) {
     return (
-      <div className="bg-white/5 border border-white/10 rounded-2xl p-5 mb-4">
+      <div className="rounded-3xl p-6 h-full flex flex-col justify-center" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(201,149,42,0.18)' }}>
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-full bg-[#1D9E75]/20 flex items-center justify-center flex-shrink-0">
             <Check size={15} className="text-[#1D9E75]" />
@@ -195,7 +195,7 @@ export default function DailyCheckIn({ userId, weekOffset = 0, customRange = nul
   const q = QUESTIONS[qStep];
 
   return (
-    <div className="bg-white/5 border border-white/10 rounded-2xl p-5 mb-4">
+    <div className="rounded-3xl p-6 h-full flex flex-col" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(201,149,42,0.18)' }}>
       <div className="flex items-center justify-between mb-1">
         <h2 className="text-white font-semibold text-sm">Daily Check-in</h2>
         <span className="text-white/25 text-xs">{qStep + 1} / {QUESTIONS.length}</span>
