@@ -197,9 +197,23 @@ export default function ProgressZone({ userId }) {
   ];
 
   return (
-    <div className="mt-2 mb-4">
+    <div className="mt-6 mb-4">
       <h2 className="text-white font-semibold text-sm mb-3">Your Progress</h2>
-      <div className="flex gap-2.5 overflow-x-auto pb-1 -mx-1 px-1" style={{ scrollbarWidth: 'none' }}>
+      {/* 5-column grid on desktop, horizontal scroll on mobile */}
+      <div className="hidden lg:grid lg:grid-cols-5 gap-3">
+        {CARDS.map((card) => (
+          <MetricCard
+            key={card.title}
+            title={card.title}
+            value={card.value}
+            unit={card.unit}
+            trend={card.trend}
+            trendLabel={card.trendLabel}
+            message={card.msg}
+          />
+        ))}
+      </div>
+      <div className="flex lg:hidden gap-2.5 overflow-x-auto pb-1 -mx-1 px-1" style={{ scrollbarWidth: 'none' }}>
         {CARDS.map((card) => (
           <MetricCard
             key={card.title}
