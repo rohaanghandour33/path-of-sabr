@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Send, Bot } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import Anthropic from '@anthropic-ai/sdk';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const PRAYER_KEYS = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
@@ -268,26 +267,49 @@ export default function Companion({ userId, user }) {
     const last10 = allMsgs.slice(-10).map(m => ({ role: m.role, content: m.content }));
 
     try {
-      const client = new Anthropic({
-        apiKey: import.meta.env.VITE_ANTHROPIC_API_KEY,
-        dangerouslyAllowBrowser: true,
-      });
-
       let fullResponse = '';
 
-      const stream = client.messages.stream({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 512,
-        system: [{ type: 'text', text: systemPrompt, cache_control: { type: 'ephemeral' } }],
-        messages: last10,
+      // Call server-side API route — keeps API key off the client
+      const response = await fetch('/api/companion', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: last10, systemPrompt }),
       });
 
-      stream.on('text', (delta) => {
-        fullResponse += delta;
-        setStreamText(fullResponse);
-      });
+      if (!response.ok) {
+        throw new Error(`Server error ${response.status}`);
+      }
 
-      await stream.finalMessage();
+      // Parse SSE stream from the edge function
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() ?? ''; // keep any incomplete trailing line
+
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          const raw = line.slice(6).trim();
+          if (raw === '[DONE]') break;
+          try {
+            const parsed = JSON.parse(raw);
+            if (parsed.error) throw new Error(parsed.error);
+            if (parsed.delta) {
+              fullResponse += parsed.delta;
+              setStreamText(fullResponse);
+            }
+          } catch (parseErr) {
+            // skip malformed SSE lines
+            console.warn('SSE parse error:', parseErr);
+          }
+        }
+      }
 
       // Add AI response to messages
       const aiMsg = { id: Date.now() + 1, role: 'assistant', content: fullResponse };
