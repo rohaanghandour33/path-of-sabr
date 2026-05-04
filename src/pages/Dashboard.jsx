@@ -7,6 +7,7 @@ import PrayerTracker from '../components/dashboard/PrayerTracker';
 import DailyCheckIn from '../components/dashboard/DailyCheckIn';
 import BottomNav from '../components/dashboard/BottomNav';
 import ProgressZone from '../components/dashboard/ProgressZone';
+import Companion from './Companion';
 
 const PRAYER_KEYS = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
 const TODAY = new Date().toISOString().split('T')[0];
@@ -320,13 +321,13 @@ export default function Dashboard() {
             <span className="font-bold text-base tracking-tight" style={{ color: '#1D9E75' }}>Path of Sabr</span>
           </div>
           <div className="hidden lg:flex items-center gap-0.5 rounded-xl p-1" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
-            {['home', 'prayers', 'profile'].map((tab) => (
+            {['home', 'prayers', 'ai', 'profile'].map((tab) => (
               <button key={tab} onClick={() => handleTabChange(tab)}
                 className="px-4 py-2 rounded-lg text-xs font-semibold capitalize transition-all duration-150 tracking-wide"
                 style={activeTab === tab
                   ? { background: 'rgba(29,158,117,0.15)', color: '#1D9E75', border: '1px solid rgba(29,158,117,0.2)' }
                   : { color: 'rgba(255,255,255,0.35)', border: '1px solid transparent' }}>
-                {tab === 'home' ? 'Home' : tab === 'prayers' ? 'Prayers' : 'Profile'}
+                {tab === 'home' ? 'Home' : tab === 'prayers' ? 'Prayers' : tab === 'ai' ? 'AI Companion' : 'Profile'}
               </button>
             ))}
           </div>
@@ -369,6 +370,11 @@ export default function Dashboard() {
               <PrayerHistory userId={user?.id} weekOffset={weekOffset} customRange={appliedRange} />
             </div>
           </>
+        )}
+
+        {/* AI COMPANION */}
+        {activeTab === 'ai' && (
+          <Companion userId={user?.id} user={user} />
         )}
 
         {/* PROFILE */}

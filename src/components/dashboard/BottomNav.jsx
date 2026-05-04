@@ -3,7 +3,7 @@ import { Home, MoonStar, Bot, User } from 'lucide-react';
 const TABS = [
   { id: 'home',    label: 'Home',         Icon: Home },
   { id: 'prayers', label: 'Prayers',      Icon: MoonStar },
-  { id: 'ai',      label: 'AI Companion', Icon: Bot, disabled: true },
+  { id: 'ai',      label: 'AI Companion', Icon: Bot },
   { id: 'profile', label: 'Profile',      Icon: User },
 ];
 
