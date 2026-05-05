@@ -1,9 +1,13 @@
+import { useState } from 'react';
 import { Check, Sparkles, Lock } from 'lucide-react';
 
-const plans = [
+const MONTHLY = [
   {
     name: 'Reflect',
     price: '£0',
+    annualPrice: null,
+    annualEquiv: null,
+    annualSave: null,
     period: null,
     description: 'Free forever. Begin your journey with the essentials — no credit card needed.',
     badge: null,
@@ -19,8 +23,11 @@ const plans = [
   {
     name: 'Thrive',
     price: '£7.99',
+    annualPrice: '£59',
+    annualEquiv: '£4.92/month equivalent',
+    annualSave: 'Save 38%',
     period: '/month',
-    description: 'The full Path of Sabr experience. 10% of every subscription goes to sadaqah automatically.',
+    description: "The full Path of Sabr experience. 10% of every subscription's profit goes to sadaqah automatically.",
     badge: null,
     features: [
       'Everything in Reflect',
@@ -29,7 +36,7 @@ const plans = [
       'Scholar-sourced guidance library',
       'Streak recovery & gentle nudges',
       'Monthly progress report',
-      '10% automatically to sadaqah ✦',
+      "10% of profit to sadaqah ✦",
     ],
     primary: false,
     accent: '#1D9E75',
@@ -37,6 +44,9 @@ const plans = [
   {
     name: 'Companion Mode',
     price: '£14.99',
+    annualPrice: '£119',
+    annualEquiv: '£9.92/month equivalent',
+    annualSave: 'Save 34%',
     period: '/month',
     description: 'For those who want to go deeper. Unlimited access and richer daily check-ins.',
     badge: 'Most Popular',
@@ -46,14 +56,15 @@ const plans = [
       'No message limits — ever',
       'Deeper daily check-ins',
       'Priority response times',
-      '10% automatically to sadaqah ✦',
+      "10% of profit to sadaqah ✦",
     ],
     primary: true,
     accent: '#C9952A',
   },
 ];
 
-function PlanCard({ plan }) {
+function PlanCard({ plan, annual }) {
+  const showAnnual = annual && plan.annualPrice;
   return (
     <div
       className={`relative rounded-3xl overflow-hidden ${plan.primary ? 'sm:scale-[1.04]' : ''}`}
@@ -95,10 +106,26 @@ function PlanCard({ plan }) {
 
         <div>
           <p className="section-label mb-2" style={{ color: plan.accent }}>{plan.name}</p>
-          <div className="flex items-end gap-1 mb-2 sm:mb-3">
-            <span className="text-4xl sm:text-5xl font-extrabold tracking-tight text-white">{plan.price}</span>
-            {plan.period && <span className="text-base mb-1 sm:mb-2 text-white/60">{plan.period}</span>}
+
+          {/* Price display */}
+          <div className="flex items-end gap-1 mb-1">
+            <span className="text-4xl sm:text-5xl font-extrabold tracking-tight text-white">
+              {showAnnual ? plan.annualPrice : plan.price}
+            </span>
+            {showAnnual
+              ? <span className="text-base mb-1 sm:mb-2 text-white/60">/year</span>
+              : plan.period && <span className="text-base mb-1 sm:mb-2 text-white/60">{plan.period}</span>
+            }
+            {showAnnual && plan.annualSave && (
+              <span className="mb-1 sm:mb-2 ml-2 text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: 'rgba(201,149,42,0.2)', color: '#C9952A' }}>
+                {plan.annualSave}
+              </span>
+            )}
           </div>
+          {showAnnual && plan.annualEquiv && (
+            <p className="text-xs mb-2" style={{ color: 'rgba(255,255,255,0.4)' }}>{plan.annualEquiv}</p>
+          )}
+
           <p className="text-sm leading-relaxed text-white/55">{plan.description}</p>
         </div>
 
@@ -133,29 +160,63 @@ function PlanCard({ plan }) {
 }
 
 export default function Pricing() {
+  const [annual, setAnnual] = useState(false);
+
   return (
     <section id="pricing" className="relative py-16 sm:py-24 overflow-hidden" style={{ background: 'linear-gradient(160deg, #051a10 0%, #062516 100%)' }}>
       <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse 60% 50% at 50% 50%, rgba(29,158,117,0.08) 0%, transparent 70%)' }} />
 
       <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-12 sm:mb-16">
+        <div className="text-center mb-10 sm:mb-12">
           <p className="section-label text-[#C9952A] mb-3">Pricing</p>
           <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white mb-3 sm:mb-4 tracking-tight">Simple, transparent pricing</h2>
           <p className="text-white/50 max-w-lg mx-auto text-sm sm:text-base leading-relaxed">
             Pricing is revealed at launch. Join the waitlist now to lock in founding member rates, before they go up.
           </p>
+
+          {/* ── Monthly / Annual toggle ── */}
+          <div className="inline-flex items-center gap-3 mt-8 p-1 rounded-2xl" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}>
+            <button
+              onClick={() => setAnnual(false)}
+              className="px-5 py-2 rounded-xl text-sm font-semibold transition-all duration-200"
+              style={!annual
+                ? { background: 'rgba(29,158,117,0.18)', color: '#1D9E75', border: '1px solid rgba(29,158,117,0.3)' }
+                : { color: 'rgba(255,255,255,0.35)', border: '1px solid transparent' }}
+            >
+              Monthly
+            </button>
+            <button
+              onClick={() => setAnnual(true)}
+              className="flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold transition-all duration-200"
+              style={annual
+                ? { background: 'rgba(201,149,42,0.15)', color: '#C9952A', border: '1px solid rgba(201,149,42,0.3)' }
+                : { color: 'rgba(255,255,255,0.35)', border: '1px solid transparent' }}
+            >
+              Annual
+              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: 'rgba(201,149,42,0.2)', color: '#C9952A' }}>
+                Save up to 38%
+              </span>
+            </button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-5 items-center">
-          {plans.map((plan) => <PlanCard key={plan.name} plan={plan} />)}
+          {MONTHLY.map((plan) => <PlanCard key={plan.name} plan={plan} annual={annual} />)}
         </div>
+
+        {/* Annual billing note */}
+        {annual && (
+          <p className="text-center text-xs mt-6" style={{ color: 'rgba(255,255,255,0.25)' }}>
+            Annual plans billed once per year. Cancel anytime before renewal.
+          </p>
+        )}
 
         <div className="mt-10 sm:mt-12 text-center">
           <a href="#waitlist" className="btn-primary text-white font-semibold px-8 py-4 rounded-xl text-sm inline-block">
             Join the Waitlist for Early Access →
           </a>
           <p className="text-xs text-white/30 max-w-md mx-auto mt-4">
-            ✦ Every paid plan gives 10% to sadaqah automatically.
+            ✦ 10% of every subscription's profit goes to sadaqah automatically.
           </p>
         </div>
       </div>

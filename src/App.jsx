@@ -8,6 +8,7 @@ import DeenVerses from './components/DeenVerses';
 import Features from './components/Features';
 import SocialProof from './components/SocialProof';
 import Pricing from './components/Pricing';
+import Sadaqah from './components/Sadaqah';
 import Footer from './components/Footer';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
@@ -42,6 +43,7 @@ function LandingPage() {
         <DeenVerses />
         <Features />
         <SocialProof />
+        <Sadaqah />
         <Pricing />
       </main>
       <Footer />
