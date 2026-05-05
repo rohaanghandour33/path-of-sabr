@@ -308,7 +308,7 @@ export default function Companion({ userId, user }) {
           .order('date', { ascending: false }),
         supabase.from('ai_messages').select('message_count').eq('user_id', userId).eq('date', today).maybeSingle(),
         supabase.from('ai_conversations').select('role,content,created_at').eq('user_id', userId)
-          .order('created_at', { ascending: false }).limit(10),
+          .order('created_at', { ascending: false }),
       ]);
 
       const streak = calcPrayerStreak(prayerHistory || []);
@@ -356,7 +356,8 @@ export default function Companion({ userId, user }) {
     setMessageCount(newCount);
 
     const allMsgs = [...messages, userMsg];
-    const last10  = allMsgs.slice(-10).map(m => ({ role: m.role, content: m.content }));
+    // Send last 20 messages as context to the AI — full history shown to user but capped here for token cost
+    const last10  = allMsgs.slice(-20).map(m => ({ role: m.role, content: m.content }));
 
     let fullResponse = '';
 
