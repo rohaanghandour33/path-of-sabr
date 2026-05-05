@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, CalendarRange, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CalendarRange, X, Lock } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import PrayerTracker from '../components/dashboard/PrayerTracker';
@@ -303,6 +303,8 @@ export default function Dashboard() {
   );
 
   const displayName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Friend';
+  const tier = user?.user_metadata?.subscription_tier || 'free';
+  const companionLocked = tier === 'free';
   const navProps = { weekOffset, setWeekOffset, showRangePicker, setShowRangePicker, rangeInput, setRangeInput, appliedRange, setAppliedRange };
 
   return (
@@ -317,22 +319,70 @@ export default function Dashboard() {
 
         {/* Header */}
         <div className="flex items-center justify-between pt-8 pb-6" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-          <div className="flex items-center gap-3">
+          {/* Logo */}
+          <div className="flex items-center gap-3 flex-shrink-0">
             <img src="/logo.png" alt="Path of Sabr" className="h-9 w-9 rounded-full object-cover shrink-0" />
             <span className="font-bold text-base tracking-tight" style={{ color: '#1D9E75' }}>Path of Sabr</span>
           </div>
-          <div className="hidden lg:flex items-center gap-0.5 rounded-xl p-1" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
-            {['home', 'prayers', 'ai', 'profile'].map((tab) => (
+
+          {/* Right side — companion button + desktop nav */}
+          <div className="flex items-center gap-3">
+
+            {/* ── Deen Companion CTA ── */}
+            {companionLocked ? (
+              /* Locked state — free tier */
+              <div className="relative group">
+                <button
+                  disabled
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-semibold cursor-not-allowed"
+                  style={{
+                    background: 'rgba(201,149,42,0.07)',
+                    border: '1px solid rgba(201,149,42,0.18)',
+                    color: 'rgba(201,149,42,0.4)',
+                  }}
+                >
+                  <Lock size={12} />
+                  <span className="hidden sm:inline">Deen Companion</span>
+                  <span className="sm:hidden">Companion</span>
+                </button>
+                {/* Tooltip */}
+                <div
+                  className="absolute right-0 top-full mt-2 w-48 rounded-xl px-3 py-2.5 text-xs text-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50"
+                  style={{ background: '#0d2218', border: '1px solid rgba(201,149,42,0.2)', color: 'rgba(255,255,255,0.5)' }}
+                >
+                  Upgrade to unlock your personal AI companion
+                </div>
+              </div>
+            ) : (
+              /* Unlocked state — paid tier */
               <button
-                key={tab}
-                onClick={() => tab === 'ai' ? navigate('/companion') : handleTabChange(tab)}
-                className="px-4 py-2 rounded-lg text-xs font-semibold capitalize transition-all duration-150 tracking-wide"
-                style={activeTab === tab && tab !== 'ai'
-                  ? { background: 'rgba(29,158,117,0.15)', color: '#1D9E75', border: '1px solid rgba(29,158,117,0.2)' }
-                  : { color: 'rgba(255,255,255,0.35)', border: '1px solid transparent' }}>
-                {tab === 'home' ? 'Home' : tab === 'prayers' ? 'Prayers' : tab === 'ai' ? 'AI Companion' : 'Profile'}
+                onClick={() => navigate('/companion')}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-2xl text-xs font-bold tracking-wide transition-all duration-200 hover:scale-[1.03] active:scale-[0.98]"
+                style={{
+                  background: 'linear-gradient(135deg, #C9952A 0%, #e8b84b 100%)',
+                  color: '#020c07',
+                  boxShadow: '0 0 20px rgba(201,149,42,0.35), 0 4px 12px rgba(0,0,0,0.3)',
+                }}
+              >
+                ✦ <span className="hidden sm:inline">Meet Your Deen Companion</span>
+                <span className="sm:hidden">Companion</span>
               </button>
-            ))}
+            )}
+
+            {/* Desktop tab nav */}
+            <div className="hidden lg:flex items-center gap-0.5 rounded-xl p-1" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
+              {['home', 'prayers', 'profile'].map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => handleTabChange(tab)}
+                  className="px-4 py-2 rounded-lg text-xs font-semibold capitalize transition-all duration-150 tracking-wide"
+                  style={activeTab === tab
+                    ? { background: 'rgba(29,158,117,0.15)', color: '#1D9E75', border: '1px solid rgba(29,158,117,0.2)' }
+                    : { color: 'rgba(255,255,255,0.35)', border: '1px solid transparent' }}>
+                  {tab === 'home' ? 'Home' : tab === 'prayers' ? 'Prayers' : 'Profile'}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
