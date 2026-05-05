@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { AuthProvider } from './contexts/AuthContext';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Navbar from './components/Navbar';
 import AnnouncementBanner from './components/AnnouncementBanner';
@@ -13,7 +13,24 @@ import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
 import Onboarding from './pages/Onboarding';
+import Companion from './pages/Companion';
+import BottomNav from './components/dashboard/BottomNav';
 import './index.css';
+
+// Standalone page for the AI Companion route
+function CompanionPage() {
+  const { user } = useAuth();
+  return (
+    // Companion manages its own height (100dvh) — no wrapper constraints needed
+    <>
+      <Companion userId={user?.id} user={user} />
+      {/* Bottom nav — mobile only; desktop uses the sidebar for identity/nav */}
+      <div className="lg:hidden">
+        <BottomNav activeTab="ai" setActiveTab={() => {}} />
+      </div>
+    </>
+  );
+}
 
 function LandingPage() {
   return (
@@ -53,6 +70,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/companion"
+            element={
+              <ProtectedRoute>
+                <CompanionPage />
               </ProtectedRoute>
             }
           />

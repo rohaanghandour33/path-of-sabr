@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, CalendarRange, X } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
@@ -7,7 +7,6 @@ import PrayerTracker from '../components/dashboard/PrayerTracker';
 import DailyCheckIn from '../components/dashboard/DailyCheckIn';
 import BottomNav from '../components/dashboard/BottomNav';
 import ProgressZone from '../components/dashboard/ProgressZone';
-import Companion from './Companion';
 
 const PRAYER_KEYS = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
 const TODAY = new Date().toISOString().split('T')[0];
@@ -272,7 +271,9 @@ function ProfileView({ user, onSignOut }) {
 export default function Dashboard() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('home');
+  const location = useLocation();
+  // Allow other pages (e.g. /companion) to navigate back to a specific tab
+  const [activeTab, setActiveTab] = useState(location.state?.tab || 'home');
   const [weekOffset, setWeekOffset] = useState(0);
   const [showRangePicker, setShowRangePicker] = useState(false);
   const [rangeInput, setRangeInput] = useState({ start: '', end: '' });
@@ -322,9 +323,11 @@ export default function Dashboard() {
           </div>
           <div className="hidden lg:flex items-center gap-0.5 rounded-xl p-1" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
             {['home', 'prayers', 'ai', 'profile'].map((tab) => (
-              <button key={tab} onClick={() => handleTabChange(tab)}
+              <button
+                key={tab}
+                onClick={() => tab === 'ai' ? navigate('/companion') : handleTabChange(tab)}
                 className="px-4 py-2 rounded-lg text-xs font-semibold capitalize transition-all duration-150 tracking-wide"
-                style={activeTab === tab
+                style={activeTab === tab && tab !== 'ai'
                   ? { background: 'rgba(29,158,117,0.15)', color: '#1D9E75', border: '1px solid rgba(29,158,117,0.2)' }
                   : { color: 'rgba(255,255,255,0.35)', border: '1px solid transparent' }}>
                 {tab === 'home' ? 'Home' : tab === 'prayers' ? 'Prayers' : tab === 'ai' ? 'AI Companion' : 'Profile'}
@@ -370,11 +373,6 @@ export default function Dashboard() {
               <PrayerHistory userId={user?.id} weekOffset={weekOffset} customRange={appliedRange} />
             </div>
           </>
-        )}
-
-        {/* AI COMPANION */}
-        {activeTab === 'ai' && (
-          <Companion userId={user?.id} user={user} />
         )}
 
         {/* PROFILE */}

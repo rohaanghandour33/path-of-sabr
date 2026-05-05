@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
-import { Send, Bot } from 'lucide-react';
+import { Send } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const PRAYER_KEYS = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
 const PRAYER_LABEL = { fajr: 'Fajr', dhuhr: 'Dhuhr', asr: 'Asr', maghrib: 'Maghrib', isha: 'Isha' };
 const STATUS_LABEL  = { on_time: 'on time', late: 'late', missed: 'missed' };
+const STATUS_COLOR  = { on_time: '#1D9E75', late: '#C9952A', missed: '#e57368' };
 
 const DAILY_LIMITS = { free: 3, thrive: 15, companion: Infinity };
 
@@ -92,10 +93,7 @@ STRICT RULES — follow every single one without exception:
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function fmt(d) { return d.toISOString().split('T')[0]; }
-
-function getTier(user) {
-  return user?.user_metadata?.subscription_tier || 'free';
-}
+function getTier(user) { return user?.user_metadata?.subscription_tier || 'free'; }
 
 function calcPrayerStreak(records) {
   const today = new Date(); today.setHours(0, 0, 0, 0);
@@ -104,8 +102,7 @@ function calcPrayerStreak(records) {
     const d = new Date(today); d.setDate(today.getDate() - i);
     const r = records.find(rec => rec.date === fmt(d));
     if (!r) break;
-    const hasAny = PRAYER_KEYS.some(p => r[p]);
-    if (!hasAny) break;
+    if (!PRAYER_KEYS.some(p => r[p])) break;
     streak++;
   }
   return streak;
@@ -122,10 +119,10 @@ function formatPrayerData(prayerRow) {
 function formatMoodData(moodRow) {
   if (!moodRow) return 'No check-in completed today.';
   const conn = moodRow.mood_score ? `Connection to Allah: ${moodRow.mood_score}/5` : '';
-  let heartStates = '', needs = '', struggles = '', pulledAway = '';
+  let heartStates = '', needs = '', struggles = '';
   try { const ml = JSON.parse(moodRow.mood_label || '{}'); heartStates = (ml.heartStates || []).join(', '); needs = (ml.needs || []).join(', '); } catch {}
-  try { const n = JSON.parse(moodRow.notes || '{}'); struggles = (n.struggles || []).join(', '); pulledAway = n.pulledAway ? `Was pulled away from deen today: ${n.pulledAway ? 'Yes' : 'No'}` : ''; } catch {}
-  return [conn, heartStates && `Heart state: ${heartStates}`, needs && `Needs: ${needs}`, struggles && `Struggles: ${struggles}`, pulledAway].filter(Boolean).join(' | ') || 'Check-in data unavailable.';
+  try { const n = JSON.parse(moodRow.notes || '{}'); struggles = (n.struggles || []).join(', '); } catch {}
+  return [conn, heartStates && `Heart state: ${heartStates}`, needs && `Needs: ${needs}`, struggles && `Struggles: ${struggles}`].filter(Boolean).join(' | ') || 'Check-in data unavailable.';
 }
 
 function buildSystemPrompt(ctx) {
@@ -142,30 +139,88 @@ function buildSystemPrompt(ctx) {
     .replace('[STREAK]', `${ctx.streak} day${ctx.streak !== 1 ? 's' : ''} in a row`);
 }
 
+// ─── Crescent moon + star icon (Islamic, warm, gold) ─────────────────────────
+function MoonStarIcon({ size = 32, className = '' }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 36 36"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+    >
+      <defs>
+        <mask id="crescent-clip">
+          <rect width="36" height="36" fill="white" />
+          {/* Offset circle creates the crescent cutout */}
+          <circle cx="21.5" cy="13" r="9.5" fill="black" />
+        </mask>
+      </defs>
+      {/* Crescent moon body */}
+      <circle
+        cx="15"
+        cy="19"
+        r="11"
+        fill="#C9952A"
+        opacity="0.92"
+        mask="url(#crescent-clip)"
+      />
+      {/* Four-point star */}
+      <path
+        d="M27.5 7 L28.6 10.4 L32 11.5 L28.6 12.6 L27.5 16 L26.4 12.6 L23 11.5 L26.4 10.4 Z"
+        fill="#C9952A"
+      />
+    </svg>
+  );
+}
+
+// Small inline version for message bubbles
+function MoonStarSmall() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 36 36" fill="none">
+      <defs>
+        <mask id="crescent-clip-sm">
+          <rect width="36" height="36" fill="white" />
+          <circle cx="21.5" cy="13" r="9.5" fill="black" />
+        </mask>
+      </defs>
+      <circle cx="15" cy="19" r="11" fill="#C9952A" opacity="0.92" mask="url(#crescent-clip-sm)" />
+      <path d="M27.5 7 L28.6 10.4 L32 11.5 L28.6 12.6 L27.5 16 L26.4 12.6 L23 11.5 L26.4 10.4 Z" fill="#C9952A" />
+    </svg>
+  );
+}
+
 // ─── Message bubble ───────────────────────────────────────────────────────────
 function Bubble({ role, content, isStreaming }) {
   const isUser = role === 'user';
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-3`}>
       {!isUser && (
-        <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mr-2 mt-0.5"
-          style={{ background: 'rgba(201,149,42,0.15)', border: '1px solid rgba(201,149,42,0.25)' }}>
-          <Bot size={13} style={{ color: '#C9952A' }} />
+        <div
+          className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mr-2 mt-0.5"
+          style={{ background: 'rgba(201,149,42,0.12)', border: '1px solid rgba(201,149,42,0.2)' }}
+        >
+          <MoonStarSmall />
         </div>
       )}
       <div
         className={`max-w-[78%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${isUser ? 'rounded-tr-sm' : 'rounded-tl-sm'}`}
-        style={isUser
-          ? { background: 'rgba(29,158,117,0.22)', border: '1px solid rgba(29,158,117,0.35)', color: 'rgba(255,255,255,0.92)' }
-          : { background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.85)' }
+        style={
+          isUser
+            ? { background: 'rgba(29,158,117,0.22)', border: '1px solid rgba(29,158,117,0.35)', color: 'rgba(255,255,255,0.92)' }
+            : { background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.85)' }
         }
       >
         {content}
         {isStreaming && (
           <span className="inline-flex gap-0.5 ml-1 align-middle">
-            {[0, 1, 2].map(i => (
-              <span key={i} className="w-1 h-1 rounded-full bg-current opacity-60 animate-bounce"
-                style={{ animationDelay: `${i * 0.15}s` }} />
+            {[0, 1, 2].map((i) => (
+              <span
+                key={i}
+                className="w-1 h-1 rounded-full bg-current opacity-60 animate-bounce"
+                style={{ animationDelay: `${i * 0.15}s` }}
+              />
             ))}
           </span>
         )}
@@ -174,26 +229,44 @@ function Bubble({ role, content, isStreaming }) {
   );
 }
 
+// ─── Sidebar prayer dot ───────────────────────────────────────────────────────
+function PrayerDot({ status, label }) {
+  const color = STATUS_COLOR[status] || 'rgba(255,255,255,0.12)';
+  return (
+    <div className="flex flex-col items-center gap-1">
+      <div className="w-2.5 h-2.5 rounded-full" style={{ background: color }} />
+      <span className="text-[9px] font-semibold uppercase" style={{ color: 'rgba(255,255,255,0.25)' }}>
+        {label[0]}
+      </span>
+    </div>
+  );
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 export default function Companion({ userId, user }) {
-  const [messages, setMessages] = useState([]);
-  const [input, setInput] = useState('');
-  const [streaming, setStreaming] = useState(false);
-  const [streamText, setStreamText] = useState('');
+  const [messages, setMessages]       = useState([]);
+  const [input, setInput]             = useState('');
+  const [streaming, setStreaming]     = useState(false);
+  const [streamText, setStreamText]   = useState('');
   const [messageCount, setMessageCount] = useState(0);
-  const [limit, setLimit] = useState(3);
-  const [loading, setLoading] = useState(true);
+  const [limit, setLimit]             = useState(3);
+  const [loading, setLoading]         = useState(true);
   const [systemPrompt, setSystemPrompt] = useState('');
+  // Sidebar data
+  const [streakCount, setStreakCount]   = useState(0);
+  const [prayerToday, setPrayerToday]   = useState(null);
+  const [moodScore, setMoodScore]       = useState(null);
+
   const messagesEndRef = useRef(null);
-  const inputRef = useRef(null);
+  const inputRef       = useRef(null);
   const today = new Date().toISOString().split('T')[0];
 
-  // ── Scroll to bottom on new messages ────────────────────────────────────────
+  // ── Auto-scroll ──────────────────────────────────────────────────────────
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, streamText]);
 
-  // ── Boot: load context + history + limits ────────────────────────────────────
+  // ── Boot ─────────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!userId) return;
     bootstrap();
@@ -201,55 +274,59 @@ export default function Companion({ userId, user }) {
 
   const bootstrap = async () => {
     setLoading(true);
+    try {
+      const [
+        { data: onboarding },
+        { data: prayerRow },
+        { data: moodRow },
+        { data: prayerHistory },
+        { data: countData },
+        { data: historyRows },
+      ] = await Promise.all([
+        supabase.from('onboarding_responses').select('q1,q2,q2b,q3,q5,q6,q7').eq('user_id', userId).maybeSingle(),
+        supabase.from('prayers').select('*').eq('user_id', userId).eq('date', today).maybeSingle(),
+        supabase.from('moods').select('*').eq('user_id', userId).eq('date', today).maybeSingle(),
+        supabase.from('prayers').select('*').eq('user_id', userId)
+          .gte('date', fmt(new Date(Date.now() - 60 * 86400000)))
+          .order('date', { ascending: false }),
+        supabase.from('ai_messages').select('message_count').eq('user_id', userId).eq('date', today).maybeSingle(),
+        supabase.from('ai_conversations').select('role,content,created_at').eq('user_id', userId)
+          .order('created_at', { ascending: false }).limit(10),
+      ]);
 
-    // Fetch in parallel
-    const [
-      { data: onboarding },
-      { data: prayerToday },
-      { data: moodToday },
-      { data: prayerHistory },
-      { data: countData },
-      { data: historyRows },
-    ] = await Promise.all([
-      supabase.from('onboarding_responses').select('q1,q2,q2b,q3,q5,q6,q7').eq('user_id', userId).maybeSingle(),
-      supabase.from('prayers').select('*').eq('user_id', userId).eq('date', today).maybeSingle(),
-      supabase.from('moods').select('*').eq('user_id', userId).eq('date', today).maybeSingle(),
-      supabase.from('prayers').select('*').eq('user_id', userId).gte('date', fmt(new Date(Date.now() - 60 * 86400000))).order('date', { ascending: false }),
-      supabase.from('ai_messages').select('message_count').eq('user_id', userId).eq('date', today).maybeSingle(),
-      supabase.from('ai_conversations').select('role,content,created_at').eq('user_id', userId).order('created_at', { ascending: false }).limit(10),
-    ]);
+      const streak = calcPrayerStreak(prayerHistory || []);
+      const ctx = {
+        name: user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'dear brother/sister',
+        ...(onboarding || {}),
+        prayerData: formatPrayerData(prayerRow),
+        moodData:   formatMoodData(moodRow),
+        streak,
+      };
 
-    // Build context & system prompt
-    const streak = calcPrayerStreak(prayerHistory || []);
-    const ctx = {
-      name: user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'dear brother/sister',
-      ...(onboarding || {}),
-      prayerData: formatPrayerData(prayerToday),
-      moodData: formatMoodData(moodToday),
-      streak,
-    };
-    setSystemPrompt(buildSystemPrompt(ctx));
+      setSystemPrompt(buildSystemPrompt(ctx));
+      setStreakCount(streak);
+      setPrayerToday(prayerRow);
+      try { setMoodScore(moodRow?.mood_score ?? null); } catch {}
 
-    // Message count & limit
-    const count = countData?.message_count || 0;
-    const tier = getTier(user);
-    const tierLimit = DAILY_LIMITS[tier] ?? 3;
-    setMessageCount(count);
-    setLimit(tierLimit);
+      const count    = countData?.message_count || 0;
+      const tier     = getTier(user);
+      const tierLimit = DAILY_LIMITS[tier] ?? 3;
+      setMessageCount(count);
+      setLimit(tierLimit);
 
-    // Load last 10 messages (they come back newest-first, so reverse)
-    const history = (historyRows || []).reverse();
-    setMessages(history.map((r, i) => ({ id: i, role: r.role, content: r.content })));
-
-    setLoading(false);
+      const history = (historyRows || []).reverse();
+      setMessages(history.map((r, i) => ({ id: i, role: r.role, content: r.content })));
+    } catch (err) {
+      console.error('[Companion] bootstrap error:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // ── Send message ─────────────────────────────────────────────────────────────
+  // ── Send ─────────────────────────────────────────────────────────────────
   const send = async () => {
     const text = input.trim();
     if (!text || streaming) return;
-
-    // Enforce daily limit
     if (limit !== Infinity && messageCount >= limit) return;
 
     const userMsg = { id: Date.now(), role: 'user', content: text };
@@ -258,32 +335,34 @@ export default function Companion({ userId, user }) {
     setStreaming(true);
     setStreamText('');
 
-    // Increment count optimistically
     const newCount = messageCount + 1;
     setMessageCount(newCount);
 
-    // Build API messages from current history (last 10 turns)
     const allMsgs = [...messages, userMsg];
-    const last10 = allMsgs.slice(-10).map(m => ({ role: m.role, content: m.content }));
+    const last10  = allMsgs.slice(-10).map(m => ({ role: m.role, content: m.content }));
+
+    let fullResponse = '';
 
     try {
-      let fullResponse = '';
+      console.log('[Companion] → POST /api/companion, messages:', last10.length);
 
-      // Call server-side API route — keeps API key off the client
       const response = await fetch('/api/companion', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ messages: last10, systemPrompt }),
       });
 
+      console.log('[Companion] ← HTTP status:', response.status);
+
       if (!response.ok) {
-        throw new Error(`Server error ${response.status}`);
+        const body = await response.text().catch(() => '');
+        throw new Error(`Server ${response.status}: ${body}`);
       }
 
-      // Parse SSE stream from the edge function
-      const reader = response.body.getReader();
+      // ── Parse SSE stream ────────────────────────────────────────────────
+      const reader  = response.body.getReader();
       const decoder = new TextDecoder();
-      let buffer = '';
+      let buffer    = '';
 
       while (true) {
         const { done, value } = await reader.read();
@@ -291,52 +370,62 @@ export default function Companion({ userId, user }) {
 
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split('\n');
-        buffer = lines.pop() ?? ''; // keep any incomplete trailing line
+        buffer = lines.pop() ?? '';
 
         for (const line of lines) {
           if (!line.startsWith('data: ')) continue;
           const raw = line.slice(6).trim();
           if (raw === '[DONE]') break;
+
+          // ── IMPORTANT: parse JSON separately so app-level errors
+          //    aren't swallowed by a catch meant for JSON syntax errors ──
+          let parsed;
           try {
-            const parsed = JSON.parse(raw);
-            if (parsed.error) throw new Error(parsed.error);
-            if (parsed.delta) {
-              fullResponse += parsed.delta;
-              setStreamText(fullResponse);
-            }
-          } catch (parseErr) {
-            // skip malformed SSE lines
-            console.warn('SSE parse error:', parseErr);
+            parsed = JSON.parse(raw);
+          } catch {
+            continue; // skip genuinely malformed lines (pings etc.)
+          }
+
+          if (parsed.error) {
+            // propagate to outer catch — not swallowed here
+            throw new Error(`AI error: ${parsed.error}`);
+          }
+          if (parsed.delta) {
+            fullResponse += parsed.delta;
+            setStreamText(fullResponse);
           }
         }
       }
 
-      // Add AI response to messages
+      console.log('[Companion] ✓ stream complete, response length:', fullResponse.length);
+
+      if (!fullResponse) {
+        throw new Error('Received empty response from AI. Check server logs.');
+      }
+
       const aiMsg = { id: Date.now() + 1, role: 'assistant', content: fullResponse };
       setMessages(prev => [...prev, aiMsg]);
       setStreamText('');
 
-      // Persist to Supabase (both messages at once)
+      // Persist
       await supabase.from('ai_conversations').insert([
-        { user_id: userId, role: 'user', content: text },
+        { user_id: userId, role: 'user',      content: text },
         { user_id: userId, role: 'assistant', content: fullResponse },
       ]);
-
-      // Update message count in DB
       await supabase.from('ai_messages').upsert(
         { user_id: userId, date: today, message_count: newCount },
         { onConflict: 'user_id,date' }
       );
 
     } catch (err) {
-      console.error('Companion API error:', err);
+      console.error('[Companion] ✗ error:', err.message);
       setMessages(prev => [...prev, {
         id: Date.now() + 2,
         role: 'assistant',
-        content: 'Sorry, something went wrong. Please try again.',
+        content: `Something went wrong — ${err.message}`,
       }]);
       setStreamText('');
-      setMessageCount(prev => Math.max(0, prev - 1)); // roll back optimistic count
+      setMessageCount(prev => Math.max(0, prev - 1));
     } finally {
       setStreaming(false);
       setTimeout(() => inputRef.current?.focus(), 100);
@@ -347,151 +436,341 @@ export default function Companion({ userId, user }) {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
   };
 
-  // ─────────────────────────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────────────────
+  if (loading) return (
+    <div className="flex items-center justify-center" style={{ height: '100dvh', background: '#020c07' }}>
+      <div className="w-8 h-8 rounded-full border-2 animate-spin"
+        style={{ borderColor: 'rgba(201,149,42,0.3)', borderTopColor: '#C9952A' }} />
+    </div>
+  );
 
-  if (loading) return null;
-
-  const atLimit = limit !== Infinity && messageCount >= limit;
+  const atLimit   = limit !== Infinity && messageCount >= limit;
   const remaining = limit === Infinity ? null : limit - messageCount;
-  const tier = getTier(user);
+  const tier      = getTier(user);
+  const displayName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Friend';
+
+  const SUGGESTIONS = [
+    'How was my prayer consistency this week?',
+    'I missed Fajr again — what do I do?',
+    "I'm feeling distant from Allah",
+  ];
 
   return (
-    <div className="flex flex-col h-[calc(100vh-72px)] lg:h-[calc(100vh-120px)]"
-      style={{ background: '#051a10' }}>
+    <div
+      style={{ height: '100dvh', background: '#020c07', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
+    >
+      {/* ════════════════════════════════════════════════════════════════════
+          MOBILE HEADER (hidden on desktop — sidebar replaces it)
+          ════════════════════════════════════════════════════════════════════ */}
+      <div
+        className="lg:hidden flex-shrink-0 flex items-center justify-between px-4 pt-5 pb-4 border-b"
+        style={{ borderColor: 'rgba(255,255,255,0.06)', background: '#020c07' }}
+      >
+        <div className="flex items-center gap-3">
+          <div
+            className="w-9 h-9 rounded-full flex items-center justify-center"
+            style={{ background: 'rgba(201,149,42,0.1)', border: '1px solid rgba(201,149,42,0.22)' }}
+          >
+            <MoonStarIcon size={22} />
+          </div>
+          <div>
+            <p className="font-bold text-sm leading-tight" style={{ color: '#C9952A' }}>Your Deen Companion</p>
+            <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.3)' }}>
+              {streaming ? 'Responding…' : 'Ask anything about your deen'}
+            </p>
+          </div>
+        </div>
+        {limit !== Infinity && (
+          <div className="text-right">
+            <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.2)' }}>Today</p>
+            <p className="text-xs font-semibold" style={{ color: remaining === 0 ? '#e57368' : '#C9952A' }}>
+              {remaining} / {limit} left
+            </p>
+          </div>
+        )}
+      </div>
 
-      {/* ── Header ── */}
-      <div className="flex-shrink-0 px-4 pt-5 pb-4 border-b"
-        style={{ borderColor: 'rgba(255,255,255,0.06)', background: '#051a10' }}>
-        <div className="max-w-2xl mx-auto">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full flex items-center justify-center"
-                style={{ background: 'rgba(201,149,42,0.12)', border: '1px solid rgba(201,149,42,0.25)' }}>
-                <Bot size={17} style={{ color: '#C9952A' }} />
-              </div>
-              <div>
-                <p className="font-bold text-base leading-tight" style={{ color: '#C9952A' }}>Your Deen Companion</p>
-                <p className="text-[10px] font-medium" style={{ color: 'rgba(255,255,255,0.3)' }}>
-                  {streaming ? 'Responding…' : 'Ask anything about your deen'}
-                </p>
+      {/* ════════════════════════════════════════════════════════════════════
+          MAIN BODY — sidebar + chat side-by-side on desktop
+          ════════════════════════════════════════════════════════════════════ */}
+      <div className="flex flex-1 min-h-0">
+
+        {/* ── SIDEBAR (desktop only, 280 px) ──────────────────────────── */}
+        <aside
+          className="hidden lg:flex flex-col flex-shrink-0"
+          style={{
+            width: '280px',
+            background: 'rgba(255,255,255,0.02)',
+            borderRight: '1px solid rgba(255,255,255,0.06)',
+          }}
+        >
+          {/* Identity */}
+          <div
+            className="flex-shrink-0 px-6 pt-8 pb-6 border-b"
+            style={{ borderColor: 'rgba(255,255,255,0.05)' }}
+          >
+            {/* Glowing icon */}
+            <div className="relative w-14 h-14 mb-4">
+              <div
+                className="absolute inset-0 rounded-full blur-lg opacity-40"
+                style={{ background: '#C9952A' }}
+              />
+              <div
+                className="relative w-14 h-14 rounded-full flex items-center justify-center"
+                style={{ background: 'rgba(201,149,42,0.12)', border: '1px solid rgba(201,149,42,0.3)' }}
+              >
+                <MoonStarIcon size={34} />
               </div>
             </div>
+            <p className="font-bold text-base" style={{ color: '#C9952A' }}>Your Deen Companion</p>
+            <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.3)' }}>
+              {streaming ? 'Responding…' : `As-salamu alaykum, ${displayName}`}
+            </p>
+          </div>
 
-            {/* Message counter */}
+          {/* Stats cards */}
+          <div className="flex-1 overflow-y-auto px-4 py-5 space-y-3">
+
+            {/* Prayer streak */}
+            <div
+              className="rounded-2xl p-4"
+              style={{ background: 'rgba(29,158,117,0.07)', border: '1px solid rgba(29,158,117,0.15)' }}
+            >
+              <p className="text-[10px] font-bold tracking-[0.12em] uppercase mb-2" style={{ color: 'rgba(255,255,255,0.3)' }}>
+                Prayer Streak
+              </p>
+              <div className="flex items-end gap-1.5">
+                <span className="text-3xl font-bold leading-none" style={{ color: '#1D9E75' }}>{streakCount}</span>
+                <span className="text-sm pb-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>
+                  {streakCount === 1 ? 'day' : 'days'} in a row
+                </span>
+              </div>
+              {streakCount === 0 && (
+                <p className="text-xs mt-2" style={{ color: 'rgba(255,255,255,0.25)' }}>
+                  Log today's prayers to start your streak
+                </p>
+              )}
+            </div>
+
+            {/* Today's prayers */}
+            <div
+              className="rounded-2xl p-4"
+              style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
+            >
+              <p className="text-[10px] font-bold tracking-[0.12em] uppercase mb-3" style={{ color: 'rgba(255,255,255,0.3)' }}>
+                Today's Prayers
+              </p>
+              {prayerToday ? (
+                <div className="flex items-center justify-between">
+                  {PRAYER_KEYS.map(p => (
+                    <PrayerDot key={p} status={prayerToday[p]} label={PRAYER_LABEL[p]} />
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs" style={{ color: 'rgba(255,255,255,0.2)' }}>No prayers logged yet</p>
+              )}
+            </div>
+
+            {/* Mood */}
+            {moodScore !== null && (
+              <div
+                className="rounded-2xl p-4"
+                style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
+              >
+                <p className="text-[10px] font-bold tracking-[0.12em] uppercase mb-2" style={{ color: 'rgba(255,255,255,0.3)' }}>
+                  Connection to Allah
+                </p>
+                <div className="flex gap-1">
+                  {[1, 2, 3, 4, 5].map(n => (
+                    <div
+                      key={n}
+                      className="flex-1 h-1.5 rounded-full"
+                      style={{ background: n <= moodScore ? '#C9952A' : 'rgba(255,255,255,0.08)' }}
+                    />
+                  ))}
+                </div>
+                <p className="text-xs mt-2" style={{ color: 'rgba(255,255,255,0.3)' }}>{moodScore}/5 today</p>
+              </div>
+            )}
+
+            {/* Message counter (free tier) */}
             {limit !== Infinity && (
-              <div className="text-right">
-                <p className="text-[10px] font-bold tracking-wider uppercase" style={{ color: 'rgba(255,255,255,0.2)' }}>Today</p>
-                <p className="text-xs font-semibold" style={{ color: remaining === 0 ? '#e57368' : '#C9952A' }}>
-                  {remaining} / {limit} left
+              <div
+                className="rounded-2xl p-4"
+                style={{ background: 'rgba(201,149,42,0.05)', border: '1px solid rgba(201,149,42,0.12)' }}
+              >
+                <p className="text-[10px] font-bold tracking-[0.12em] uppercase mb-2" style={{ color: 'rgba(255,255,255,0.3)' }}>
+                  Messages Today
+                </p>
+                <div className="flex gap-1 mb-2">
+                  {Array.from({ length: limit }).map((_, i) => (
+                    <div
+                      key={i}
+                      className="flex-1 h-1.5 rounded-full"
+                      style={{ background: i < messageCount ? '#C9952A' : 'rgba(255,255,255,0.08)' }}
+                    />
+                  ))}
+                </div>
+                <p className="text-xs" style={{ color: remaining === 0 ? '#e57368' : 'rgba(255,255,255,0.3)' }}>
+                  {remaining === 0 ? 'Daily limit reached' : `${remaining} of ${limit} remaining`}
                 </p>
               </div>
             )}
           </div>
-        </div>
-      </div>
 
-      {/* ── Messages ── */}
-      <div className="flex-1 overflow-y-auto px-4 pt-4 pb-2" style={{ scrollbarWidth: 'none' }}>
-        <div className="max-w-2xl mx-auto">
-
-          {/* Empty state */}
-          {messages.length === 0 && !streaming && (
-            <div className="flex flex-col items-center justify-center h-full pt-12 text-center px-6">
-              <div className="w-14 h-14 rounded-full flex items-center justify-center mb-4"
-                style={{ background: 'rgba(201,149,42,0.08)', border: '1px solid rgba(201,149,42,0.18)' }}>
-                <Bot size={24} style={{ color: '#C9952A' }} />
-              </div>
-              <p className="font-bold text-white mb-2">As-salamu alaykum</p>
-              <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.35)' }}>
-                I know your deen journey and your struggles. Tell me what is on your heart today — let us work on this together.
-              </p>
-              <div className="mt-6 flex flex-col gap-2 w-full max-w-xs">
-                {[
-                  "How was my prayer consistency this week?",
-                  "I missed Fajr again, what do I do?",
-                  "I'm feeling distant from Allah",
-                ].map((suggestion) => (
-                  <button key={suggestion} onClick={() => { setInput(suggestion); inputRef.current?.focus(); }}
-                    className="text-left px-4 py-2.5 rounded-xl text-xs transition-all"
-                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.45)' }}>
-                    {suggestion}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Message bubbles */}
-          {messages.map((m) => (
-            <Bubble key={m.id} role={m.role} content={m.content} />
-          ))}
-
-          {/* Streaming response */}
-          {streaming && (
-            <Bubble role="assistant" content={streamText || ' '} isStreaming />
-          )}
-
-          <div ref={messagesEndRef} />
-        </div>
-      </div>
-
-      {/* ── Input bar ── */}
-      <div className="flex-shrink-0 px-4 pb-4 pt-3 border-t"
-        style={{ borderColor: 'rgba(255,255,255,0.06)', background: '#051a10' }}>
-        <div className="max-w-2xl mx-auto">
-
-          {/* Limit reached */}
-          {atLimit ? (
-            <div className="rounded-2xl px-5 py-4 text-center"
-              style={{ background: 'rgba(201,149,42,0.06)', border: '1px solid rgba(201,149,42,0.18)' }}>
-              <p className="text-sm font-semibold" style={{ color: '#C9952A' }}>Daily limit reached</p>
-              <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.35)' }}>
-                {tier === 'free'
-                  ? 'You have used your 3 daily messages. Upgrade to Companion Mode for unlimited access.'
-                  : 'Come back tomorrow — every day is a new chance.'}
-              </p>
-            </div>
-          ) : (
-            <div className="flex gap-2 items-end">
-              <textarea
-                ref={inputRef}
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={handleKey}
-                placeholder="Say what is on your heart…"
-                rows={1}
-                disabled={streaming}
-                className="flex-1 rounded-2xl px-4 py-3 text-sm text-white placeholder-white/20 resize-none focus:outline-none transition-all"
-                style={{
-                  background: 'rgba(255,255,255,0.05)',
-                  border: '1px solid rgba(255,255,255,0.09)',
-                  maxHeight: '120px',
-                  lineHeight: '1.5',
-                  scrollbarWidth: 'none',
-                }}
-                onInput={(e) => {
-                  e.target.style.height = 'auto';
-                  e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
-                }}
-              />
-              <button
-                onClick={send}
-                disabled={!input.trim() || streaming}
-                className="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0 transition-all disabled:opacity-30"
-                style={{ background: input.trim() && !streaming ? 'rgba(29,158,117,0.3)' : 'rgba(255,255,255,0.05)', border: '1px solid rgba(29,158,117,0.35)' }}>
-                <Send size={15} style={{ color: '#1D9E75' }} />
-              </button>
-            </div>
-          )}
-
-          {/* Tier note */}
-          {!atLimit && tier === 'free' && (
-            <p className="text-[10px] text-center mt-2" style={{ color: 'rgba(255,255,255,0.18)' }}>
-              {remaining} message{remaining !== 1 ? 's' : ''} remaining today · Free tier
+          {/* Bottom verse */}
+          <div
+            className="flex-shrink-0 px-6 py-5 border-t"
+            style={{ borderColor: 'rgba(255,255,255,0.05)' }}
+          >
+            <p className="arabic-text text-center text-sm" style={{ color: 'rgba(201,149,42,0.4)', lineHeight: '1.8' }}>
+              وَاسْتَعِينُوا بِالصَّبْرِ وَالصَّلَاةِ
             </p>
-          )}
+            <p className="text-center text-[10px] mt-1" style={{ color: 'rgba(255,255,255,0.18)' }}>
+              Seek help through patience and prayer
+            </p>
+          </div>
+        </aside>
+
+        {/* ── CHAT COLUMN ─────────────────────────────────────────────── */}
+        <div className="flex-1 flex flex-col min-w-0">
+
+          {/* Desktop chat header */}
+          <div
+            className="hidden lg:flex flex-shrink-0 items-center justify-between px-8 py-4 border-b"
+            style={{ borderColor: 'rgba(255,255,255,0.06)' }}
+          >
+            <div>
+              <p className="font-semibold text-sm" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                {streaming ? (
+                  <span style={{ color: '#C9952A' }}>Responding…</span>
+                ) : (
+                  'Ask anything about your deen journey'
+                )}
+              </p>
+            </div>
+            {limit !== Infinity && !atLimit && (
+              <p className="text-xs" style={{ color: 'rgba(255,255,255,0.2)' }}>
+                {remaining} message{remaining !== 1 ? 's' : ''} remaining today
+              </p>
+            )}
+          </div>
+
+          {/* Messages scrollable area */}
+          <div
+            className="flex-1 overflow-y-auto px-4 lg:px-8 pt-5 pb-2"
+            style={{ scrollbarWidth: 'none' }}
+          >
+            {/* Empty state */}
+            {messages.length === 0 && !streaming && (
+              <div className="flex flex-col items-center justify-center h-full text-center px-6 py-12">
+                <div
+                  className="w-16 h-16 rounded-full flex items-center justify-center mb-5 relative"
+                  style={{ background: 'rgba(201,149,42,0.08)', border: '1px solid rgba(201,149,42,0.18)' }}
+                >
+                  <div
+                    className="absolute inset-0 rounded-full blur-xl opacity-20"
+                    style={{ background: '#C9952A' }}
+                  />
+                  <MoonStarIcon size={38} />
+                </div>
+                <p className="font-bold text-white text-lg mb-2">As-salamu alaykum</p>
+                <p className="text-sm leading-relaxed max-w-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                  I know your deen journey and your struggles. Tell me what is on your heart today — let us work on this together.
+                </p>
+                <div className="mt-6 flex flex-col gap-2 w-full max-w-sm">
+                  {SUGGESTIONS.map((s) => (
+                    <button
+                      key={s}
+                      onClick={() => { setInput(s); inputRef.current?.focus(); }}
+                      className="text-left px-4 py-3 rounded-2xl text-sm transition-all"
+                      style={{
+                        background: 'rgba(255,255,255,0.03)',
+                        border: '1px solid rgba(255,255,255,0.07)',
+                        color: 'rgba(255,255,255,0.45)',
+                      }}
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Bubbles */}
+            {messages.map((m) => (
+              <Bubble key={m.id} role={m.role} content={m.content} />
+            ))}
+
+            {/* Streaming bubble */}
+            {streaming && (
+              <Bubble role="assistant" content={streamText || ' '} isStreaming />
+            )}
+
+            <div ref={messagesEndRef} />
+          </div>
+
+          {/* ── Input bar ─────────────────────────────────────────────── */}
+          {/* pb-[72px] on mobile clears the fixed BottomNav; lg:pb-4 on desktop */}
+          <div
+            className="flex-shrink-0 px-4 lg:px-8 pt-3 pb-[76px] lg:pb-5 border-t"
+            style={{ borderColor: 'rgba(255,255,255,0.06)' }}
+          >
+            {atLimit ? (
+              <div
+                className="rounded-2xl px-5 py-4 text-center"
+                style={{ background: 'rgba(201,149,42,0.06)', border: '1px solid rgba(201,149,42,0.18)' }}
+              >
+                <p className="text-sm font-semibold" style={{ color: '#C9952A' }}>Daily limit reached</p>
+                <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                  {tier === 'free'
+                    ? 'You have used your 3 daily messages. Upgrade to Companion Mode for unlimited access.'
+                    : 'Come back tomorrow — every day is a new chance.'}
+                </p>
+              </div>
+            ) : (
+              <div className="flex gap-2 items-end">
+                <textarea
+                  ref={inputRef}
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={handleKey}
+                  placeholder="Say what is on your heart…"
+                  rows={1}
+                  disabled={streaming}
+                  className="flex-1 rounded-2xl px-4 py-3 text-sm text-white placeholder-white/20 resize-none focus:outline-none transition-all"
+                  style={{
+                    background: 'rgba(255,255,255,0.05)',
+                    border: '1px solid rgba(255,255,255,0.09)',
+                    maxHeight: '120px',
+                    lineHeight: '1.5',
+                    scrollbarWidth: 'none',
+                  }}
+                  onInput={(e) => {
+                    e.target.style.height = 'auto';
+                    e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
+                  }}
+                  onFocus={(e) => { e.target.style.borderColor = 'rgba(201,149,42,0.35)'; }}
+                  onBlur={(e)  => { e.target.style.borderColor = 'rgba(255,255,255,0.09)'; }}
+                />
+                <button
+                  onClick={send}
+                  disabled={!input.trim() || streaming}
+                  className="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0 transition-all disabled:opacity-30"
+                  style={{
+                    background: input.trim() && !streaming ? 'rgba(29,158,117,0.25)' : 'rgba(255,255,255,0.04)',
+                    border: '1px solid rgba(29,158,117,0.35)',
+                  }}
+                >
+                  <Send size={15} style={{ color: '#1D9E75' }} />
+                </button>
+              </div>
+            )}
+          </div>
         </div>
+        {/* end chat column */}
       </div>
+      {/* end main body */}
     </div>
   );
 }

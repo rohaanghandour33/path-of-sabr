@@ -1,85 +1,116 @@
-import Anthropic from '@anthropic-ai/sdk';
+// Node.js runtime — most reliable for streaming on Vercel
+// Uses raw fetch() to Anthropic API instead of the SDK to avoid edge-compat issues
 
-// Vercel Edge runtime — streams natively, no response buffering
-export const config = { runtime: 'edge' };
+export default async function handler(req, res) {
+  console.log('[companion] ▶ request received, method:', req.method);
 
-export default async function handler(req) {
-  // ── Method guard ──────────────────────────────────────────────────────────
   if (req.method !== 'POST') {
-    return new Response('Method not allowed', { status: 405 });
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   // ── Parse body ────────────────────────────────────────────────────────────
-  let messages, systemPrompt;
-  try {
-    ({ messages, systemPrompt } = await req.json());
-  } catch {
-    return new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
-      status: 400,
-      headers: { 'Content-Type': 'application/json' },
-    });
+  const { messages, systemPrompt } = req.body || {};
+
+  console.log('[companion] messages count:', messages?.length ?? 'missing');
+  console.log('[companion] systemPrompt chars:', systemPrompt?.length ?? 'missing');
+
+  if (!Array.isArray(messages) || !systemPrompt) {
+    console.error('[companion] ✗ missing messages or systemPrompt');
+    return res.status(400).json({ error: 'Missing messages or systemPrompt' });
   }
 
-  if (!messages || !systemPrompt) {
-    return new Response(JSON.stringify({ error: 'Missing messages or systemPrompt' }), {
-      status: 400,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
-
-  // ── API key guard ─────────────────────────────────────────────────────────
+  // ── API key check ─────────────────────────────────────────────────────────
   const apiKey = process.env.ANTHROPIC_API_KEY;
+  console.log('[companion] API key present:', !!apiKey, '| prefix:', apiKey?.slice(0, 10));
+
   if (!apiKey) {
-    return new Response(JSON.stringify({ error: 'ANTHROPIC_API_KEY not configured' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
+    console.error('[companion] ✗ ANTHROPIC_API_KEY is not set in environment');
+    return res.status(500).json({
+      error: 'ANTHROPIC_API_KEY is not configured on the server. Add it in Vercel → Settings → Environment Variables.',
     });
   }
 
-  // ── Stream Claude → SSE → client ──────────────────────────────────────────
-  const encoder = new TextEncoder();
+  // ── Stream headers ────────────────────────────────────────────────────────
+  res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
+  res.setHeader('Cache-Control', 'no-cache, no-transform');
+  res.setHeader('X-Accel-Buffering', 'no');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders(); // send headers immediately so the client starts reading
 
-  const readable = new ReadableStream({
-    async start(controller) {
-      try {
-        const client = new Anthropic({ apiKey });
+  try {
+    console.log('[companion] → calling Anthropic API (claude-sonnet-4-6, stream:true)');
 
-        const stream = client.messages.stream({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 512,
-          system: [
-            { type: 'text', text: systemPrompt, cache_control: { type: 'ephemeral' } },
-          ],
-          messages,
-        });
+    const anthropicRes = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-beta': 'prompt-caching-2024-07-31',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 512,
+        stream: true,
+        system: [
+          { type: 'text', text: systemPrompt, cache_control: { type: 'ephemeral' } },
+        ],
+        messages,
+      }),
+    });
 
-        // Forward each text delta as an SSE event
-        for await (const event of stream) {
+    console.log('[companion] ← Anthropic HTTP status:', anthropicRes.status);
+
+    if (!anthropicRes.ok) {
+      const errorText = await anthropicRes.text();
+      console.error('[companion] ✗ Anthropic error body:', errorText);
+      res.write(`data: ${JSON.stringify({ error: `Anthropic API error (${anthropicRes.status}): ${errorText}` })}\n\n`);
+      return res.end();
+    }
+
+    // ── Re-stream Anthropic's SSE → client ───────────────────────────────
+    const reader = anthropicRes.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let deltaCount = 0;
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() ?? '';
+
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const raw = line.slice(6).trim();
+
+        if (raw === '[DONE]') {
+          console.log('[companion] ✓ stream complete, deltas sent:', deltaCount);
+          res.write('data: [DONE]\n\n');
+          break;
+        }
+
+        try {
+          const event = JSON.parse(raw);
           if (
             event.type === 'content_block_delta' &&
             event.delta?.type === 'text_delta'
           ) {
-            const data = JSON.stringify({ delta: event.delta.text });
-            controller.enqueue(encoder.encode(`data: ${data}\n\n`));
+            deltaCount++;
+            res.write(`data: ${JSON.stringify({ delta: event.delta.text })}\n\n`);
           }
+        } catch {
+          // skip ping / non-JSON lines silently
         }
-
-        controller.enqueue(encoder.encode('data: [DONE]\n\n'));
-        controller.close();
-      } catch (err) {
-        console.error('Companion stream error:', err);
-        const data = JSON.stringify({ error: err.message ?? 'Unknown error' });
-        controller.enqueue(encoder.encode(`data: ${data}\n\n`));
-        controller.close();
       }
-    },
-  });
+    }
 
-  return new Response(readable, {
-    headers: {
-      'Content-Type': 'text/event-stream; charset=utf-8',
-      'Cache-Control': 'no-cache, no-transform',
-      'X-Accel-Buffering': 'no', // disable nginx buffering if proxied
-    },
-  });
+    res.end();
+  } catch (err) {
+    console.error('[companion] ✗ fetch/stream error:', err.message, err.stack);
+    res.write(`data: ${JSON.stringify({ error: `Server error: ${err.message}` })}\n\n`);
+    res.end();
+  }
 }
