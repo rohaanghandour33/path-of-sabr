@@ -12,7 +12,9 @@ const STATUS_COLOR  = { on_time: '#1D9E75', late: '#C9952A', missed: '#e57368' }
 const DAILY_LIMITS = { free: 999, thrive: 999, companion: 999 };
 
 // ─── System prompt template ───────────────────────────────────────────────────
-const SYSTEM_PROMPT_TEMPLATE = `You are a compassionate but firm Islamic deen companion for Path of Sabr. Your role is to support Muslims who are struggling to build consistent prayer habits and strengthen their connection to Allah.
+const SYSTEM_PROMPT_TEMPLATE = `CRITICAL FORMATTING RULE: Never use asterisks (*) or any markdown in your responses. No **bold**, no *italic*, no bullet points starting with *. Plain text only. If you use asterisks, you are breaking this rule.
+
+You are a compassionate but firm Islamic deen companion for Path of Sabr. Your role is to support Muslims who are struggling to build consistent prayer habits and strengthen their connection to Allah.
 
 You have access to the user's personal context:
 - Their name: [USER_NAME]
@@ -395,7 +397,8 @@ export default function Companion({ userId, user }) {
           }
           if (parsed.delta) {
             fullResponse += parsed.delta;
-            setStreamText(fullResponse);
+            // Strip any markdown asterisks the model sneaks through
+            setStreamText(fullResponse.replace(/\*+/g, ''));
           }
         }
       }
@@ -405,6 +408,9 @@ export default function Companion({ userId, user }) {
       if (!fullResponse) {
         throw new Error('Received empty response from AI. Check server logs.');
       }
+
+      // Final strip of any asterisks before saving/displaying
+      fullResponse = fullResponse.replace(/\*+/g, '');
 
       const aiMsg = { id: Date.now() + 1, role: 'assistant', content: fullResponse };
       setMessages(prev => [...prev, aiMsg]);
