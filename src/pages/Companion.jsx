@@ -8,7 +8,8 @@ const PRAYER_LABEL = { fajr: 'Fajr', dhuhr: 'Dhuhr', asr: 'Asr', maghrib: 'Maghr
 const STATUS_LABEL  = { on_time: 'on time', late: 'late', missed: 'missed' };
 const STATUS_COLOR  = { on_time: '#1D9E75', late: '#C9952A', missed: '#e57368' };
 
-const DAILY_LIMITS = { free: 3, thrive: 15, companion: Infinity };
+// TODO: restore real limits before launch — free: 3, thrive: 15, companion: Infinity
+const DAILY_LIMITS = { free: 999, thrive: 999, companion: 999 };
 
 // ─── System prompt template ───────────────────────────────────────────────────
 const SYSTEM_PROMPT_TEMPLATE = `You are a compassionate but firm Islamic deen companion for Path of Sabr. Your role is to support Muslims who are struggling to build consistent prayer habits and strengthen their connection to Allah.
