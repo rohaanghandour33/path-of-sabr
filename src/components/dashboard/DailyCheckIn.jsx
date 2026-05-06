@@ -4,13 +4,145 @@ import { supabase } from '../../lib/supabase';
 
 const CONNECTION_LABELS = { 1: 'Distant', 2: 'Low', 3: 'Neutral', 4: 'Close', 5: 'Very close' };
 
-const QUESTIONS = [
-  { id: 0, type: 'scale',  field: 'connection',  question: 'How connected do you feel to Allah right now?' },
-  { id: 1, type: 'multi',  field: 'struggles',   question: 'What is your biggest struggle with your deen today?', options: ['Prayer consistency', 'FOMO', 'Family pressure', 'Feeling lost', 'Lack of knowledge'] },
-  { id: 2, type: 'multi',  field: 'heartStates', question: 'How would you describe your heart right now?',       options: ['At peace', 'Anxious', 'Guilty', 'Hopeful', 'Empty', 'Grateful'] },
-  { id: 3, type: 'yesno',  field: 'pulledAway',  question: 'Did anything pull you away from your deen today?' },
-  { id: 4, type: 'multi',  field: 'needs',       question: 'What do you need most right now?',                  options: ['Motivation', 'Guidance', 'Accountability', 'Just to be heard', "A reminder of Allah's mercy"] },
-];
+// ── Question bank — ~7 variations per slot, rotated daily ─────────────────
+const QUESTION_BANK = {
+  connection: [
+    'How connected do you feel to Allah right now?',
+    'On a scale of 1–5, how close does your heart feel to Allah today?',
+    'How present does Allah feel in your life at this moment?',
+    'How would you rate your spiritual connection with Allah today?',
+    'How much are you feeling Allah\'s presence in your day so far?',
+    'Does your heart feel near to Allah or far today?',
+    'How alive does your iman feel right now?',
+  ],
+  struggles: [
+    {
+      question: 'What is your biggest struggle with your deen today?',
+      options: ['Prayer consistency', 'FOMO', 'Family pressure', 'Feeling lost', 'Lack of knowledge'],
+    },
+    {
+      question: 'What is weighing on your deen the most right now?',
+      options: ['Missing prayers', 'Distractions', 'Negative company', 'Doubt', 'Low motivation'],
+    },
+    {
+      question: 'What has been hardest for you spiritually this week?',
+      options: ['Staying consistent', 'Social media', 'Loneliness', 'Overthinking', 'Sins I keep repeating'],
+    },
+    {
+      question: 'What is pulling you away from your deen the most?',
+      options: ['Work / studies', 'Phone habits', 'Friends / environment', 'Mental health', 'Laziness'],
+    },
+    {
+      question: 'Which area of your deen needs the most attention today?',
+      options: ['Salah', 'Quran', 'Dhikr', 'Character', 'Knowledge'],
+    },
+    {
+      question: 'What feels like the biggest obstacle in your worship today?',
+      options: ['Time', 'Energy', 'Focus', 'Guilt', 'Not knowing where to start'],
+    },
+    {
+      question: 'What is making it hardest to worship fully today?',
+      options: ['Busyness', 'Emotional pain', 'Lack of routine', 'Peer pressure', 'Weak iman'],
+    },
+  ],
+  heartStates: [
+    {
+      question: 'How would you describe your heart right now?',
+      options: ['At peace', 'Anxious', 'Guilty', 'Hopeful', 'Empty', 'Grateful'],
+    },
+    {
+      question: 'What best describes the state of your heart today?',
+      options: ['Calm', 'Heavy', 'Restless', 'Content', 'Numb', 'Yearning'],
+    },
+    {
+      question: 'How does your inner self feel at this moment?',
+      options: ['Light', 'Burdened', 'Confused', 'Determined', 'Broken', 'Loved'],
+    },
+    {
+      question: 'What emotion is sitting in your chest right now?',
+      options: ['Gratitude', 'Fear', 'Regret', 'Longing', 'Happiness', 'Sadness'],
+    },
+    {
+      question: 'What would you say best captures your spiritual mood today?',
+      options: ['Focused', 'Distracted', 'Inspired', 'Tired', 'Repentant', 'Joyful'],
+    },
+    {
+      question: 'If your heart could speak, what would it say today?',
+      options: ['I need rest', 'I feel close to Allah', 'I feel distant', 'I am struggling', 'I feel grateful', 'I need help'],
+    },
+    {
+      question: 'How settled does your heart feel today?',
+      options: ['Very settled', 'Somewhat settled', 'A little uneasy', 'Unsettled', 'Overwhelmed', 'Numb'],
+    },
+  ],
+  pulledAway: [
+    'Did anything pull you away from your deen today?',
+    'Were there moments today where you felt distant from Allah?',
+    'Did you notice anything cutting into your connection with Allah today?',
+    'Did anything today make it harder to remember Allah?',
+    'Were there distractions today that pulled your heart away?',
+    'Did you experience anything that weakened your iman today?',
+    'Was there a moment today where you felt your focus on deen slip?',
+  ],
+  needs: [
+    {
+      question: 'What do you need most right now?',
+      options: ['Motivation', 'Guidance', 'Accountability', 'Just to be heard', "A reminder of Allah's mercy"],
+    },
+    {
+      question: 'What would help your heart the most today?',
+      options: ['Du\'a', 'Someone to talk to', 'A reminder', 'Quiet time', 'Direction'],
+    },
+    {
+      question: 'What would strengthen your iman most right now?',
+      options: ['Quran', 'Dhikr', 'Good company', 'Knowledge', 'Tawbah'],
+    },
+    {
+      question: 'What does your soul need at this moment?',
+      options: ['Peace', 'Clarity', 'Courage', 'Comfort', 'A fresh start'],
+    },
+    {
+      question: 'What would make the biggest difference for your deen right now?',
+      options: ['Consistency', 'Forgiveness', 'Support', 'A sign from Allah', 'More time'],
+    },
+    {
+      question: 'What are you looking for most right now?',
+      options: ['Reassurance', 'Accountability', 'Inspiration', 'Community', 'Silence'],
+    },
+    {
+      question: 'If you could receive one thing spiritually today, what would it be?',
+      options: ["Allah's mercy", 'Strength', 'Focus', 'Hope', 'A breakthrough'],
+    },
+  ],
+};
+
+// Rotate by day of year — zero-cost, no API calls
+function getDayOfYear() {
+  const now = new Date();
+  const start = new Date(now.getFullYear(), 0, 0);
+  return Math.floor((now - start) / 86400000);
+}
+
+function getDailyQuestions() {
+  const d = getDayOfYear();
+  const pick = (arr) => arr[d % arr.length];
+
+  const connectionQ = pick(QUESTION_BANK.connection);
+  const strugglesV  = pick(QUESTION_BANK.struggles);
+  const heartV      = pick(QUESTION_BANK.heartStates);
+  const pulledAwayQ = pick(QUESTION_BANK.pulledAway);
+  const needsV      = pick(QUESTION_BANK.needs);
+
+  return [
+    { id: 0, type: 'scale', field: 'connection', question: connectionQ },
+    { id: 1, type: 'multi', field: 'struggles',  question: strugglesV.question,  options: strugglesV.options },
+    { id: 2, type: 'multi', field: 'heartStates', question: heartV.question,     options: heartV.options },
+    { id: 3, type: 'yesno', field: 'pulledAway', question: pulledAwayQ },
+    { id: 4, type: 'multi', field: 'needs',      question: needsV.question,      options: needsV.options },
+  ];
+}
+
+const QUESTIONS = getDailyQuestions();
 
 const CARD_STYLE = {
   background: 'linear-gradient(145deg, rgba(255,255,255,0.055) 0%, rgba(255,255,255,0.018) 100%)',
