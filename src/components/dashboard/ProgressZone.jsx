@@ -53,29 +53,39 @@ function calcRecovery(recs) {
 
 function MetricCard({ title, value, unit, trend, trendLabel, message }) {
   const TrendIcon = trend === 'up' ? TrendingUp : Minus;
-  const trendColor = trend === 'up' ? '#1D9E75' : 'rgba(255,255,255,0.25)';
+  const trendColor = trend === 'up' ? '#1D9E75' : 'rgba(255,255,255,0.2)';
+  const isEmpty = value === '—';
 
   return (
     <div
-      className="dash-card rounded-2xl p-5 flex flex-col flex-1 min-w-[160px]"
+      className="rounded-2xl p-5 flex flex-col flex-1 min-w-[160px]"
       style={{
-        background: 'linear-gradient(145deg, rgba(201,149,42,0.07) 0%, rgba(255,255,255,0.02) 100%)',
-        border: '1px solid rgba(201,149,42,0.12)',
-        boxShadow: '0 4px 20px rgba(0,0,0,0.12)',
+        background: 'linear-gradient(145deg, rgba(201,149,42,0.08) 0%, rgba(255,255,255,0.02) 100%)',
+        border: '1px solid rgba(201,149,42,0.14)',
+        boxShadow: '0 1px 0 rgba(201,149,42,0.05) inset, 0 8px 32px rgba(0,0,0,0.2)',
       }}
     >
-      <p className="text-[9px] font-bold tracking-[0.14em] uppercase mb-4" style={{ color: 'rgba(255,255,255,0.28)' }}>
+      <p className="text-[9px] font-bold tracking-[0.16em] uppercase mb-4" style={{ color: 'rgba(255,255,255,0.22)' }}>
         {title}
       </p>
+
       <div className="flex items-baseline gap-1.5 mb-auto">
-        <span className="font-bold leading-none tracking-tight" style={{ fontSize: '2rem', color: '#C9952A' }}>{value}</span>
-        {unit && <span className="text-xs font-medium" style={{ color: 'rgba(255,255,255,0.28)' }}>{unit}</span>}
+        <span
+          className="font-extrabold leading-none tracking-tight"
+          style={{ fontSize: isEmpty ? '1.6rem' : '2.2rem', color: isEmpty ? 'rgba(255,255,255,0.2)' : '#C9952A' }}
+        >
+          {value}
+        </span>
+        {unit && !isEmpty && (
+          <span className="text-xs font-semibold" style={{ color: 'rgba(255,255,255,0.25)' }}>{unit}</span>
+        )}
       </div>
-      <div className="flex items-center gap-1.5 mt-4 mb-2">
-        <TrendIcon size={11} style={{ color: trendColor }} strokeWidth={2.5} />
-        <span className="text-[10px] font-medium" style={{ color: trendColor }}>{trendLabel}</span>
+
+      <div className="flex items-center gap-1.5 mt-4 mb-1.5">
+        <TrendIcon size={10} style={{ color: trendColor }} strokeWidth={2.5} />
+        <span className="text-[10px] font-semibold" style={{ color: trendColor }}>{trendLabel}</span>
       </div>
-      <p className="text-[11px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.25)' }}>{message}</p>
+      <p className="text-[11px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.22)' }}>{message}</p>
     </div>
   );
 }
@@ -175,10 +185,11 @@ export default function ProgressZone({ userId, weekOffset = 0, customRange = nul
   ];
 
   return (
-    <div className="mt-6 mb-4">
-      <p className="text-[10px] font-bold tracking-[0.14em] uppercase mb-3" style={{ color: 'rgba(255,255,255,0.25)' }}>
-        Your Progress
-      </p>
+    <div className="mt-8 mb-4">
+      <div className="flex items-center gap-3 mb-4">
+        <p className="text-[10px] font-bold tracking-[0.16em] uppercase" style={{ color: 'rgba(255,255,255,0.22)' }}>Your Progress</p>
+        <div className="h-px flex-1" style={{ background: 'linear-gradient(to right, rgba(201,149,42,0.2), transparent)' }} />
+      </div>
       <div className="hidden lg:grid lg:grid-cols-5 gap-3">
         {CARDS.map((c) => <MetricCard key={c.title} title={c.title} value={c.value} unit={c.unit} trend={c.trend} trendLabel={c.trendLabel} message={c.msg} />)}
       </div>

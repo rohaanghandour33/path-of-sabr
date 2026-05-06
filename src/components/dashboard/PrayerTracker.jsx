@@ -2,32 +2,26 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 
 const PRAYERS = [
-  { key: 'fajr',    label: 'Fajr' },
-  { key: 'dhuhr',   label: 'Dhuhr' },
-  { key: 'asr',     label: 'Asr' },
-  { key: 'maghrib', label: 'Maghrib' },
-  { key: 'isha',    label: 'Isha' },
+  { key: 'fajr',    label: 'Fajr',    time: 'Dawn' },
+  { key: 'dhuhr',   label: 'Dhuhr',   time: 'Midday' },
+  { key: 'asr',     label: 'Asr',     time: 'Afternoon' },
+  { key: 'maghrib', label: 'Maghrib', time: 'Sunset' },
+  { key: 'isha',    label: 'Isha',    time: 'Night' },
 ];
 
 const PRAYER_KEYS = PRAYERS.map((p) => p.key);
 
 const STATUSES = [
-  {
-    key: 'on_time',
-    label: 'On Time',
-    segmentActive: { background: 'rgba(29,158,117,0.28)', color: '#1D9E75' },
-  },
-  {
-    key: 'late',
-    label: 'Late',
-    segmentActive: { background: 'rgba(201,149,42,0.28)', color: '#C9952A' },
-  },
-  {
-    key: 'missed',
-    label: 'Missed',
-    segmentActive: { background: 'rgba(192,57,43,0.28)', color: '#e57368' },
-  },
+  { key: 'on_time', label: 'On Time', color: '#1D9E75', activeBg: 'rgba(29,158,117,0.18)',  activeBorder: 'rgba(29,158,117,0.4)' },
+  { key: 'late',    label: 'Late',    color: '#C9952A', activeBg: 'rgba(201,149,42,0.18)', activeBorder: 'rgba(201,149,42,0.4)' },
+  { key: 'missed',  label: 'Missed',  color: '#e57368', activeBg: 'rgba(192,57,43,0.18)',  activeBorder: 'rgba(192,57,43,0.4)' },
 ];
+
+const CARD = {
+  background: 'linear-gradient(145deg, rgba(255,255,255,0.055) 0%, rgba(255,255,255,0.018) 100%)',
+  border: '1px solid rgba(255,255,255,0.07)',
+  boxShadow: '0 1px 0 rgba(255,255,255,0.04) inset, 0 20px 60px rgba(0,0,0,0.28)',
+};
 
 function calculateStreak(records) {
   let streak = 0;
@@ -44,63 +38,50 @@ function calculateStreak(records) {
   return streak;
 }
 
-const CARD_STYLE = {
-  background: 'linear-gradient(160deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.025) 100%)',
-  border: '1px solid rgba(201,149,42,0.15)',
-  boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
-};
-
 function PrayerSummaryCard({ records, title, subtitle }) {
   let total = 0, onTime = 0, late = 0, missed = 0;
   records.forEach((r) => {
     PRAYER_KEYS.forEach((p) => {
-      if (r[p]) {
-        total++;
-        if (r[p] === 'on_time') onTime++;
-        else if (r[p] === 'late') late++;
-        else if (r[p] === 'missed') missed++;
-      }
+      if (r[p]) { total++; if (r[p] === 'on_time') onTime++; else if (r[p] === 'late') late++; else if (r[p] === 'missed') missed++; }
     });
   });
   const pct = total > 0 ? Math.round((onTime / total) * 100) : 0;
 
   return (
-    <div className="dash-card rounded-3xl p-6 h-full flex flex-col" style={CARD_STYLE}>
-      <div className="flex items-start justify-between mb-5">
+    <div className="rounded-3xl p-6 h-full flex flex-col" style={CARD}>
+      <div className="flex items-start justify-between mb-6">
         <div>
-          <p className="text-[10px] font-bold tracking-[0.12em] uppercase mb-1" style={{ color: 'rgba(255,255,255,0.3)' }}>
-            {title}
-          </p>
-          {subtitle && <p className="text-white/25 text-xs">{subtitle}</p>}
+          <p className="text-[10px] font-bold tracking-[0.14em] uppercase mb-1" style={{ color: 'rgba(255,255,255,0.25)' }}>{title}</p>
+          {subtitle && <p className="text-xs" style={{ color: 'rgba(255,255,255,0.2)' }}>{subtitle}</p>}
         </div>
-        <span className="text-[10px] px-2.5 py-1 rounded-full" style={{ background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.25)' }}>
-          View only
-        </span>
+        <span className="text-[10px] px-2.5 py-1 rounded-full" style={{ background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.2)' }}>View only</span>
       </div>
 
       {records.length === 0 ? (
         <div className="flex-1 flex items-center justify-center">
-          <p className="text-white/25 text-sm">No prayers logged</p>
+          <p className="text-white/20 text-sm">No prayers logged</p>
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-3 gap-2 mb-5">
+          <div className="grid grid-cols-3 gap-2.5 mb-6">
             {[
-              { label: 'On time', value: onTime, color: '#1D9E75', bg: 'rgba(29,158,117,0.08)' },
-              { label: 'Late',    value: late,   color: '#C9952A', bg: 'rgba(201,149,42,0.08)' },
-              { label: 'Missed',  value: missed,  color: '#e57368', bg: 'rgba(192,57,43,0.08)' },
-            ].map(({ label, value, color, bg }) => (
-              <div key={label} className="text-center rounded-2xl py-4" style={{ background: bg }}>
-                <p className="text-2xl font-bold leading-none" style={{ color }}>{value}</p>
-                <p className="text-[10px] mt-1.5 font-medium" style={{ color: 'rgba(255,255,255,0.3)' }}>{label}</p>
+              { label: 'On time', value: onTime, color: '#1D9E75', bg: 'rgba(29,158,117,0.08)', border: 'rgba(29,158,117,0.15)' },
+              { label: 'Late',    value: late,   color: '#C9952A', bg: 'rgba(201,149,42,0.08)', border: 'rgba(201,149,42,0.15)' },
+              { label: 'Missed',  value: missed,  color: '#e57368', bg: 'rgba(192,57,43,0.07)',  border: 'rgba(192,57,43,0.12)' },
+            ].map(({ label, value, color, bg, border }) => (
+              <div key={label} className="text-center rounded-2xl py-4" style={{ background: bg, border: `1px solid ${border}` }}>
+                <p className="text-2xl font-extrabold leading-none" style={{ color }}>{value}</p>
+                <p className="text-[10px] mt-2 font-semibold tracking-wide uppercase" style={{ color: 'rgba(255,255,255,0.25)' }}>{label}</p>
               </div>
             ))}
           </div>
-          <div className="h-1 rounded-full overflow-hidden mb-3" style={{ background: 'rgba(255,255,255,0.07)' }}>
-            <div className="h-full rounded-full transition-all duration-700" style={{ width: `${pct}%`, background: 'linear-gradient(90deg, #1D9E75, #26c48e)' }} />
+
+          <div className="h-1.5 rounded-full overflow-hidden mb-3" style={{ background: 'rgba(255,255,255,0.06)' }}>
+            <div className="h-full rounded-full transition-all duration-700"
+              style={{ width: `${pct}%`, background: 'linear-gradient(90deg, #1D9E75, #26c48e)', boxShadow: '0 0 8px rgba(29,158,117,0.4)' }} />
           </div>
           <div className="flex items-center justify-between mt-auto">
-            <p className="text-xs font-semibold" style={{ color: '#1D9E75' }}>{pct}% on time</p>
+            <p className="text-sm font-bold" style={{ color: '#1D9E75' }}>{pct}% on time</p>
             <p className="text-xs" style={{ color: 'rgba(255,255,255,0.2)' }}>{total} logged</p>
           </div>
         </>
@@ -118,9 +99,7 @@ export default function PrayerTracker({ userId, weekOffset = 0, customRange = nu
 
   useEffect(() => {
     if (!userId) return;
-    setPrayers({});
-    setReadOnlyRecords([]);
-    setLoading(true);
+    setPrayers({}); setReadOnlyRecords([]); setLoading(true);
     fetchData();
   }, [userId, weekOffset, customRange?.start, customRange?.end]);
 
@@ -160,7 +139,6 @@ export default function PrayerTracker({ userId, weekOffset = 0, customRange = nu
   };
 
   if (loading) return null;
-
   if (customRange) {
     const days = Math.round((new Date(customRange.end + 'T12:00:00') - new Date(customRange.start + 'T12:00:00')) / 86400000) + 1;
     return <PrayerSummaryCard records={readOnlyRecords} title="Period Summary" subtitle={`${days} day period`} />;
@@ -169,45 +147,71 @@ export default function PrayerTracker({ userId, weekOffset = 0, customRange = nu
     return <PrayerSummaryCard records={readOnlyRecords} title="Week's Prayers" subtitle={null} />;
   }
 
-  return (
-    <div className="dash-card rounded-3xl p-6 h-full flex flex-col" style={CARD_STYLE}>
-      <p className="text-[10px] font-bold tracking-[0.12em] uppercase mb-5" style={{ color: 'rgba(255,255,255,0.3)' }}>
-        Today's Prayers
-      </p>
+  // Count today's logged prayers
+  const loggedCount = PRAYER_KEYS.filter(k => prayers[k]).length;
 
-      <div className="space-y-3 flex-1">
-        {PRAYERS.map(({ key, label }) => (
-          <div key={key} className="flex items-center gap-3">
-            <span className="text-white/60 text-sm font-medium w-16 flex-shrink-0">{label}</span>
-            {/* Segmented control */}
-            <div className="flex flex-1 rounded-xl p-0.5" style={{ background: 'rgba(255,255,255,0.07)' }}>
-              {STATUSES.map((s) => {
-                const isActive = prayers[key] === s.key;
-                return (
-                  <button
-                    key={s.key}
-                    onClick={() => updatePrayer(key, s.key)}
-                    className="flex-1 py-2 rounded-[10px] text-[11px] font-semibold transition-all duration-150"
-                    style={isActive
-                      ? { ...s.segmentActive, boxShadow: '0 1px 6px rgba(0,0,0,0.25)' }
-                      : { color: 'rgba(255,255,255,0.22)', background: 'transparent' }
-                    }
-                  >
-                    {s.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        ))}
+  return (
+    <div className="rounded-3xl p-6 h-full flex flex-col" style={CARD}>
+      {/* Header */}
+      <div className="flex items-center justify-between mb-5">
+        <p className="text-[10px] font-bold tracking-[0.14em] uppercase" style={{ color: 'rgba(255,255,255,0.25)' }}>
+          Today's Prayers
+        </p>
+        {loggedCount > 0 && (
+          <span className="text-[10px] font-semibold px-2.5 py-1 rounded-full" style={{ background: 'rgba(29,158,117,0.1)', border: '1px solid rgba(29,158,117,0.2)', color: '#1D9E75' }}>
+            {loggedCount} / 5 logged
+          </span>
+        )}
       </div>
 
+      {/* Prayer rows */}
+      <div className="space-y-2.5 flex-1">
+        {PRAYERS.map(({ key, label, time }) => {
+          const current = prayers[key];
+          return (
+            <div key={key} className="rounded-2xl px-4 py-3" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }}>
+              <div className="flex items-center gap-3">
+                {/* Prayer name */}
+                <div className="w-20 flex-shrink-0">
+                  <p className="text-sm font-semibold text-white/80">{label}</p>
+                  <p className="text-[10px] mt-0.5" style={{ color: 'rgba(255,255,255,0.2)' }}>{time}</p>
+                </div>
+
+                {/* Status buttons */}
+                <div className="flex flex-1 gap-1.5">
+                  {STATUSES.map((s) => {
+                    const isActive = current === s.key;
+                    return (
+                      <button
+                        key={s.key}
+                        onClick={() => updatePrayer(key, s.key)}
+                        className="flex-1 py-2 rounded-xl text-[11px] font-bold transition-all duration-150"
+                        style={isActive
+                          ? { background: s.activeBg, border: `1px solid ${s.activeBorder}`, color: s.color, boxShadow: `0 0 12px ${s.activeBg}` }
+                          : { background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.2)' }
+                        }
+                      >
+                        {s.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Streak footer */}
       {streak > 0 && (
-        <div className="flex items-center gap-2 mt-5 pt-4 border-t border-white/5">
-          <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: '#C9952A' }} />
-          <p className="text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>
-            <span className="font-bold" style={{ color: '#C9952A' }}>{streak}</span> prayers in a row
-          </p>
+        <div className="flex items-center justify-between mt-5 pt-4" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full" style={{ background: '#C9952A', boxShadow: '0 0 6px rgba(201,149,42,0.5)' }} />
+            <p className="text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>
+              <span className="font-bold text-sm" style={{ color: '#C9952A' }}>{streak}</span> prayers in a row
+            </p>
+          </div>
+          <p className="text-[10px] font-bold tracking-wider uppercase" style={{ color: 'rgba(201,149,42,0.4)' }}>Streak</p>
         </div>
       )}
     </div>

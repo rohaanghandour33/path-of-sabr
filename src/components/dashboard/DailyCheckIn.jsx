@@ -13,9 +13,9 @@ const QUESTIONS = [
 ];
 
 const CARD_STYLE = {
-  background: 'linear-gradient(160deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.025) 100%)',
-  border: '1px solid rgba(201,149,42,0.15)',
-  boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
+  background: 'linear-gradient(145deg, rgba(255,255,255,0.055) 0%, rgba(255,255,255,0.018) 100%)',
+  border: '1px solid rgba(255,255,255,0.07)',
+  boxShadow: '0 1px 0 rgba(255,255,255,0.04) inset, 0 20px 60px rgba(0,0,0,0.28)',
 };
 
 const OPT_ACTIVE   = { background: 'rgba(29,158,117,0.12)', border: '1px solid rgba(29,158,117,0.35)', color: '#1D9E75' };
