@@ -363,20 +363,6 @@ export default function Dashboard() {
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Companion CTA */}
-            <button
-              onClick={() => navigate('/companion')}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-2xl text-xs font-bold tracking-wide transition-all duration-200 hover:scale-[1.03] active:scale-[0.97]"
-              style={{
-                background: 'linear-gradient(135deg, #C9952A 0%, #e8b84b 100%)',
-                color: '#020c07',
-                boxShadow: '0 0 24px rgba(201,149,42,0.3), 0 4px 12px rgba(0,0,0,0.3)',
-              }}
-            >
-              ✦ <span className="hidden sm:inline">Meet Your Deen Companion</span>
-              <span className="sm:hidden">Companion</span>
-            </button>
-
             {/* Desktop nav */}
             <div className="hidden lg:flex items-center gap-0.5 rounded-xl p-1" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
               {['home', 'prayers', 'profile'].map((tab) => (
@@ -396,20 +382,41 @@ export default function Dashboard() {
         {activeTab === 'home' && (
           <>
             {/* Welcome hero */}
-            <div className="mt-10 mb-8">
-              <p className="text-xs font-bold tracking-[0.2em] uppercase mb-3" style={{ color: 'rgba(29,158,117,0.65)' }}>
-                {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
-              </p>
-              <h1 className="text-3xl lg:text-4xl font-extrabold text-white leading-tight tracking-tight">
-                Assalamu Alaykum,
-              </h1>
-              <h1 className="text-3xl lg:text-4xl font-extrabold leading-tight tracking-tight" style={{ color: '#C9952A' }}>
-                {firstName}.
-              </h1>
-              <div className="flex items-center gap-3 mt-4">
-                <div className="h-px w-12" style={{ background: 'linear-gradient(to right, rgba(201,149,42,0.5), transparent)' }} />
-                <p className="text-xs" style={{ color: 'rgba(255,255,255,0.2)' }}>Your deen journey continues today</p>
+            <div className="mt-10 mb-8 flex items-center justify-between gap-6">
+              {/* Left — greeting */}
+              <div>
+                <p className="text-xs font-bold tracking-[0.2em] uppercase mb-3" style={{ color: 'rgba(29,158,117,0.65)' }}>
+                  {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+                </p>
+                <h1 className="text-3xl lg:text-4xl font-extrabold text-white leading-tight tracking-tight">
+                  Assalamu Alaykum,
+                </h1>
+                <h1 className="text-3xl lg:text-4xl font-extrabold leading-tight tracking-tight" style={{ color: '#C9952A' }}>
+                  {firstName}.
+                </h1>
+                <div className="flex items-center gap-3 mt-4">
+                  <div className="h-px w-12" style={{ background: 'linear-gradient(to right, rgba(201,149,42,0.5), transparent)' }} />
+                  <p className="text-xs" style={{ color: 'rgba(255,255,255,0.2)' }}>Your deen journey continues today</p>
+                </div>
               </div>
+
+              {/* Right — companion CTA */}
+              <button
+                onClick={() => navigate('/companion')}
+                className="hidden sm:flex flex-col items-center gap-2 px-8 py-5 rounded-3xl flex-shrink-0 transition-all duration-200 hover:scale-[1.03] active:scale-[0.97]"
+                style={{
+                  background: 'linear-gradient(135deg, #C9952A 0%, #e8b84b 100%)',
+                  boxShadow: '0 0 40px rgba(201,149,42,0.35), 0 8px 24px rgba(0,0,0,0.4)',
+                }}
+              >
+                <span className="text-2xl">☽</span>
+                <span className="text-sm font-extrabold tracking-wide text-center leading-snug" style={{ color: '#020c07' }}>
+                  Meet Your<br />Deen Companion
+                </span>
+                <span className="text-[10px] font-bold tracking-widest uppercase" style={{ color: 'rgba(2,12,7,0.55)' }}>
+                  Talk now →
+                </span>
+              </button>
             </div>
 
             <NavBar {...navProps} />
