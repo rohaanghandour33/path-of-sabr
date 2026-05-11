@@ -33,7 +33,7 @@ export default function BottomNav({ activeTab, setActiveTab }) {
   };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-white/10" style={{ background: '#020c07' }}>
+    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-white/10" style={{ background: '#020c07', paddingBottom: 'env(safe-area-inset-bottom)' }}>
       <div className="max-w-md mx-auto flex relative">
         {TABS.map(({ id, label, Icon }) => {
           const active = isActive(id);

@@ -745,7 +745,7 @@ export default function Companion({ userId, user }) {
           {/* ── Input bar ─────────────────────────────────────────────── */}
           {/* pb-[72px] on mobile clears the fixed BottomNav; lg:pb-4 on desktop */}
           <div
-            className="flex-shrink-0 px-4 lg:px-8 pt-3 pb-[76px] lg:pb-5 border-t"
+            className="flex-shrink-0 px-4 lg:px-8 pt-3 pb-safe-nav border-t"
             style={{ borderColor: 'rgba(255,255,255,0.06)' }}
           >
             {atLimit ? (

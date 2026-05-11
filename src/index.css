@@ -187,3 +187,24 @@ body::before {
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: #020c07; }
 ::-webkit-scrollbar-thumb { background: #1D9E75; border-radius: 3px; }
+
+/* ── iOS Safari: prevent auto-zoom on input focus ────────────────────────────
+   Safari zooms in when an input's font-size is below 16px.
+   max(16px, 1em) enforces 16px minimum while respecting any larger value.    */
+input,
+textarea,
+select {
+  font-size: max(16px, 1em);
+}
+
+/* ── Safe-area-aware bottom padding for the Companion input bar ──────────────
+   On mobile the fixed BottomNav is ~65 px tall + up to ~44 px safe area.
+   On desktop (lg+) the BottomNav is hidden and only needs a small gap.       */
+.pb-safe-nav {
+  padding-bottom: calc(76px + env(safe-area-inset-bottom));
+}
+@media (min-width: 1024px) {
+  .pb-safe-nav {
+    padding-bottom: 1.25rem; /* lg:pb-5 */
+  }
+}
