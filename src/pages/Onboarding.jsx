@@ -66,9 +66,9 @@ const QUESTIONS = [
 
   // ── Section 2 — Your Struggles ───────────────────────────────────────────────
   {
-    id: 'q6', type: 'multi', maxSelect: 3,
+    id: 'q6', type: 'multi',
     question: 'What has stopped you from being consistent with your deen before?',
-    hint: 'Select up to 3',
+    hint: 'Select all that apply',
     options: [
       'Laziness',
       'Bad company',
@@ -81,9 +81,10 @@ const QUESTIONS = [
     ],
   },
   {
-    id: 'q7', type: 'single',
-    question: 'Which prayer do you find hardest to pray consistently?',
-    options: ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha', "They're all difficult"],
+    id: 'q7', type: 'multi',
+    question: 'Which prayers do you find hardest to pray consistently?',
+    hint: 'Select all that apply',
+    options: ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'],
   },
   {
     id: 'q8', type: 'single',
@@ -163,9 +164,9 @@ const QUESTIONS = [
     ],
   },
   {
-    id: 'q18', type: 'multi', maxSelect: 3,
+    id: 'q18', type: 'multi',
     question: 'Which of these would you most like to build as a habit?',
-    hint: 'Select up to 3',
+    hint: 'Select all that apply',
     options: [
       'Consistent prayer',
       'Daily Quran',
@@ -290,7 +291,7 @@ export default function Onboarding() {
   const [step, setStep] = useState(0);
   const [responses, setResponses] = useState({
     q1: '',  q2: '',  q3: '',  q4: '',  q5: '',
-    q6: [],  q7: '',  q8: '',  q9: '',  q10: '',
+    q6: [],  q7: [],  q8: '',  q9: '',  q10: '',
     q11: '', q12: [], q13: '', q14: '', q15: '',
     q16: '', q17: '', q18: [], q19: '', q20: '',
   });
