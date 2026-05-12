@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Check } from 'lucide-react';
+import { Check, ChevronLeft } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 
@@ -191,12 +191,25 @@ const QUESTIONS = [
 ];
 
 // ── Progress bar ─────────────────────────────────────────────────────────────
-function ProgressBar({ step }) {
+function ProgressBar({ step, onBack }) {
   const pct = Math.round(((step + 1) / 20) * 100);
   const sectionIdx = Math.floor(step / 5);
   const questionInSection = (step % 5) + 1;
   return (
     <div className="px-5 pt-12 pb-4">
+      {/* Back button row */}
+      <div className="mb-3 h-6 flex items-center">
+        {step > 0 && (
+          <button
+            onClick={onBack}
+            className="flex items-center gap-1 text-xs font-medium transition-opacity hover:opacity-70 active:opacity-50"
+            style={{ color: 'rgba(255,255,255,0.35)' }}
+          >
+            <ChevronLeft size={14} strokeWidth={2} />
+            Back
+          </button>
+        )}
+      </div>
       <div className="flex items-center justify-between mb-2">
         <div>
           <p className="text-[10px] font-bold tracking-widest uppercase mb-0.5" style={{ color: 'rgba(201,149,42,0.75)' }}>
@@ -324,6 +337,10 @@ export default function Onboarding() {
     return false;
   };
 
+  const handleBack = () => {
+    if (step > 0) setStep((s) => s - 1);
+  };
+
   const handleNext = async () => {
     if (step < 19) {
       setStep((s) => s + 1);
@@ -386,7 +403,7 @@ export default function Onboarding() {
 
       {/* Fixed progress bar */}
       <div className="flex-shrink-0">
-        <ProgressBar step={step} />
+        <ProgressBar step={step} onBack={handleBack} />
       </div>
 
       {/* Scrollable content */}
