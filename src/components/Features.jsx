@@ -1,12 +1,12 @@
 import { Moon, Bot, Heart, BookOpen, Users, Target } from 'lucide-react';
 
 const features = [
-  { icon: Moon,     title: 'Prayer Tracker',          description: 'Log all five daily prayers with a single tap. Celebrate streaks and gently catch up after a miss — without shame.',                        accent: '#1D9E75', delay: 'delay-100' },
+  { icon: Moon,     title: 'Prayer Tracker',          description: 'Log all five daily prayers with a single tap. Celebrate streaks and gently catch up after a miss. Without shame.',                      accent: '#1D9E75', delay: 'delay-100' },
   { icon: Bot,      title: 'AI Deen Companion',        description: 'A conversational AI grounded in Quran and authenticated Sunnah. Ask anything and receive guidance, not judgement.',                          accent: '#C9952A', delay: 'delay-200' },
   { icon: Heart,    title: 'Mood Check-ins',           description: 'Daily emotional check-ins help you spot patterns between your spiritual practice and your mental wellbeing.',                                  accent: '#1D9E75', delay: 'delay-300' },
-  { icon: BookOpen, title: 'Scholar-Sourced Guidance', description: 'Every response is rooted in verified scholarly sources. No fatwa-spinning — just sound Islamic knowledge, made accessible.',                  accent: '#C9952A', delay: 'delay-400' },
+  { icon: BookOpen, title: 'Scholar-Sourced Guidance', description: 'Every response is rooted in verified scholarly sources. No fatwa-spinning. Just sound Islamic knowledge, made accessible.',                   accent: '#C9952A', delay: 'delay-400' },
   { icon: Users,    title: 'FOMO Support',             description: "Gentle nudges, du'a reminders, and accountability tools built for Muslims navigating faith in a world designed to distract.",                accent: '#1D9E75', delay: 'delay-500' },
-  { icon: Target,   title: 'Assigned Tasks',            description: 'Tasks assigned specifically around your schedule — so your path back to Allah fits your life, not someone else\'s.',                         accent: '#C9952A', delay: 'delay-600' },
+  { icon: Target,   title: 'Assigned Tasks',            description: "Tasks assigned specifically around your schedule so your path back to Allah fits your life, not someone else's.",                            accent: '#C9952A', delay: 'delay-600' },
 ];
 
 function FeatureCard({ icon: Icon, title, description, accent, delay }) {

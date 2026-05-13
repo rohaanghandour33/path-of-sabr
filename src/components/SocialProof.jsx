@@ -3,7 +3,7 @@ const STEPS = [
     emoji: '🌱',
     label: 'Day 1',
     title: 'You Show Up',
-    detail: 'The decision is made. No perfect plan — just one honest step toward Allah.',
+    detail: 'The decision is made. No perfect plan. Just one honest step toward Allah.',
     accent: '#1D9E75',
     pos: { left: '41%', top: '1%' },
     dot: [500, 85],
@@ -12,7 +12,7 @@ const STEPS = [
     emoji: '⭐',
     label: 'Week 1',
     title: 'First Real Wins',
-    detail: 'Fajr prayed twice. One dhikr after salah. Small — but you felt something real.',
+    detail: 'Fajr prayed twice. One dhikr after salah. Small but real.',
     accent: '#C9952A',
     pos: { left: '68%', top: '27%' },
     dot: [723, 248],
@@ -39,7 +39,7 @@ const STEPS = [
     emoji: '🌟',
     label: 'Month 2+',
     title: 'The New You',
-    detail: 'You slip — but you come back faster. That is the whole journey right there.',
+    detail: 'You slip. But you come back faster. That is the whole journey right there.',
     accent: '#1D9E75',
     pos: { left: '16%', top: '27%' },
     dot: [277, 248],
@@ -91,7 +91,6 @@ function JourneyDesktop() {
           fill="none"
           stroke="url(#jArc)"
           strokeWidth="1.5"
-          strokeDasharray="10 6"
         />
 
         {/* Dots at each milestone */}
