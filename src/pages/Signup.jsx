@@ -1,122 +1,70 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { Link } from 'react-router-dom';
 
 export default function Signup() {
-  const { signUp } = useAuth();
-  const navigate = useNavigate();
-  const [fullName, setFullName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
-
-    const { error: signUpError } = await signUp(email, password, fullName);
-
-    if (signUpError) {
-      setError(signUpError.message);
-      setLoading(false);
-      return;
-    }
-
-    setSuccess(true);
-    setLoading(false);
-  };
-
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-16">
       <div className="w-full max-w-md">
+
         {/* Logo */}
-        <div className="flex flex-col items-center mb-8">
+        <div className="flex flex-col items-center mb-10">
           <Link to="/">
             <img src="/logo.png" alt="Path of Sabr" className="h-12 w-12 rounded-full object-cover mb-4" />
           </Link>
-          <h1 className="text-2xl font-bold text-white tracking-tight">Create your account</h1>
-          <p className="text-white/50 text-sm mt-1">Begin your journey with Path of Sabr</p>
         </div>
 
-        <div className="bg-white/5 border border-white/10 rounded-2xl p-8">
-          {success ? (
-            <div className="text-center">
-              <div className="w-12 h-12 rounded-full bg-[#1D9E75]/20 flex items-center justify-center mx-auto mb-4">
-                <svg className="w-6 h-6 text-[#1D9E75]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-              <h2 className="text-white font-semibold text-lg mb-2">Check your email</h2>
-              <p className="text-white/50 text-sm">
-                We sent a confirmation link to <span className="text-white/80">{email}</span>.
-                Click the link to activate your account.
-              </p>
-            </div>
-          ) : (
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <div>
-                <label className="block text-sm font-medium text-white/70 mb-1.5">Full name</label>
-                <input
-                  type="text"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  required
-                  placeholder="Your name"
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/25 text-sm focus:outline-none focus:border-[#1D9E75]/60 focus:bg-white/8 transition-colors"
-                />
-              </div>
+        {/* Coming soon card */}
+        <div
+          className="rounded-2xl px-8 py-10 text-center"
+          style={{
+            background: 'linear-gradient(160deg, #0f3d22 0%, #051a10 100%)',
+            border: '1px solid rgba(29,158,117,0.3)',
+            boxShadow: '0 0 48px rgba(29,158,117,0.07), 0 8px 40px rgba(0,0,0,0.5)',
+          }}
+        >
+          {/* Icon */}
+          <div
+            className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-6"
+            style={{ background: 'rgba(29,158,117,0.15)', border: '1px solid rgba(29,158,117,0.25)' }}
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1D9E75" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z" />
+              <path d="M12 6v6l4 2" />
+            </svg>
+          </div>
 
-              <div>
-                <label className="block text-sm font-medium text-white/70 mb-1.5">Email</label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  placeholder="you@example.com"
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/25 text-sm focus:outline-none focus:border-[#1D9E75]/60 focus:bg-white/8 transition-colors"
-                />
-              </div>
+          <p
+            className="text-[10px] font-bold tracking-[0.2em] uppercase mb-3"
+            style={{ color: 'rgba(29,158,117,0.7)' }}
+          >
+            Coming Soon
+          </p>
 
-              <div>
-                <label className="block text-sm font-medium text-white/70 mb-1.5">Password</label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  minLength={8}
-                  placeholder="Minimum 8 characters"
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/25 text-sm focus:outline-none focus:border-[#1D9E75]/60 focus:bg-white/8 transition-colors"
-                />
-              </div>
+          <h1 className="text-xl font-bold text-white leading-snug mb-3">
+            Join the waitlist to be first through the door
+          </h1>
 
-              {error && (
-                <p className="text-red-400 text-sm bg-red-400/10 border border-red-400/20 rounded-lg px-3 py-2">
-                  {error}
-                </p>
-              )}
+          <p className="text-white/40 text-sm leading-relaxed mb-8">
+            Path of Sabr is almost ready. Get early access by joining the waitlist at our website.
+          </p>
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="btn-primary w-full text-white font-semibold py-3 rounded-xl text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loading ? 'Creating account...' : 'Get started'}
-              </button>
-            </form>
-          )}
+          <a
+            href="https://pathofsabr.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn-primary inline-block text-white font-semibold px-8 py-3.5 rounded-xl text-sm"
+          >
+            Join the Waitlist →
+          </a>
         </div>
 
-        <p className="text-center text-white/40 text-sm mt-6">
+        {/* Login link for existing users */}
+        <p className="text-center text-white/35 text-sm mt-6">
           Already have an account?{' '}
-          <Link to="/login" className="text-[#1D9E75] hover:text-[#1D9E75]/80 font-medium transition-colors">
+          <Link to="/login" className="font-medium transition-colors" style={{ color: '#1D9E75' }}>
             Sign in
           </Link>
         </p>
+
       </div>
     </div>
   );
