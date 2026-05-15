@@ -9,14 +9,15 @@ export default async function handler(req, res) {
   }
 
   // ── Parse body ────────────────────────────────────────────────────────────
-  const { messages, systemPrompt } = req.body || {};
+  const { messages, staticPrompt, personalContext } = req.body || {};
 
   console.log('[companion] messages count:', messages?.length ?? 'missing');
-  console.log('[companion] systemPrompt chars:', systemPrompt?.length ?? 'missing');
+  console.log('[companion] staticPrompt chars:', staticPrompt?.length ?? 'missing');
+  console.log('[companion] personalContext chars:', personalContext?.length ?? 'missing');
 
-  if (!Array.isArray(messages) || !systemPrompt) {
-    console.error('[companion] ✗ missing messages or systemPrompt');
-    return res.status(400).json({ error: 'Missing messages or systemPrompt' });
+  if (!Array.isArray(messages) || !staticPrompt || !personalContext) {
+    console.error('[companion] ✗ missing messages, staticPrompt, or personalContext');
+    return res.status(400).json({ error: 'Missing messages, staticPrompt, or personalContext' });
   }
 
   // ── API key check ─────────────────────────────────────────────────────────
@@ -53,7 +54,10 @@ export default async function handler(req, res) {
         max_tokens: 512,
         stream: true,
         system: [
-          { type: 'text', text: systemPrompt, cache_control: { type: 'ephemeral' } },
+          // Static instructions — cached for 5 min across all users (saves ~90% of prompt tokens)
+          { type: 'text', text: staticPrompt, cache_control: { type: 'ephemeral' } },
+          // Personal context — changes per user/day, never cached
+          { type: 'text', text: personalContext },
         ],
         messages,
       }),

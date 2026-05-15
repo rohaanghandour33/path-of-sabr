@@ -154,18 +154,20 @@ function formatMoodData(moodRow) {
   return [conn, heartStates && `Heart state: ${heartStates}`, needs && `Needs: ${needs}`, struggles && `Struggles: ${struggles}`].filter(Boolean).join(' | ') || 'Check-in data unavailable.';
 }
 
-function buildSystemPrompt(ctx) {
-  return SYSTEM_PROMPT_TEMPLATE
-    .replace('[USER_NAME]', ctx.name || 'dear brother/sister')
-    .replace('[ONBOARDING_Q1]', ctx.q1 || 'Not provided')
-    .replace('[ONBOARDING_Q2B]', ctx.q2 === 'Yes' ? (ctx.q2b?.join(', ') || 'Not specified') : 'Does not struggle with specific prayers')
-    .replace('[ONBOARDING_Q3]', ctx.q3?.join(', ') || 'Not provided')
-    .replace('[ONBOARDING_Q5]', ctx.q5 || 'Not provided')
-    .replace('[ONBOARDING_Q6]', ctx.q6 || 'Not provided')
-    .replace('[ONBOARDING_Q7]', ctx.q7 || 'Not provided')
-    .replace('[PRAYER_DATA]', ctx.prayerData)
-    .replace('[MOOD_DATA]', ctx.moodData)
-    .replace('[STREAK]', `${ctx.streak} day${ctx.streak !== 1 ? 's' : ''} in a row`);
+function buildPersonalContext(ctx) {
+  return [
+    `USER CONTEXT (personalised — do not cache):`,
+    `Name: ${ctx.name || 'dear brother/sister'}`,
+    `Why they joined: ${ctx.q1 || 'Not provided'}`,
+    `Prayers they struggle with: ${ctx.q2 === 'Yes' ? (ctx.q2b?.join(', ') || 'Not specified') : 'Does not struggle with specific prayers'}`,
+    `What pulls them away from deen: ${ctx.q3?.join(', ') || 'Not provided'}`,
+    `Their personal situation: ${ctx.q5 || 'Not provided'}`,
+    `Their vision of being fully on deen: ${ctx.q6 || 'Not provided'}`,
+    `What they want help with most: ${ctx.q7 || 'Not provided'}`,
+    `Today's prayer log: ${ctx.prayerData}`,
+    `Today's mood check-in: ${ctx.moodData}`,
+    `Prayer streak: ${ctx.streak} day${ctx.streak !== 1 ? 's' : ''} in a row`,
+  ].join('\n');
 }
 
 // ─── Crescent moon + star icon (Islamic, warm, gold) ─────────────────────────
@@ -280,7 +282,7 @@ export default function Companion({ userId, user }) {
   const [messageCount, setMessageCount] = useState(0);
   const [limit, setLimit]             = useState(3);
   const [loading, setLoading]         = useState(true);
-  const [systemPrompt, setSystemPrompt] = useState('');
+  const [personalContext, setPersonalContext] = useState('');
   // Sidebar data
   const [streakCount, setStreakCount]   = useState(0);
   const [prayerToday, setPrayerToday]   = useState(null);
@@ -332,7 +334,7 @@ export default function Companion({ userId, user }) {
         streak,
       };
 
-      setSystemPrompt(buildSystemPrompt(ctx));
+      setPersonalContext(buildPersonalContext(ctx));
       setStreakCount(streak);
       setPrayerToday(prayerRow);
       try { setMoodScore(moodRow?.mood_score ?? null); } catch {}
@@ -379,7 +381,7 @@ export default function Companion({ userId, user }) {
       const response = await fetch('/api/companion', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: last10, systemPrompt }),
+        body: JSON.stringify({ messages: last10, staticPrompt: SYSTEM_PROMPT_TEMPLATE, personalContext }),
       });
 
       console.log('[Companion] ← HTTP status:', response.status);
