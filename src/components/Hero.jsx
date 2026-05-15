@@ -48,68 +48,59 @@ export default function Hero() {
         {/* Badge */}
         <div className="animate-fade-in-up inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 text-white/90 text-xs font-semibold px-4 py-1.5 rounded-full mb-6 sm:mb-8 tracking-wide">
           <span className="w-1.5 h-1.5 rounded-full bg-[#1D9E75] inline-block animate-pulse" />
-          Early Access — Join the Waitlist
+          Early Access — Limited Spots
         </div>
 
-        {/* Arabic */}
-        <p className="arabic-text text-white/60 text-xl sm:text-2xl mb-4 animate-fade-in delay-100">
-          بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
-        </p>
-
-        {/* Headline */}
-        <h1 className="animate-fade-in-up delay-200 text-[2rem] sm:text-5xl lg:text-6xl font-extrabold text-white leading-tight tracking-tight mb-5 sm:mb-6">
-          Live for your deen.{' '}
+        {/* Headline — raw pain */}
+        <h1 className="animate-fade-in-up delay-100 text-[2.1rem] sm:text-5xl lg:text-6xl font-extrabold text-white leading-tight tracking-tight mb-5 sm:mb-6">
+          You keep saying{' '}
           <span className="relative inline-block">
-            <span className="relative z-10 text-[#C9952A]">Find your peace.</span>
-            <span className="absolute bottom-1 left-0 right-0 h-2 sm:h-3 bg-[#1D9E75]/30 rounded-sm -z-0" />
+            <span className="relative z-10 text-[#C9952A]">"after Ramadan."</span>
+            <span className="absolute bottom-1 left-0 right-0 h-2 sm:h-3 bg-[#C9952A]/15 rounded-sm -z-0" />
           </span>
+          <br className="hidden sm:block" />
+          {' '}It never comes.
         </h1>
 
-        {/* Subheading */}
-        <p className="animate-fade-in-up delay-300 text-base sm:text-xl text-white/70 leading-relaxed max-w-2xl mx-auto mb-4">
-          Meet the AI companion that holds you accountable like no one else can.
-          Track your prayers, break your patterns, and take the steps you've been putting off.
-          Full submission to Allah doesn't have to be a distant goal. It can be your daily reality.
+        {/* Subheading — agitate the pain, hint at solution */}
+        <p className="animate-fade-in-up delay-200 text-base sm:text-xl text-white/65 leading-relaxed max-w-2xl mx-auto mb-10 sm:mb-12">
+          Missing Fajr. Scrolling before salah. The guilt you carry all day.
+          You want to change — you just don't know where to start, and nothing has held you accountable.
+          Until now.
         </p>
-
-        {/* Sadaqah callout */}
-        <div className="animate-fade-in-up delay-400 inline-flex items-center gap-2 text-[#E1F5EE] text-sm font-medium mb-8 sm:mb-10">
-          <span className="text-lg">🌿</span>
-          <span>10% of every subscription goes to sadaqah</span>
-        </div>
 
         {/* Email form */}
         {status === 'success' ? (
-          <div className="animate-fade-in-up flex flex-col items-center gap-3 px-2">
-            <div className="flex items-center gap-3 bg-white/10 backdrop-blur-sm border border-white/25 text-white px-5 py-4 rounded-2xl w-full max-w-md">
+          <div className="animate-fade-in flex flex-col items-center gap-3 px-2">
+            <div className="flex items-center gap-3 bg-white/10 backdrop-blur-sm border border-white/25 text-white px-5 py-4 rounded-2xl w-full max-w-md mx-auto">
               <CheckCircle2 className="text-[#1D9E75] shrink-0" size={22} />
               <div className="text-left">
-                <p className="font-semibold text-sm sm:text-base">You're on the list.</p>
-                <p className="text-white/70 text-xs sm:text-sm">We'll be in touch when Path of Sabr launches.</p>
+                <p className="font-semibold text-sm sm:text-base">You're on the list. 🤲</p>
+                <p className="text-white/60 text-xs sm:text-sm mt-0.5">We'll be in touch when Path of Sabr launches.</p>
               </div>
             </div>
           </div>
         ) : (
-          <form onSubmit={handleSubmit}
-            className="animate-fade-in-up delay-500 flex flex-col sm:flex-row gap-3 w-full max-w-md mx-auto px-0">
+          <form
+            onSubmit={handleSubmit}
+            className="animate-fade-in-up delay-300 flex flex-col sm:flex-row gap-3 w-full max-w-md mx-auto"
+          >
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="your@email.com"
               required
-              className="flex-1 px-5 py-4 rounded-xl bg-white/10 backdrop-blur-sm border border-white/25 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-[#1D9E75] focus:border-transparent transition text-sm"
+              className="flex-1 px-5 py-4 rounded-xl bg-white/10 backdrop-blur-sm border border-white/25 text-white placeholder-white/45 focus:outline-none focus:ring-2 focus:ring-[#1D9E75] focus:border-transparent transition text-sm"
             />
             <button
               type="submit"
               disabled={status === 'loading'}
               className="btn-primary flex items-center justify-center gap-2 text-white font-semibold px-6 py-4 rounded-xl shadow-lg disabled:opacity-70 whitespace-nowrap text-sm"
             >
-              {status === 'loading' ? (
-                <Loader2 size={16} className="animate-spin" />
-              ) : (
-                <>Join the Waitlist <ArrowRight size={16} /></>
-              )}
+              {status === 'loading'
+                ? <Loader2 size={16} className="animate-spin" />
+                : <> Get Early Access <ArrowRight size={16} /></>}
             </button>
           </form>
         )}
@@ -118,23 +109,24 @@ export default function Hero() {
           <p className="text-red-400 text-xs mt-3">Something went wrong — please try again.</p>
         )}
 
-        <p className="animate-fade-in-up delay-600 text-white/40 text-xs mt-4">
-          No spam. Ever. Unsubscribe anytime.
+        <p className="animate-fade-in-up delay-400 text-white/35 text-xs mt-4">
+          Free to join. No spam. Unsubscribe anytime.
         </p>
 
-        {/* Stats row */}
-        <div className="animate-fade-in-up delay-700 mt-8 sm:mt-10 mb-16 grid grid-cols-3 gap-3 sm:gap-6 max-w-xs sm:max-w-lg mx-auto border-t border-white/10 pt-6 sm:pt-8">
+        {/* Trust stats */}
+        <div className="animate-fade-in-up delay-500 mt-10 sm:mt-12 mb-16 grid grid-cols-3 gap-3 sm:gap-6 max-w-xs sm:max-w-sm mx-auto border-t border-white/10 pt-6 sm:pt-8">
           {[
-            { value: '5×',  label: 'Daily prayers' },
-            { value: '10%', label: 'To sadaqah', gold: true },
-            { value: '∞',   label: 'Patience' },
+            { value: '5×',    label: 'Daily prayers' },
+            { value: '5 min', label: 'Setup time',   gold: true },
+            { value: '24/7',  label: 'Companion'     },
           ].map((s) => (
             <div key={s.label} className="text-center">
               <p className={`text-xl sm:text-2xl font-extrabold ${s.gold ? 'text-[#C9952A]' : 'text-[#E1F5EE]'}`}>{s.value}</p>
-              <p className="text-[10px] sm:text-xs text-white/70 mt-1">{s.label}</p>
+              <p className="text-[10px] sm:text-xs text-white/50 mt-1">{s.label}</p>
             </div>
           ))}
         </div>
+
       </div>
 
       {/* Shahada marquee */}

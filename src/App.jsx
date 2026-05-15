@@ -8,7 +8,7 @@ import DeenVerses from './components/DeenVerses';
 import Features from './components/Features';
 import SocialProof from './components/SocialProof';
 import Pricing from './components/Pricing';
-import Sadaqah from './components/Sadaqah';
+import HowItWorks from './components/HowItWorks';
 import Footer from './components/Footer';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
@@ -40,10 +40,10 @@ function LandingPage() {
       <Navbar />
       <main>
         <Hero />
-        <DeenVerses />
-        <Features />
         <SocialProof />
-        <Sadaqah />
+        <Features />
+        <HowItWorks />
+        <DeenVerses />
         <Pricing />
       </main>
       <Footer />
