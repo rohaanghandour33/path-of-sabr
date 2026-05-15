@@ -53,9 +53,9 @@ export default function Hero() {
 
         {/* Headline — raw pain */}
         <h1 className="animate-fade-in-up delay-100 text-[2.1rem] sm:text-5xl lg:text-6xl font-extrabold text-white leading-tight tracking-tight mb-5 sm:mb-6">
-          You make the same promise to Allah{' '}
+          You know this life is short{' '}
           <span className="relative inline-block">
-            <span className="relative z-10 text-[#C9952A]">and break it every time.</span>
+            <span className="relative z-10 text-[#C9952A]">and keep wasting it.</span>
             <span className="absolute bottom-1 left-0 right-0 h-2 sm:h-3 bg-[#C9952A]/15 rounded-sm -z-0" />
           </span>
         </h1>
