@@ -224,6 +224,64 @@ function MoonStarSmall() {
   );
 }
 
+// ─── Thinking indicator (swirling gold star) ─────────────────────────────────
+function ThinkingIndicator() {
+  return (
+    <>
+      <style>{`
+        @keyframes orbit {
+          from { transform: rotate(0deg) translateX(22px) rotate(0deg); }
+          to   { transform: rotate(360deg) translateX(22px) rotate(-360deg); }
+        }
+        @keyframes orbitGlow {
+          0%, 100% { filter: drop-shadow(0 0 3px #C9952A) drop-shadow(0 0 6px #C9952A80); }
+          50%       { filter: drop-shadow(0 0 7px #C9952A) drop-shadow(0 0 14px #C9952A); }
+        }
+        @keyframes hubPulse {
+          0%, 100% { box-shadow: 0 0 0px rgba(201,149,42,0); }
+          50%       { box-shadow: 0 0 12px rgba(201,149,42,0.25); }
+        }
+      `}</style>
+      <div className="flex justify-start mb-5 gap-3">
+        {/* Avatar with orbiting star */}
+        <div className="relative flex-shrink-0 mt-0.5" style={{ width: 28, height: 28 }}>
+          <div
+            className="w-7 h-7 rounded-full flex items-center justify-center"
+            style={{
+              background: 'rgba(201,149,42,0.12)',
+              border: '1px solid rgba(201,149,42,0.25)',
+              animation: 'hubPulse 2s ease-in-out infinite',
+            }}
+          >
+            <MoonStarSmall />
+          </div>
+          {/* Orbiting star */}
+          <div
+            className="absolute inset-0 flex items-center justify-center"
+            style={{ animation: 'orbit 1.6s linear infinite' }}
+          >
+            <svg
+              width="7" height="7" viewBox="0 0 20 20"
+              style={{ animation: 'orbitGlow 1.6s ease-in-out infinite' }}
+            >
+              <path d="M10 0 L11.8 8.2 L20 10 L11.8 11.8 L10 20 L8.2 11.8 L0 10 L8.2 8.2 Z" fill="#C9952A" />
+            </svg>
+          </div>
+        </div>
+        {/* Thinking label */}
+        <div className="flex items-center gap-1.5" style={{ color: 'rgba(255,255,255,0.35)' }}>
+          <span className="text-sm">Thinking</span>
+          <span className="flex gap-0.5 items-center">
+            {[0,1,2].map(i => (
+              <span key={i} className="w-1 h-1 rounded-full animate-bounce" style={{ background: 'rgba(201,149,42,0.5)', animationDelay: `${i * 0.2}s` }} />
+            ))}
+          </span>
+        </div>
+      </div>
+    </>
+  );
+}
+
 // ─── Message bubble ───────────────────────────────────────────────────────────
 function Bubble({ role, content, isStreaming }) {
   const isUser = role === 'user';
@@ -294,6 +352,7 @@ function PrayerDot({ status, label }) {
 export default function Companion({ userId, user }) {
   const [messages, setMessages]       = useState([]);
   const [input, setInput]             = useState('');
+  const [thinking, setThinking]       = useState(false);
   const [streaming, setStreaming]     = useState(false);
   const [streamText, setStreamText]   = useState('');
   const [messageCount, setMessageCount] = useState(0);
@@ -374,13 +433,12 @@ export default function Companion({ userId, user }) {
   // ── Send ─────────────────────────────────────────────────────────────────
   const send = async () => {
     const text = input.trim();
-    if (!text || streaming) return;
+    if (!text || streaming || thinking) return;
     if (limit !== Infinity && messageCount >= limit) return;
 
     const userMsg = { id: Date.now(), role: 'user', content: text };
     setMessages(prev => [...prev, userMsg]);
     setInput('');
-    setStreaming(true);
     setStreamText('');
 
     const newCount = messageCount + 1;
@@ -389,6 +447,18 @@ export default function Companion({ userId, user }) {
     const allMsgs = [...messages, userMsg];
     // Send last 20 messages as context to the AI — full history shown to user but capped here for token cost
     const last10  = allMsgs.slice(-20).map(m => ({ role: m.role, content: m.content }));
+
+    // ── Thinking delay — feels considered, not instant ─────────────────────
+    const wordCount = text.trim().split(/\s+/).length;
+    const isShortMsg = wordCount <= 8;
+    const minDelay = isShortMsg ? 3000 : 5000;
+    const maxDelay = isShortMsg ? 5000 : 10000;
+    const thinkDelay = minDelay + Math.random() * (maxDelay - minDelay);
+
+    setThinking(true);
+    await new Promise(resolve => setTimeout(resolve, thinkDelay));
+    setThinking(false);
+    setStreaming(true);
 
     let fullResponse = '';
 
@@ -480,6 +550,7 @@ export default function Companion({ userId, user }) {
       setStreamText('');
       setMessageCount(prev => Math.max(0, prev - 1));
     } finally {
+      setThinking(false);
       setStreaming(false);
       setTimeout(() => inputRef.current?.focus(), 100);
     }
@@ -755,9 +826,12 @@ export default function Companion({ userId, user }) {
               <Bubble key={m.id} role={m.role} content={m.content} />
             ))}
 
-            {/* Streaming bubble */}
-            {streaming && (
-              <Bubble role="assistant" content={streamText || ' '} isStreaming />
+            {/* Thinking animation */}
+            {thinking && <ThinkingIndicator />}
+
+            {/* Streaming bubble — only once text starts arriving */}
+            {streaming && streamText && (
+              <Bubble role="assistant" content={streamText} isStreaming />
             )}
 
             <div ref={messagesEndRef} />
