@@ -62,9 +62,7 @@ export default function Hero() {
 
         {/* Subheading — agitate the pain, hint at solution */}
         <p className="animate-fade-in-up delay-200 text-base sm:text-xl text-white/65 leading-relaxed max-w-2xl mx-auto mb-10 sm:mb-12">
-          Missing Fajr. Scrolling before salah. The guilt you carry all day.
-          You want to change — you just don't know where to start, and nothing has held you accountable.
-          Until now.
+          Still missing salah or delaying it until the time almost passes. Praying but your heart isn't open — just going through the motions. Wanting to be closer to Allah but not knowing how to actually get there. Path of Sabr was built for exactly this.
         </p>
 
         {/* Email form */}
