@@ -240,16 +240,18 @@ const THINKING_PHRASES = [
 
 function ThinkingIndicator() {
   const [phraseIdx, setPhraseIdx] = useState(0);
-  const [visible, setVisible] = useState(true);
+  const [fade, setFade] = useState(true); // true = visible, false = fading out
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setVisible(false);
+      // Fade out
+      setFade(false);
+      // Swap text mid-fade, then fade back in
       setTimeout(() => {
         setPhraseIdx(i => (i + 1) % THINKING_PHRASES.length);
-        setVisible(true);
-      }, 300);
-    }, 2000);
+        setFade(true);
+      }, 250);
+    }, 2200);
     return () => clearInterval(interval);
   }, []);
 
@@ -267,10 +269,6 @@ function ThinkingIndicator() {
         @keyframes hubPulse {
           0%, 100% { box-shadow: 0 0 0px rgba(201,149,42,0); }
           50%       { box-shadow: 0 0 12px rgba(201,149,42,0.25); }
-        }
-        @keyframes fadePhrase {
-          from { opacity: 0; transform: translateY(4px); }
-          to   { opacity: 1; transform: translateY(0); }
         }
       `}</style>
       <div className="flex justify-start mb-5 gap-3">
@@ -305,9 +303,9 @@ function ThinkingIndicator() {
             className="text-sm"
             style={{
               color: 'rgba(255,255,255,0.35)',
-              animation: visible ? 'fadePhrase 0.3s ease forwards' : 'none',
-              opacity: visible ? 1 : 0,
-              transition: 'opacity 0.3s ease',
+              opacity: fade ? 1 : 0,
+              transform: fade ? 'translateY(0)' : 'translateY(4px)',
+              transition: 'opacity 0.25s ease, transform 0.25s ease',
             }}
           >
             {THINKING_PHRASES[phraseIdx]}
@@ -867,10 +865,10 @@ export default function Companion({ userId, user }) {
               <Bubble key={m.id} role={m.role} content={m.content} />
             ))}
 
-            {/* Thinking animation */}
-            {thinking && <ThinkingIndicator />}
+            {/* Thinking animation — stays visible until first text chunk arrives */}
+            {(thinking || (streaming && !streamText)) && <ThinkingIndicator />}
 
-            {/* Streaming bubble — only once text starts arriving */}
+            {/* Streaming text — only renders once text starts arriving */}
             {streaming && streamText && (
               <Bubble role="assistant" content={streamText} isStreaming />
             )}
