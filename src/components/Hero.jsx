@@ -53,13 +53,11 @@ export default function Hero() {
 
         {/* Headline — raw pain */}
         <h1 className="animate-fade-in-up delay-100 text-[2.1rem] sm:text-5xl lg:text-6xl font-extrabold text-white leading-tight tracking-tight mb-5 sm:mb-6">
-          You keep saying{' '}
+          You make the same promise to Allah{' '}
           <span className="relative inline-block">
-            <span className="relative z-10 text-[#C9952A]">"after Ramadan."</span>
+            <span className="relative z-10 text-[#C9952A]">and break it every time.</span>
             <span className="absolute bottom-1 left-0 right-0 h-2 sm:h-3 bg-[#C9952A]/15 rounded-sm -z-0" />
           </span>
-          <br className="hidden sm:block" />
-          {' '}It never comes.
         </h1>
 
         {/* Subheading — agitate the pain, hint at solution */}
