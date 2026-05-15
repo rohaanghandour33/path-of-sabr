@@ -225,7 +225,34 @@ function MoonStarSmall() {
 }
 
 // ─── Thinking indicator (swirling gold star) ─────────────────────────────────
+const THINKING_PHRASES = [
+  'Thinking',
+  'Reflecting',
+  'Seeking guidance',
+  'Pondering',
+  'In contemplation',
+  'Drawing from the Sunnah',
+  'Searching for wisdom',
+  'Considering',
+  'Looking to the Quran',
+  'Finding the right words',
+];
+
 function ThinkingIndicator() {
+  const [phraseIdx, setPhraseIdx] = useState(0);
+  const [visible, setVisible] = useState(true);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setVisible(false);
+      setTimeout(() => {
+        setPhraseIdx(i => (i + 1) % THINKING_PHRASES.length);
+        setVisible(true);
+      }, 300);
+    }, 2000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <>
       <style>{`
@@ -240,6 +267,10 @@ function ThinkingIndicator() {
         @keyframes hubPulse {
           0%, 100% { box-shadow: 0 0 0px rgba(201,149,42,0); }
           50%       { box-shadow: 0 0 12px rgba(201,149,42,0.25); }
+        }
+        @keyframes fadePhrase {
+          from { opacity: 0; transform: translateY(4px); }
+          to   { opacity: 1; transform: translateY(0); }
         }
       `}</style>
       <div className="flex justify-start mb-5 gap-3">
@@ -268,9 +299,19 @@ function ThinkingIndicator() {
             </svg>
           </div>
         </div>
-        {/* Thinking label */}
-        <div className="flex items-center gap-1.5" style={{ color: 'rgba(255,255,255,0.35)' }}>
-          <span className="text-sm">Thinking</span>
+        {/* Cycling phrase */}
+        <div className="flex items-center gap-1.5">
+          <span
+            className="text-sm"
+            style={{
+              color: 'rgba(255,255,255,0.35)',
+              animation: visible ? 'fadePhrase 0.3s ease forwards' : 'none',
+              opacity: visible ? 1 : 0,
+              transition: 'opacity 0.3s ease',
+            }}
+          >
+            {THINKING_PHRASES[phraseIdx]}
+          </span>
           <span className="flex gap-0.5 items-center">
             {[0,1,2].map(i => (
               <span key={i} className="w-1 h-1 rounded-full animate-bounce" style={{ background: 'rgba(201,149,42,0.5)', animationDelay: `${i * 0.2}s` }} />
