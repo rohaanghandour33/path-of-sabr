@@ -108,6 +108,8 @@ STRICT RULES — follow every single one without exception:
 
 22. Never use markdown formatting. No asterisks, no bullet points, no dashes, no numbered lists, no headers. Write in natural flowing sentences only. No symbols to structure your response — just words.
 
+23. When your response has more than one thought, separate each thought into its own paragraph with a blank line between them. Do not write everything as one long block. Each paragraph should be one clear idea — the way Claude responds. Two or three short paragraphs is always better than one long chunk.
+
 ISLAMIC ACCURACY RULES — these override everything else when it comes to religious content:
 
 Hadith authenticity: Only cite hadith graded Sahih or Hasan. Never cite weak (da'if), fabricated (mawdu'), or unverified narrations under any circumstance. If a hadith is Hasan, always say it is Hasan — never present it as Sahih. The hadith "if you cannot cry then try to cry" is weak — never use it.
@@ -225,36 +227,51 @@ function MoonStarSmall() {
 // ─── Message bubble ───────────────────────────────────────────────────────────
 function Bubble({ role, content, isStreaming }) {
   const isUser = role === 'user';
-  return (
-    <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-3`}>
-      {!isUser && (
+
+  // Split AI text into paragraphs on double newlines or single newlines
+  const paragraphs = !isUser
+    ? content.split(/\n\n+/).flatMap(p => p.split(/\n/)).filter(p => p.trim())
+    : null;
+
+  if (isUser) {
+    return (
+      <div className="flex justify-end mb-4">
         <div
-          className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mr-2 mt-0.5"
-          style={{ background: 'rgba(201,149,42,0.12)', border: '1px solid rgba(201,149,42,0.2)' }}
+          className="max-w-[72%] rounded-2xl rounded-tr-sm px-4 py-3 text-sm leading-relaxed"
+          style={{ background: 'rgba(29,158,117,0.22)', border: '1px solid rgba(29,158,117,0.3)', color: 'rgba(255,255,255,0.92)' }}
         >
-          <MoonStarSmall />
+          {content}
         </div>
-      )}
+      </div>
+    );
+  }
+
+  // AI message — no bubble, just avatar + flowing paragraphs (Claude-style)
+  return (
+    <div className="flex justify-start mb-5 gap-3">
       <div
-        className={`max-w-[78%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${isUser ? 'rounded-tr-sm' : 'rounded-tl-sm'}`}
-        style={
-          isUser
-            ? { background: 'rgba(29,158,117,0.22)', border: '1px solid rgba(29,158,117,0.35)', color: 'rgba(255,255,255,0.92)' }
-            : { background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.85)' }
-        }
+        className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
+        style={{ background: 'rgba(201,149,42,0.12)', border: '1px solid rgba(201,149,42,0.2)' }}
       >
-        {content}
-        {isStreaming && (
-          <span className="inline-flex gap-0.5 ml-1 align-middle">
-            {[0, 1, 2].map((i) => (
-              <span
-                key={i}
-                className="w-1 h-1 rounded-full bg-current opacity-60 animate-bounce"
-                style={{ animationDelay: `${i * 0.15}s` }}
-              />
-            ))}
-          </span>
-        )}
+        <MoonStarSmall />
+      </div>
+      <div className="flex-1 max-w-[82%]">
+        {paragraphs.map((p, i) => (
+          <p key={i} className="text-sm leading-relaxed mb-3 last:mb-0" style={{ color: 'rgba(255,255,255,0.85)' }}>
+            {p}
+            {isStreaming && i === paragraphs.length - 1 && (
+              <span className="inline-flex gap-0.5 ml-1 align-middle">
+                {[0, 1, 2].map((j) => (
+                  <span
+                    key={j}
+                    className="w-1 h-1 rounded-full bg-white/40 animate-bounce"
+                    style={{ animationDelay: `${j * 0.15}s` }}
+                  />
+                ))}
+              </span>
+            )}
+          </p>
+        ))}
       </div>
     </div>
   );
