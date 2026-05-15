@@ -414,8 +414,7 @@ function PrayerDot({ status, label }) {
 export default function Companion({ userId, user }) {
   const [messages, setMessages]       = useState([]);
   const [input, setInput]             = useState('');
-  const [thinking, setThinking]       = useState(false);
-  const [streaming, setStreaming]     = useState(false);
+  const [responding, setResponding]   = useState(false);
   const [streamText, setStreamText]   = useState('');
   const [messageCount, setMessageCount] = useState(0);
   const [limit, setLimit]             = useState(3);
@@ -495,7 +494,7 @@ export default function Companion({ userId, user }) {
   // ── Send ─────────────────────────────────────────────────────────────────
   const send = async () => {
     const text = input.trim();
-    if (!text || streaming || thinking) return;
+    if (!text || responding) return;
     if (limit !== Infinity && messageCount >= limit) return;
 
     const userMsg = { id: Date.now(), role: 'user', content: text };
@@ -517,10 +516,8 @@ export default function Companion({ userId, user }) {
     const maxDelay = isShortMsg ? 5000 : 10000;
     const thinkDelay = minDelay + Math.random() * (maxDelay - minDelay);
 
-    setThinking(true);
+    setResponding(true);
     await new Promise(resolve => setTimeout(resolve, thinkDelay));
-    setThinking(false);
-    setStreaming(true);
 
     let fullResponse = '';
 
@@ -612,8 +609,7 @@ export default function Companion({ userId, user }) {
       setStreamText('');
       setMessageCount(prev => Math.max(0, prev - 1));
     } finally {
-      setThinking(false);
-      setStreaming(false);
+      setResponding(false);
       setTimeout(() => inputRef.current?.focus(), 100);
     }
   };
@@ -662,7 +658,7 @@ export default function Companion({ userId, user }) {
           <div>
             <p className="font-bold text-sm leading-tight" style={{ color: '#C9952A' }}>Your Deen Companion</p>
             <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.3)' }}>
-              {streaming ? 'Responding…' : 'Ask anything about your deen'}
+              {responding ? 'Responding…' : 'Ask anything about your deen'}
             </p>
           </div>
         </div>
@@ -710,7 +706,7 @@ export default function Companion({ userId, user }) {
             </div>
             <p className="font-bold text-base" style={{ color: '#C9952A' }}>Your Deen Companion</p>
             <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.3)' }}>
-              {streaming ? 'Responding…' : `As-salamu alaykum, ${displayName}`}
+              {responding ? 'Responding…' : `As-salamu alaykum, ${displayName}`}
             </p>
           </div>
 
@@ -828,7 +824,7 @@ export default function Companion({ userId, user }) {
           >
             <div>
               <p className="font-semibold text-sm" style={{ color: 'rgba(255,255,255,0.6)' }}>
-                {streaming ? (
+                {responding ? (
                   <span style={{ color: '#C9952A' }}>Responding…</span>
                 ) : (
                   'Ask anything about your deen journey'
@@ -848,7 +844,7 @@ export default function Companion({ userId, user }) {
             style={{ scrollbarWidth: 'none' }}
           >
             {/* Empty state */}
-            {messages.length === 0 && !streaming && (
+            {messages.length === 0 && !responding && (
               <div className="flex flex-col items-center justify-center h-full text-center px-6 py-12">
                 <div
                   className="w-16 h-16 rounded-full flex items-center justify-center mb-5 relative"
@@ -888,9 +884,9 @@ export default function Companion({ userId, user }) {
               <Bubble key={m.id} role={m.role} content={m.content} />
             ))}
 
-            {/* Single component handles thinking → streaming with no gap or remount */}
-            {(thinking || streaming) && (
-              <AILiveMessage streamText={streamText} isStreaming={streaming} />
+            {/* Single component — mounts once on send, unmounts once response is done */}
+            {responding && (
+              <AILiveMessage streamText={streamText} isStreaming={!!streamText} />
             )}
 
             <div ref={messagesEndRef} />
@@ -923,7 +919,7 @@ export default function Companion({ userId, user }) {
                   onKeyDown={handleKey}
                   placeholder="Say what is on your heart…"
                   rows={1}
-                  disabled={streaming}
+                  disabled={responding}
                   className="flex-1 rounded-2xl px-4 py-3 text-sm text-white placeholder-white/20 resize-none focus:outline-none transition-all"
                   style={{
                     background: 'rgba(255,255,255,0.05)',
@@ -941,10 +937,10 @@ export default function Companion({ userId, user }) {
                 />
                 <button
                   onClick={send}
-                  disabled={!input.trim() || streaming}
+                  disabled={!input.trim() || responding}
                   className="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0 transition-all disabled:opacity-30"
                   style={{
-                    background: input.trim() && !streaming ? 'rgba(29,158,117,0.25)' : 'rgba(255,255,255,0.04)',
+                    background: input.trim() && !responding ? 'rgba(29,158,117,0.25)' : 'rgba(255,255,255,0.04)',
                     border: '1px solid rgba(29,158,117,0.35)',
                   }}
                 >
