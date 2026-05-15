@@ -224,7 +224,8 @@ function MoonStarSmall() {
   );
 }
 
-// ─── Thinking indicator (swirling gold star) ─────────────────────────────────
+// ─── AI live message — single component for thinking + streaming ──────────────
+// Stays mounted the whole time so the interval never resets and there's no gap.
 const THINKING_PHRASES = [
   'Thinking',
   'Reflecting',
@@ -238,22 +239,22 @@ const THINKING_PHRASES = [
   'Finding the right words',
 ];
 
-function ThinkingIndicator() {
+function AILiveMessage({ streamText, isStreaming }) {
   const [phraseIdx, setPhraseIdx] = useState(0);
-  const [fade, setFade] = useState(true); // true = visible, false = fading out
+  const isThinking = !streamText;
 
+  // Cycle phrases — interval lives here so it never resets across phase changes
   useEffect(() => {
-    const interval = setInterval(() => {
-      // Fade out
-      setFade(false);
-      // Swap text mid-fade, then fade back in
-      setTimeout(() => {
-        setPhraseIdx(i => (i + 1) % THINKING_PHRASES.length);
-        setFade(true);
-      }, 250);
-    }, 2200);
-    return () => clearInterval(interval);
-  }, []);
+    if (!isThinking) return;
+    const iv = setInterval(() => {
+      setPhraseIdx(i => (i + 1) % THINKING_PHRASES.length);
+    }, 2000);
+    return () => clearInterval(iv);
+  }, [isThinking]);
+
+  const paragraphs = streamText
+    ? streamText.split(/\n\n+/).flatMap(p => p.split(/\n/)).filter(p => p.trim())
+    : [];
 
   return (
     <>
@@ -264,57 +265,79 @@ function ThinkingIndicator() {
         }
         @keyframes orbitGlow {
           0%, 100% { filter: drop-shadow(0 0 3px #C9952A) drop-shadow(0 0 6px #C9952A80); }
-          50%       { filter: drop-shadow(0 0 7px #C9952A) drop-shadow(0 0 14px #C9952A); }
+          50%       { filter: drop-shadow(0 0 8px #C9952A) drop-shadow(0 0 16px #C9952A); }
         }
         @keyframes hubPulse {
           0%, 100% { box-shadow: 0 0 0px rgba(201,149,42,0); }
-          50%       { box-shadow: 0 0 12px rgba(201,149,42,0.25); }
+          50%       { box-shadow: 0 0 12px rgba(201,149,42,0.3); }
+        }
+        @keyframes phraseIn {
+          from { opacity: 0; transform: translateY(5px); }
+          to   { opacity: 1; transform: translateY(0); }
         }
       `}</style>
       <div className="flex justify-start mb-5 gap-3">
-        {/* Avatar with orbiting star */}
+
+        {/* Avatar — orbiting star only during thinking */}
         <div className="relative flex-shrink-0 mt-0.5" style={{ width: 28, height: 28 }}>
           <div
             className="w-7 h-7 rounded-full flex items-center justify-center"
             style={{
               background: 'rgba(201,149,42,0.12)',
               border: '1px solid rgba(201,149,42,0.25)',
-              animation: 'hubPulse 2s ease-in-out infinite',
+              animation: isThinking ? 'hubPulse 2s ease-in-out infinite' : 'none',
             }}
           >
             <MoonStarSmall />
           </div>
-          {/* Orbiting star */}
-          <div
-            className="absolute inset-0 flex items-center justify-center"
-            style={{ animation: 'orbit 1.6s linear infinite' }}
-          >
-            <svg
-              width="7" height="7" viewBox="0 0 20 20"
-              style={{ animation: 'orbitGlow 1.6s ease-in-out infinite' }}
+          {isThinking && (
+            <div
+              className="absolute inset-0 flex items-center justify-center"
+              style={{ animation: 'orbit 1.6s linear infinite' }}
             >
-              <path d="M10 0 L11.8 8.2 L20 10 L11.8 11.8 L10 20 L8.2 11.8 L0 10 L8.2 8.2 Z" fill="#C9952A" />
-            </svg>
-          </div>
+              <svg width="7" height="7" viewBox="0 0 20 20" style={{ animation: 'orbitGlow 1.6s ease-in-out infinite' }}>
+                <path d="M10 0 L11.8 8.2 L20 10 L11.8 11.8 L10 20 L8.2 11.8 L0 10 L8.2 8.2 Z" fill="#C9952A" />
+              </svg>
+            </div>
+          )}
         </div>
-        {/* Cycling phrase */}
-        <div className="flex items-center gap-1.5">
-          <span
-            className="text-sm"
-            style={{
-              color: 'rgba(255,255,255,0.35)',
-              opacity: fade ? 1 : 0,
-              transform: fade ? 'translateY(0)' : 'translateY(4px)',
-              transition: 'opacity 0.25s ease, transform 0.25s ease',
-            }}
-          >
-            {THINKING_PHRASES[phraseIdx]}
-          </span>
-          <span className="flex gap-0.5 items-center">
-            {[0,1,2].map(i => (
-              <span key={i} className="w-1 h-1 rounded-full animate-bounce" style={{ background: 'rgba(201,149,42,0.5)', animationDelay: `${i * 0.2}s` }} />
-            ))}
-          </span>
+
+        {/* Content — thinking phrases OR streaming text */}
+        <div className="flex-1 max-w-[82%]">
+          {isThinking ? (
+            <div className="flex items-center gap-1.5 mt-1">
+              {/* key swap triggers phraseIn animation on every word change */}
+              <span
+                key={phraseIdx}
+                className="text-sm"
+                style={{ color: 'rgba(255,255,255,0.4)', animation: 'phraseIn 0.35s ease forwards' }}
+              >
+                {THINKING_PHRASES[phraseIdx]}
+              </span>
+              <span className="flex gap-0.5">
+                {[0,1,2].map(i => (
+                  <span
+                    key={i}
+                    className="w-1 h-1 rounded-full animate-bounce"
+                    style={{ background: 'rgba(201,149,42,0.55)', animationDelay: `${i * 0.18}s` }}
+                  />
+                ))}
+              </span>
+            </div>
+          ) : (
+            paragraphs.map((p, i) => (
+              <p key={i} className="text-sm leading-relaxed mb-3 last:mb-0" style={{ color: 'rgba(255,255,255,0.85)' }}>
+                {p}
+                {isStreaming && i === paragraphs.length - 1 && (
+                  <span className="inline-flex gap-0.5 ml-1 align-middle">
+                    {[0,1,2].map(j => (
+                      <span key={j} className="w-1 h-1 rounded-full bg-white/40 animate-bounce" style={{ animationDelay: `${j * 0.15}s` }} />
+                    ))}
+                  </span>
+                )}
+              </p>
+            ))
+          )}
         </div>
       </div>
     </>
@@ -865,12 +888,9 @@ export default function Companion({ userId, user }) {
               <Bubble key={m.id} role={m.role} content={m.content} />
             ))}
 
-            {/* Thinking animation — stays visible until first text chunk arrives */}
-            {(thinking || (streaming && !streamText)) && <ThinkingIndicator />}
-
-            {/* Streaming text — only renders once text starts arriving */}
-            {streaming && streamText && (
-              <Bubble role="assistant" content={streamText} isStreaming />
+            {/* Single component handles thinking → streaming with no gap or remount */}
+            {(thinking || streaming) && (
+              <AILiveMessage streamText={streamText} isStreaming={streaming} />
             )}
 
             <div ref={messagesEndRef} />
