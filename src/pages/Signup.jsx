@@ -29,6 +29,46 @@ export default function Signup() {
     setLoading(false);
   };
 
+  // ── COMING SOON — set to false to re-enable signup form ──────────────────
+  const COMING_SOON = true;
+
+  if (COMING_SOON) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4 py-16">
+        <div className="w-full max-w-md text-center">
+          <Link to="/">
+            <img src="/logo.png" alt="Path of Sabr" className="h-12 w-12 rounded-full object-cover mx-auto mb-8" />
+          </Link>
+          <div
+            className="rounded-2xl p-10"
+            style={{ background: 'linear-gradient(145deg, #0d3820, #06180e)', border: '1px solid rgba(29,158,117,0.25)' }}
+          >
+            <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-6" style={{ background: 'rgba(29,158,117,0.12)', border: '1px solid rgba(29,158,117,0.25)' }}>
+              <span className="text-xl">🕌</span>
+            </div>
+            <h1 className="text-2xl font-extrabold text-white mb-3 tracking-tight">Coming Soon</h1>
+            <p className="text-white/55 text-sm leading-relaxed mb-8">
+              Join the waitlist to be first through the door.
+            </p>
+            <a
+              href="https://pathofsabr.com"
+              className="btn-primary inline-block text-white font-semibold px-8 py-3 rounded-xl text-sm"
+            >
+              Join the Waitlist
+            </a>
+          </div>
+          <p className="text-center text-white/40 text-sm mt-6">
+            Already have an account?{' '}
+            <Link to="/login" className="text-[#1D9E75] hover:text-[#1D9E75]/80 font-medium transition-colors">
+              Sign in
+            </Link>
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // ── SIGNUP FORM (re-enable by setting COMING_SOON = false above) ───────────
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-16">
       <div className="w-full max-w-md">
