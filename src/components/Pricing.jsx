@@ -9,7 +9,7 @@ const MONTHLY = [
     annualEquiv: null,
     annualSave: null,
     period: null,
-    description: 'Free forever. Begin your journey with the essentials — no credit card needed.',
+    description: 'Free forever. Begin your journey with the essentials, no credit card needed.',
     badge: null,
     features: [
       'Basic prayer tracker',
@@ -53,7 +53,7 @@ const MONTHLY = [
     features: [
       'Everything in Thrive',
       'Unlimited AI Deen Companion',
-      'No message limits — ever',
+      'No message limits, ever',
       'Deeper daily check-ins',
       'Priority response times',
       "10% of profit to sadaqah ✦",

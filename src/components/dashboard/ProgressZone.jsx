@@ -113,10 +113,10 @@ export default function ProgressZone({ userId, weekOffset = 0, customRange = nul
       const rec = calcRecovery(prayers || []);
       const eng = calcEngagement(prayers || [], moods || []);
       setMetrics({
-        consistency: { value: rate !== null ? String(rate) : '—', unit: rate !== null ? '%' : '', trend: rate !== null ? 'up' : 'flat', trendLabel: rate !== null ? across : 'No prayer data', msg: rate === null ? 'Log prayers to see consistency' : rate >= 70 ? `${rate}% of logged prayers on time` : 'Keep showing up — every prayer counts' },
-        streak:      { value: String(streak), unit: streak === 1 ? 'day' : 'days', trend: streak > 0 ? 'up' : 'flat', trendLabel: 'longest streak', msg: streak === 0 ? 'No check-in streak this period' : streak < 7 ? 'Building consistency' : 'Alhamdulillah — strong consistency' },
-        connection:  { value: conn !== null ? String(conn) : '—', unit: conn !== null ? '/ 5' : '', trend: conn !== null ? 'up' : 'flat', trendLabel: conn !== null ? across : 'No check-ins', msg: conn === null ? 'Complete check-ins to track connection' : conn >= 4 ? 'Feeling close to Allah' : 'Your heart is reaching — keep going' },
-        recovery:    { value: rec !== null ? String(rec) : '—', unit: rec !== null ? '%' : '', trend: rec !== null ? 'up' : 'flat', trendLabel: rec !== null ? across : (prayers || []).length > 0 ? 'No misses logged' : 'No data', msg: rec === null ? ((prayers || []).length > 0 ? 'Alhamdulillah — no missed prayers' : 'Log prayers to track recovery') : rec >= 80 ? 'You bounce back quickly — real sabr' : 'After every miss, come back stronger' },
+        consistency: { value: rate !== null ? String(rate) : '—', unit: rate !== null ? '%' : '', trend: rate !== null ? 'up' : 'flat', trendLabel: rate !== null ? across : 'No prayer data', msg: rate === null ? 'Log prayers to see consistency' : rate >= 70 ? `${rate}% of logged prayers on time` : 'Keep showing up. Every prayer counts' },
+        streak:      { value: String(streak), unit: streak === 1 ? 'day' : 'days', trend: streak > 0 ? 'up' : 'flat', trendLabel: 'longest streak', msg: streak === 0 ? 'No check-in streak this period' : streak < 7 ? 'Building consistency' : 'Alhamdulillah, strong consistency' },
+        connection:  { value: conn !== null ? String(conn) : '—', unit: conn !== null ? '/ 5' : '', trend: conn !== null ? 'up' : 'flat', trendLabel: conn !== null ? across : 'No check-ins', msg: conn === null ? 'Complete check-ins to track connection' : conn >= 4 ? 'Feeling close to Allah' : 'Your heart is reaching. Keep going' },
+        recovery:    { value: rec !== null ? String(rec) : '—', unit: rec !== null ? '%' : '', trend: rec !== null ? 'up' : 'flat', trendLabel: rec !== null ? across : (prayers || []).length > 0 ? 'No misses logged' : 'No data', msg: rec === null ? ((prayers || []).length > 0 ? 'Alhamdulillah. No missed prayers' : 'Log prayers to track recovery') : rec >= 80 ? 'You bounce back quickly. Real sabr' : 'After every miss, come back stronger' },
         engagement:  { value: String(eng), unit: 'actions', trend: eng > 0 ? 'up' : 'flat', trendLabel: across, msg: eng === 0 ? 'No activity logged this period' : `${eng} total actions over ${days} days` },
       });
       setLoading(false);
@@ -142,26 +142,26 @@ export default function ProgressZone({ userId, weekOffset = 0, customRange = nul
     const thisRate = onTimeRate(thisWeekP), lastRate = onTimeRate(lastWeekP);
     let cV, cT, cL, cM;
     if (thisRate === null) { cV = '—'; cT = 'flat'; cL = 'No data yet'; cM = 'Start logging prayers'; }
-    else if (thisRate === 100) { cV = '100'; cT = 'up'; cL = 'Perfect week'; cM = 'Alhamdulillah — every prayer on time'; }
-    else { const d = lastRate !== null ? thisRate - lastRate : 0; cV = String(thisRate); cT = d >= 0 ? 'up' : 'flat'; cL = d > 0 ? `+${d}% vs prev week` : d < 0 ? `${d}% vs prev week` : 'Same as prev week'; cM = d > 0 ? 'On-time prayers improving' : d < 0 ? 'Keep going — every prayer counts' : 'Steady — push a little higher'; }
+    else if (thisRate === 100) { cV = '100'; cT = 'up'; cL = 'Perfect week'; cM = 'Alhamdulillah. Every prayer on time'; }
+    else { const d = lastRate !== null ? thisRate - lastRate : 0; cV = String(thisRate); cT = d >= 0 ? 'up' : 'flat'; cL = d > 0 ? `+${d}% vs prev week` : d < 0 ? `${d}% vs prev week` : 'Same as prev week'; cM = d > 0 ? 'On-time prayers improving' : d < 0 ? 'Keep going. Every prayer counts' : 'Steady, push a little higher'; }
 
     const streak = calcCheckInStreak(moods || [], anchor);
-    const streakMsg = streak === 0 ? (weekOffset === 0 ? 'Complete your first check-in today' : 'No streak at this point') : streak < 5 ? 'Building momentum' : 'Alhamdulillah — beautiful consistency';
+    const streakMsg = streak === 0 ? (weekOffset === 0 ? 'Complete your first check-in today' : 'No streak at this point') : streak < 5 ? 'Building momentum' : 'Alhamdulillah, beautiful consistency';
 
     const thisConn = avgScore(thisWeekM), lastConn = avgScore(lastWeekM);
     let connV, connT, connL, connM;
     if (thisConn === null) { connV = '—'; connT = 'flat'; connL = 'No check-ins'; connM = 'Complete a check-in to track connection'; }
-    else { const d = lastConn !== null ? +(thisConn - lastConn).toFixed(1) : 0; connV = String(thisConn); connT = d >= 0 ? 'up' : 'flat'; connL = d > 0 ? `+${d} vs prev week` : d < 0 ? `${d} vs prev week` : 'Stable'; connM = d > 0 ? 'Feeling more connected — keep going' : d < 0 ? 'Your heart is still reaching' : 'Holding steady this week'; }
+    else { const d = lastConn !== null ? +(thisConn - lastConn).toFixed(1) : 0; connV = String(thisConn); connT = d >= 0 ? 'up' : 'flat'; connL = d > 0 ? `+${d} vs prev week` : d < 0 ? `${d} vs prev week` : 'Stable'; connM = d > 0 ? 'Feeling more connected. Keep going' : d < 0 ? 'Your heart is still reaching' : 'Holding steady this week'; }
 
     const thisRec = calcRecovery(thisWeekP), lastRec = calcRecovery(lastWeekP);
     let rV, rT, rL, rM;
-    if (thisRec === null) { rV = '—'; rT = 'flat'; rL = 'No misses this week'; rM = thisWeekP.length > 0 ? 'Alhamdulillah — no missed prayers' : 'Log prayers to track recovery'; }
-    else { const d = lastRec !== null ? thisRec - lastRec : 0; rV = String(thisRec); rT = d >= 0 ? 'up' : 'flat'; rL = d > 0 ? `+${d}% faster` : d < 0 ? 'Keep bouncing back' : 'Consistent recovery'; rM = thisRec >= 80 ? 'You recover quickly — real sabr' : 'After every miss, come back stronger'; }
+    if (thisRec === null) { rV = '—'; rT = 'flat'; rL = 'No misses this week'; rM = thisWeekP.length > 0 ? 'Alhamdulillah. No missed prayers' : 'Log prayers to track recovery'; }
+    else { const d = lastRec !== null ? thisRec - lastRec : 0; rV = String(thisRec); rT = d >= 0 ? 'up' : 'flat'; rL = d > 0 ? `+${d}% faster` : d < 0 ? 'Keep bouncing back' : 'Consistent recovery'; rM = thisRec >= 80 ? 'You recover quickly. Real sabr' : 'After every miss, come back stronger'; }
 
     const thisEng = calcEngagement(thisWeekP, thisWeekM), lastEng = calcEngagement(lastWeekP, lastWeekM);
     let eV, eT, eL, eM;
-    if (thisEng === 0) { eV = '0'; eT = 'flat'; eL = 'No activity yet'; eM = 'Open the app daily — small steps matter'; }
-    else { const d = thisEng - lastEng; eV = String(thisEng); eT = d >= 0 ? 'up' : 'flat'; eL = d > 0 ? `+${d} vs prev week` : d < 0 ? 'Keep coming back' : 'Same as prev week'; eM = d > 0 ? 'More active this week — keep going' : d < 0 ? 'Come back a little more' : 'Steady — push a little harder'; }
+    if (thisEng === 0) { eV = '0'; eT = 'flat'; eL = 'No activity yet'; eM = 'Open the app daily. Small steps matter'; }
+    else { const d = thisEng - lastEng; eV = String(thisEng); eT = d >= 0 ? 'up' : 'flat'; eL = d > 0 ? `+${d} vs prev week` : d < 0 ? 'Keep coming back' : 'Same as prev week'; eM = d > 0 ? 'More active this week. Keep going' : d < 0 ? 'Come back a little more' : 'Steady, push a little harder'; }
 
     setMetrics({
       consistency: { value: cV, unit: cV !== '—' ? '%' : '', trend: cT, trendLabel: cL, msg: cM },

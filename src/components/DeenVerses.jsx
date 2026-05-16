@@ -14,7 +14,7 @@ const items = [
   {
     type: 'quran',
     arabic: 'يَا أَيُّهَا الَّذِينَ آمَنُوا ادْخُلُوا فِي السِّلْمِ كَافَّةً',
-    text: 'O you who believe, enter into Islam completely — do not follow the footsteps of Shaytan.',
+    text: 'O you who believe, enter into Islam completely. Do not follow the footsteps of Shaytan.',
     source: 'Surah Al-Baqarah, 2:208',
   },
   {

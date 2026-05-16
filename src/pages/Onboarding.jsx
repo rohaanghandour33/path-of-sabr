@@ -91,7 +91,7 @@ const QUESTIONS = [
     question: 'Do the people around you help your deen or pull you away from it?',
     options: [
       'They help me',
-      "Mixed — some help, some don't",
+      "Mixed, some help and some don't",
       'Most pull me away',
       "I don't have anyone who cares about deen",
     ],
@@ -112,7 +112,7 @@ const QUESTIONS = [
     options: [
       'Yes, many times',
       'Yes, once or twice',
-      'No — this is my first real attempt',
+      'No, this is my first real attempt',
     ],
   },
 
@@ -152,15 +152,15 @@ const QUESTIONS = [
   {
     id: 'q16', type: 'text',
     question: 'What is the one thing you most want to change about your deen right now?',
-    placeholder: 'Be honest — there are no wrong answers here.',
+    placeholder: 'Be honest. There are no wrong answers here.',
   },
   {
     id: 'q17', type: 'single',
     question: 'How hard do you want to be pushed with your weekly tasks?',
     options: [
-      "Gentle — small steps, I'm fragile right now",
-      "Moderate — I'm ready to be challenged",
-      'Challenging — push me hard, I need accountability',
+      "Gentle, small steps. I'm fragile right now",
+      "Moderate, I'm ready to be challenged",
+      'Challenging, push me hard. I need accountability',
     ],
   },
   {
@@ -181,7 +181,7 @@ const QUESTIONS = [
   {
     id: 'q19', type: 'text',
     question: 'What does success look like for you in 90 days?',
-    placeholder: 'Describe it freely — how would you feel, what would be different...',
+    placeholder: 'Describe it freely. How would you feel, what would be different...',
   },
   {
     id: 'q20', type: 'text',

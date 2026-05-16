@@ -48,7 +48,7 @@ export default function Hero() {
         {/* Badge */}
         <div className="animate-fade-in-up inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 text-white/90 text-xs font-semibold px-4 py-1.5 rounded-full mb-6 sm:mb-8 tracking-wide">
           <span className="w-1.5 h-1.5 rounded-full bg-[#1D9E75] inline-block animate-pulse" />
-          Early Access — Limited Spots
+          Early Access · Limited Spots
         </div>
 
         {/* Headline — raw pain */}
@@ -102,7 +102,7 @@ export default function Hero() {
         )}
 
         {status === 'error' && (
-          <p className="text-red-400 text-xs mt-3">Something went wrong — please try again.</p>
+          <p className="text-red-400 text-xs mt-3">Something went wrong. Please try again.</p>
         )}
 
         <p className="animate-fade-in-up delay-400 text-white/35 text-xs mt-4">

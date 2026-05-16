@@ -633,7 +633,7 @@ export default function Companion({ userId, user }) {
 
   const SUGGESTIONS = [
     'How was my prayer consistency this week?',
-    'I missed Fajr again — what do I do?',
+    'I missed Fajr again. What do I do?',
     "I'm feeling distant from Allah",
   ];
 

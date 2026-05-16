@@ -10,7 +10,7 @@ const STEPS = [
     number: '02',
     emoji: '🤝',
     title: 'Meet your companion',
-    detail: 'An AI grounded in Quran and authenticated Sunnah that knows your journey personally. Guidance built for you — not generic advice.',
+    detail: 'An AI grounded in Quran and authenticated Sunnah that knows your journey personally. Guidance built for you, not generic advice.',
     accent: '#C9952A',
   },
   {

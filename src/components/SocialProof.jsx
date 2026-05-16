@@ -1,5 +1,5 @@
 const struggles = [
-  { icon: '🌙', problem: 'Missing Fajr — again',         detail: 'Wake up with the intention, miss it anyway, then carry the guilt all day.',       accent: '#1D9E75' },
+  { icon: '🌙', problem: 'Missing Fajr Again',         detail: 'Wake up with the intention, miss it anyway, then carry the guilt all day.',       accent: '#1D9E75' },
   { icon: '📱', problem: 'Phone before prayer',           detail: "Scrolling before salah has become the default and it's hard to unlearn.",         accent: '#C9952A' },
   { icon: '😔', problem: '"Next Ramadan I\'ll fix it"',  detail: 'The restart cycle that repeats year after year without real change.',              accent: '#1D9E75' },
   { icon: '🤷', problem: 'Not knowing where to start',   detail: 'Wanting a better deen but overwhelmed by where to actually begin.',               accent: '#C9952A' },
