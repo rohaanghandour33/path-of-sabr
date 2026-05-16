@@ -1,163 +1,75 @@
-// Pre-compute node positions (6 nodes evenly spaced, starting from top)
-// Container is landscape (paddingBottom 62%), so R is intentionally an ellipse —
-// wider left/right, tighter top/bottom — which fills the space naturally.
-const R = 32;
+import { useState } from 'react';
 
-const NODES = [
-  { icon: '🌙', problem: 'Missing Fajr',              color: '#1D9E75', angle: 270 },
-  { icon: '📱', problem: 'Phone Before Prayer',        color: '#C9952A', angle: 330 },
-  { icon: '🔁', problem: 'The Same Sins',              color: '#1D9E75', angle: 30  },
-  { icon: '🤷', problem: 'Not Knowing Where to Start', color: '#C9952A', angle: 90  },
-  { icon: '💭', problem: 'No One to Ask',              color: '#1D9E75', angle: 150 },
-  { icon: '😔', problem: 'Next Ramadan...',            color: '#C9952A', angle: 210 },
-].map(n => ({
-  ...n,
-  x: 50 + R * Math.cos(n.angle * Math.PI / 180),
-  y: 50 + R * Math.sin(n.angle * Math.PI / 180),
-}));
+const CARDS = [
+  {
+    icon: '🌙',
+    pain: '"I set 3 alarms for Fajr. I slept through all of them. Again."',
+    solution: 'Path of Sabr tracks every prayer without shame and builds a streak system that actually makes you want to show up tomorrow.',
+    accent: '#1D9E75',
+  },
+  {
+    icon: '📱',
+    pain: '"I pick up my phone before I even make wudu. Every single morning."',
+    solution: 'Daily check-ins help you spot the pattern. Your companion nudges you before the habit kicks in, not after.',
+    accent: '#C9952A',
+  },
+  {
+    icon: '😔',
+    pain: '"I\'ve been saying I\'ll fix my deen after Ramadan for 4 years now."',
+    solution: 'Your companion calls it out every time. Then gives you one thing you can do in the next 10 minutes.',
+    accent: '#1D9E75',
+  },
+  {
+    icon: '🤷',
+    pain: '"I want to be closer to Allah. I just have no idea where to actually start."',
+    solution: '20 questions build a personal plan around your life, your schedule, and exactly where you are right now.',
+    accent: '#C9952A',
+  },
+  {
+    icon: '💭',
+    pain: '"I have real deen questions but I\'m too embarrassed to ask anyone."',
+    solution: 'Ask anything. Your companion is grounded in Quran and authenticated Sunnah and never makes you feel judged.',
+    accent: '#1D9E75',
+  },
+  {
+    icon: '🔁',
+    pain: '"I make tawbah, feel good for a week, then fall into the exact same thing."',
+    solution: 'Real accountability without shame. Your companion walks with you through the cycle and helps you break it for good.',
+    accent: '#C9952A',
+  },
+];
 
-// ── Desktop circular mind map ─────────────────────────────────────────────────
-function CircleMap() {
-  return (
-    <div
-      className="relative w-full select-none mx-auto"
-      style={{ maxWidth: 900, paddingBottom: '62%' }}
-    >
-      {/* Connector lines */}
-      <svg
-        className="absolute inset-0 w-full h-full pointer-events-none"
-        viewBox="0 0 100 100"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <defs>
-          <radialGradient id="centreGlow" cx="50%" cy="50%" r="50%">
-            <stop offset="0%"   stopColor="#1D9E75" stopOpacity="0.12" />
-            <stop offset="100%" stopColor="#1D9E75" stopOpacity="0" />
-          </radialGradient>
-        </defs>
-
-        {/* Soft centre glow */}
-        <ellipse cx="50" cy="50" rx="22" ry="22" fill="url(#centreGlow)" />
-
-        {/* Lines from hub centre to each node centre — nodes sit on top */}
-        {NODES.map((n, i) => (
-          <line
-            key={i}
-            x1="50" y1="50"
-            x2={n.x} y2={n.y}
-            stroke={n.color}
-            strokeWidth="0.4"
-            strokeOpacity="0.35"
-            strokeLinecap="round"
-          />
-        ))}
-      </svg>
-
-      {/* Hub */}
-      <div
-        className="absolute z-20 flex flex-col items-center justify-center text-center rounded-full"
-        style={{
-          left: '50%', top: '50%',
-          width: '24%',
-          aspectRatio: '1/1',
-          transform: 'translate(-50%, -50%)',
-          background: 'linear-gradient(145deg, #0d3820 0%, #040f08 100%)',
-          border: '1.5px solid rgba(29,158,117,0.45)',
-          boxShadow: '0 0 40px rgba(29,158,117,0.15), 0 8px 32px rgba(0,0,0,0.6)',
-        }}
-      >
-        <p className="font-extrabold text-white leading-tight" style={{ fontSize: 'clamp(8px, 1.8vw, 13px)' }}>
-          Sound<br />Familiar?
-        </p>
-        <p className="mt-1 font-semibold" style={{ fontSize: 'clamp(6px, 1.1vw, 9px)', color: 'rgba(29,158,117,0.7)' }}>
-          You are not alone
-        </p>
-      </div>
-
-      {/* Nodes */}
-      {NODES.map((n, i) => (
-        <div
-          key={i}
-          className="absolute z-10 rounded-full flex flex-col items-center justify-center text-center transition-transform duration-300 hover:scale-105"
-          style={{
-            left: `${n.x}%`,
-            top: `${n.y}%`,
-            width: '21%',
-            aspectRatio: '1/1',
-            transform: 'translate(-50%, -50%)',
-            background: n.color === '#1D9E75'
-              ? 'linear-gradient(145deg, rgba(29,158,117,0.22) 0%, rgba(29,158,117,0.08) 100%)'
-              : 'linear-gradient(145deg, rgba(201,149,42,0.22) 0%, rgba(201,149,42,0.08) 100%)',
-            border: `1.5px solid ${n.color === '#1D9E75' ? 'rgba(29,158,117,0.4)' : 'rgba(201,149,42,0.4)'}`,
-            boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
-            padding: '8%',
-          }}
-        >
-          <span style={{ fontSize: 'clamp(14px, 2.8vw, 22px)', lineHeight: 1 }}>{n.icon}</span>
-          <p
-            className="font-bold text-white leading-tight mt-1"
-            style={{ fontSize: 'clamp(6px, 1.15vw, 9.5px)' }}
-          >
-            {n.problem}
-          </p>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// ── Mobile — 2-col grid of circles ───────────────────────────────────────────
-function CircleMapMobile() {
-  return (
-    <div className="flex flex-col items-center gap-6">
-      {/* Hub pill */}
-      <div
-        className="px-7 py-4 rounded-full text-center"
-        style={{
-          background: 'linear-gradient(145deg, #0d3820, #040f08)',
-          border: '1.5px solid rgba(29,158,117,0.4)',
-          boxShadow: '0 4px 24px rgba(0,0,0,0.4)',
-        }}
-      >
-        <p className="text-white font-extrabold text-base leading-snug">Sound Familiar?</p>
-        <p className="text-xs mt-0.5 font-medium" style={{ color: 'rgba(29,158,117,0.7)' }}>You are not alone</p>
-      </div>
-
-      {/* 2-col grid */}
-      <div className="grid grid-cols-2 gap-4 w-full max-w-xs">
-        {NODES.map((n, i) => (
-          <div
-            key={i}
-            className="rounded-full flex flex-col items-center justify-center text-center"
-            style={{
-              aspectRatio: '1/1',
-              background: n.color === '#1D9E75'
-                ? 'linear-gradient(145deg, rgba(29,158,117,0.2) 0%, rgba(29,158,117,0.07) 100%)'
-                : 'linear-gradient(145deg, rgba(201,149,42,0.2) 0%, rgba(201,149,42,0.07) 100%)',
-              border: `1.5px solid ${n.color === '#1D9E75' ? 'rgba(29,158,117,0.38)' : 'rgba(201,149,42,0.38)'}`,
-              padding: '12%',
-            }}
-          >
-            <span className="text-2xl leading-none">{n.icon}</span>
-            <p className="text-white font-bold text-[11px] leading-tight mt-1.5">{n.problem}</p>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ── Section ───────────────────────────────────────────────────────────────────
 export default function SocialProof() {
+  const [idx, setIdx] = useState(0);
+  const [dir, setDir] = useState(null); // 'left' | 'right'
+  const [animating, setAnimating] = useState(false);
+
+  const go = (nextIdx, direction) => {
+    if (animating) return;
+    setDir(direction);
+    setAnimating(true);
+    setTimeout(() => {
+      setIdx(nextIdx);
+      setDir(null);
+      setAnimating(false);
+    }, 260);
+  };
+
+  const prev = () => go((idx - 1 + CARDS.length) % CARDS.length, 'left');
+  const next = () => go((idx + 1) % CARDS.length, 'right');
+
+  const card = CARDS[idx];
+
   return (
     <section
       className="relative py-16 sm:py-24 overflow-hidden"
       style={{ background: 'linear-gradient(160deg, #051a10 0%, #061509 100%)' }}
     >
-      <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse 60% 40% at 50% 50%, rgba(29,158,117,0.06) 0%, transparent 70%)' }} />
+      <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse 60% 40% at 50% 50%, rgba(29,158,117,0.05) 0%, transparent 70%)' }} />
 
-      <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
 
+        {/* Header */}
         <div className="text-center mb-10 sm:mb-14">
           <p className="section-label text-[#C9952A] mb-3">Sound Familiar?</p>
           <p className="text-white/35 max-w-sm mx-auto text-sm">
@@ -165,16 +77,97 @@ export default function SocialProof() {
           </p>
         </div>
 
-        <div className="hidden lg:block">
-          <CircleMap />
+        {/* Flashcard */}
+        <div className="relative">
+
+          {/* Card */}
+          <div
+            className="rounded-3xl overflow-hidden"
+            style={{
+              background: 'linear-gradient(145deg, #0d3820 0%, #06180e 100%)',
+              border: `1px solid ${card.accent === '#1D9E75' ? 'rgba(29,158,117,0.25)' : 'rgba(201,149,42,0.25)'}`,
+              boxShadow: '0 24px 80px rgba(0,0,0,0.5)',
+              opacity: animating ? 0 : 1,
+              transform: animating
+                ? `translateX(${dir === 'right' ? '-24px' : '24px'})`
+                : 'translateX(0)',
+              transition: 'opacity 0.26s ease, transform 0.26s ease',
+            }}
+          >
+            {/* Pain half */}
+            <div className="px-8 sm:px-14 pt-10 sm:pt-14 pb-8 sm:pb-10 text-center">
+              <span className="text-4xl sm:text-5xl mb-6 block">{card.icon}</span>
+              <p
+                className="font-bold text-white leading-snug"
+                style={{ fontSize: 'clamp(1.15rem, 3vw, 1.65rem)' }}
+              >
+                {card.pain}
+              </p>
+            </div>
+
+            {/* Divider */}
+            <div className="mx-8 sm:mx-14 h-px" style={{ background: `linear-gradient(90deg, transparent, ${card.accent}40, transparent)` }} />
+
+            {/* Solution half */}
+            <div className="px-8 sm:px-14 pt-6 sm:pt-8 pb-10 sm:pb-12 text-center">
+              <p
+                className="text-xs font-bold tracking-widest uppercase mb-3"
+                style={{ color: card.accent === '#1D9E75' ? 'rgba(29,158,117,0.6)' : 'rgba(201,149,42,0.6)' }}
+              >
+                How Path of Sabr helps
+              </p>
+              <p className="text-white/65 leading-relaxed text-sm sm:text-base max-w-lg mx-auto">
+                {card.solution}
+              </p>
+            </div>
+          </div>
+
+          {/* Arrows */}
+          <button
+            onClick={prev}
+            className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 sm:-translate-x-6 w-11 h-11 rounded-full flex items-center justify-center transition-all hover:scale-110 active:scale-95"
+            style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M10 3L5 8L10 13" stroke="rgba(255,255,255,0.6)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+
+          <button
+            onClick={next}
+            className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 sm:translate-x-6 w-11 h-11 rounded-full flex items-center justify-center transition-all hover:scale-110 active:scale-95"
+            style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+              <path d="M6 3L11 8L6 13" stroke="rgba(255,255,255,0.6)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
         </div>
 
-        <div className="lg:hidden">
-          <CircleMapMobile />
+        {/* Dot indicators */}
+        <div className="flex justify-center gap-2 mt-7">
+          {CARDS.map((c, i) => (
+            <button
+              key={i}
+              onClick={() => go(i, i > idx ? 'right' : 'left')}
+              className="rounded-full transition-all duration-300"
+              style={{
+                width:  i === idx ? 20 : 6,
+                height: 6,
+                background: i === idx ? card.accent : 'rgba(255,255,255,0.15)',
+              }}
+            />
+          ))}
         </div>
 
+        {/* Counter */}
+        <p className="text-center mt-3 text-xs" style={{ color: 'rgba(255,255,255,0.2)' }}>
+          {idx + 1} of {CARDS.length}
+        </p>
+
+        {/* Bottom CTA */}
         <div
-          className="mt-10 sm:mt-14 rounded-2xl p-6 sm:p-8 flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between sm:gap-6"
+          className="mt-12 rounded-2xl p-6 sm:p-8 flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between sm:gap-6"
           style={{ background: 'linear-gradient(145deg, #0d3320, #0a2318)', border: '1px solid rgba(29,158,117,0.2)' }}
         >
           <div>
