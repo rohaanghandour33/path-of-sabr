@@ -1,5 +1,7 @@
-// Pre-compute node positions on a circle (6 nodes, evenly spaced, starting from top)
-const R = 34; // radius as % of the square container
+// Pre-compute node positions (6 nodes evenly spaced, starting from top)
+// Container is landscape (paddingBottom 62%), so R is intentionally an ellipse —
+// wider left/right, tighter top/bottom — which fills the space naturally.
+const R = 32;
 
 const NODES = [
   { icon: '🌙', problem: 'Missing Fajr',              color: '#1D9E75', angle: 270 },
@@ -19,7 +21,7 @@ function CircleMap() {
   return (
     <div
       className="relative w-full select-none mx-auto"
-      style={{ maxWidth: 560, paddingBottom: '100%' }}
+      style={{ maxWidth: 900, paddingBottom: '62%' }}
     >
       {/* Connector lines */}
       <svg
