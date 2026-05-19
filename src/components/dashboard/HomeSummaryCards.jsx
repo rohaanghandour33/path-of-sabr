@@ -122,7 +122,7 @@ export default function HomeSummaryCards({ userId, onViewTasks }) {
           }}
         >
           <p className="text-[9px] font-bold tracking-[0.18em] uppercase mb-4" style={{ color: 'rgba(255,255,255,0.22)' }}>
-            Iman Score
+            Action Score
           </p>
 
           <span
@@ -141,7 +141,7 @@ export default function HomeSummaryCards({ userId, onViewTasks }) {
           </div>
 
           <p className="text-[11px] leading-relaxed mt-auto" style={{ color: 'rgba(255,255,255,0.22)' }}>
-            Based on your prayers, check-ins and tasks.
+            Based on your actions. Only Allah knows what's in the heart.
           </p>
         </div>
 
