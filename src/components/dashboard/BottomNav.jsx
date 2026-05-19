@@ -1,11 +1,12 @@
-import { Home, MoonStar, Bot, User } from 'lucide-react';
+import { Home, MoonStar, ListChecks, Bot, User } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 const TABS = [
-  { id: 'home',    label: 'Home',         Icon: Home },
-  { id: 'prayers', label: 'Prayers',      Icon: MoonStar },
-  { id: 'ai',      label: 'AI Companion', Icon: Bot },
-  { id: 'profile', label: 'Profile',      Icon: User },
+  { id: 'home',    label: 'Home',    Icon: Home },
+  { id: 'prayers', label: 'Prayers', Icon: MoonStar },
+  { id: 'tasks',   label: 'Tasks',   Icon: ListChecks },
+  { id: 'ai',      label: 'AI',      Icon: Bot },
+  { id: 'profile', label: 'Profile', Icon: User },
 ];
 
 export default function BottomNav({ activeTab, setActiveTab }) {

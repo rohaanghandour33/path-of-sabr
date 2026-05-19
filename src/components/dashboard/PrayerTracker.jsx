@@ -204,14 +204,25 @@ export default function PrayerTracker({ userId, weekOffset = 0, customRange = nu
 
       {/* Streak footer */}
       {streak > 0 && (
-        <div className="flex items-center justify-between mt-5 pt-4" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full" style={{ background: '#C9952A', boxShadow: '0 0 6px rgba(201,149,42,0.5)' }} />
-            <p className="text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>
-              <span className="font-bold text-sm" style={{ color: '#C9952A' }}>{streak}</span> prayers in a row
-            </p>
+        <div className="mt-5 pt-4" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <span className="text-xl leading-none">⭐</span>
+              <div>
+                <div className="flex items-baseline gap-1.5">
+                  <span className="font-extrabold" style={{ fontSize: '1.6rem', color: '#C9952A', lineHeight: 1 }}>{streak}</span>
+                  <span className="text-sm font-semibold" style={{ color: 'rgba(255,255,255,0.45)' }}>prayers in a row</span>
+                </div>
+                <p className="text-[10px] mt-0.5" style={{ color: 'rgba(201,149,42,0.45)' }}>Keep going. Don't break it.</p>
+              </div>
+            </div>
+            <span
+              className="text-[9px] font-bold tracking-widest uppercase px-2.5 py-1 rounded-full flex-shrink-0"
+              style={{ background: 'rgba(201,149,42,0.1)', border: '1px solid rgba(201,149,42,0.22)', color: 'rgba(201,149,42,0.7)' }}
+            >
+              Streak
+            </span>
           </div>
-          <p className="text-[10px] font-bold tracking-wider uppercase" style={{ color: 'rgba(201,149,42,0.4)' }}>Streak</p>
         </div>
       )}
     </div>

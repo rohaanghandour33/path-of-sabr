@@ -3,10 +3,14 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, CalendarRange, X, LogOut, User } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
+import { checkAndGenerateTasks } from '../lib/taskUtils';
 import PrayerTracker from '../components/dashboard/PrayerTracker';
 import DailyCheckIn from '../components/dashboard/DailyCheckIn';
 import BottomNav from '../components/dashboard/BottomNav';
-import ProgressZone from '../components/dashboard/ProgressZone';
+import WeeklyPrayerRing from '../components/dashboard/WeeklyPrayerRing';
+import HomeSummaryCards from '../components/dashboard/HomeSummaryCards';
+import TasksView from '../components/dashboard/TasksView';
+import TaskBanner from '../components/TaskBanner';
 
 const PRAYER_KEYS = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
 const TODAY = new Date().toISOString().split('T')[0];
@@ -316,7 +320,9 @@ export default function Dashboard() {
   const [rangeInput, setRangeInput] = useState({ start: '', end: '' });
   const [appliedRange, setAppliedRange] = useState(null);
   const [checkingOnboarding, setCheckingOnboarding] = useState(true);
+  const [showTaskBanner, setShowTaskBanner] = useState(false);
 
+  // ── Onboarding gate ───────────────────────────────────────────────────────
   useEffect(() => {
     if (!user) return;
     const cached = localStorage.getItem(`onboarding_done_${user.id}`);
@@ -328,6 +334,14 @@ export default function Dashboard() {
         else navigate('/onboarding', { replace: true });
       });
   }, [user]);
+
+  // ── Task generation (runs once onboarding check is done) ─────────────────
+  useEffect(() => {
+    if (!user || checkingOnboarding) return;
+    checkAndGenerateTasks(user.id).then(({ generated }) => {
+      if (generated) setShowTaskBanner(true);
+    });
+  }, [user?.id, checkingOnboarding]);
 
   const resetNav = () => { setWeekOffset(0); setShowRangePicker(false); setRangeInput({ start: '', end: '' }); setAppliedRange(null); };
   const handleTabChange = (tab) => { setActiveTab(tab); resetNav(); };
@@ -365,13 +379,18 @@ export default function Dashboard() {
           <div className="flex items-center gap-3">
             {/* Desktop nav */}
             <div className="hidden lg:flex items-center gap-0.5 rounded-xl p-1" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
-              {['home', 'prayers', 'profile'].map((tab) => (
-                <button key={tab} onClick={() => handleTabChange(tab)}
+              {[
+                { id: 'home',    label: 'Home' },
+                { id: 'prayers', label: 'Prayers' },
+                { id: 'tasks',   label: 'Tasks' },
+                { id: 'profile', label: 'Profile' },
+              ].map(({ id, label }) => (
+                <button key={id} onClick={() => handleTabChange(id)}
                   className="px-4 py-2 rounded-lg text-xs font-semibold capitalize transition-all duration-150"
-                  style={activeTab === tab
+                  style={activeTab === id
                     ? { background: 'rgba(29,158,117,0.14)', color: '#1D9E75', border: '1px solid rgba(29,158,117,0.25)' }
                     : { color: 'rgba(255,255,255,0.3)', border: '1px solid transparent' }}>
-                  {tab === 'home' ? 'Home' : tab === 'prayers' ? 'Prayers' : 'Profile'}
+                  {label}
                 </button>
               ))}
             </div>
@@ -381,8 +400,18 @@ export default function Dashboard() {
         {/* ── HOME ── */}
         {activeTab === 'home' && (
           <>
+            {/* Task banner */}
+            {showTaskBanner && (
+              <div className="mt-6">
+                <TaskBanner
+                  onNavigateToTasks={() => { handleTabChange('tasks'); setShowTaskBanner(false); }}
+                  onDismiss={() => setShowTaskBanner(false)}
+                />
+              </div>
+            )}
+
             {/* Welcome hero */}
-            <div className="mt-10 mb-8 flex items-center justify-between gap-6">
+            <div className={`${showTaskBanner ? 'mt-4' : 'mt-10'} mb-8 flex items-center justify-between gap-6`}>
               {/* Left — greeting */}
               <div>
                 <p className="text-xs font-bold tracking-[0.2em] uppercase mb-3" style={{ color: 'rgba(29,158,117,0.65)' }}>
@@ -422,12 +451,12 @@ export default function Dashboard() {
             <NavBar {...navProps} />
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-5 items-stretch">
-              <PrayerTracker userId={user?.id} weekOffset={weekOffset} customRange={appliedRange} />
-              <DailyCheckIn  userId={user?.id} weekOffset={weekOffset} customRange={appliedRange} />
-              <PrayerHistory userId={user?.id} weekOffset={weekOffset} customRange={appliedRange} />
+              <PrayerTracker    userId={user?.id} weekOffset={weekOffset} customRange={appliedRange} />
+              <DailyCheckIn     userId={user?.id} weekOffset={weekOffset} customRange={appliedRange} />
+              <WeeklyPrayerRing userId={user?.id} />
             </div>
 
-            <ProgressZone userId={user?.id} weekOffset={weekOffset} customRange={appliedRange} />
+            <HomeSummaryCards userId={user?.id} onViewTasks={() => handleTabChange('tasks')} />
           </>
         )}
 
@@ -447,6 +476,24 @@ export default function Dashboard() {
               <PrayerTracker userId={user?.id} weekOffset={weekOffset} customRange={appliedRange} />
               <PrayerHistory userId={user?.id} weekOffset={weekOffset} customRange={appliedRange} />
             </div>
+          </>
+        )}
+
+        {/* ── TASKS ── */}
+        {activeTab === 'tasks' && (
+          <>
+            <div className="mt-10 mb-8">
+              <p className="text-xs font-bold tracking-[0.2em] uppercase mb-3" style={{ color: 'rgba(255,255,255,0.2)' }}>This Week</p>
+              <h1 className="text-3xl font-extrabold text-white tracking-tight">Tasks</h1>
+              <div className="flex items-center gap-3 mt-4">
+                <div className="h-px w-12" style={{ background: 'linear-gradient(to right, rgba(29,158,117,0.5), transparent)' }} />
+                <p className="text-xs" style={{ color: 'rgba(255,255,255,0.2)' }}>Your personalised weekly plan</p>
+              </div>
+            </div>
+            <TasksView
+              userId={user?.id}
+              onGenerated={() => setShowTaskBanner(false)} // banner not needed if user is already on tasks tab
+            />
           </>
         )}
 
