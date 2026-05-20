@@ -1,16 +1,17 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, CalendarRange, X, LogOut, User } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { ChevronLeft, ChevronRight, CalendarRange, X, LogOut } from 'lucide-react';
+import Companion from './Companion';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
-import { checkAndGenerateTasks } from '../lib/taskUtils';
+import { checkAndGenerateTasks, getUserSchedule } from '../lib/taskUtils';
 import PrayerTracker from '../components/dashboard/PrayerTracker';
 import DailyCheckIn from '../components/dashboard/DailyCheckIn';
 import BottomNav from '../components/dashboard/BottomNav';
 import WeeklyPrayerRing from '../components/dashboard/WeeklyPrayerRing';
 import HomeSummaryCards from '../components/dashboard/HomeSummaryCards';
 import TasksView from '../components/dashboard/TasksView';
-import TaskBanner from '../components/TaskBanner';
+import ScheduleSurvey from '../components/dashboard/ScheduleSurvey';
 
 const PRAYER_KEYS = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
 const TODAY = new Date().toISOString().split('T')[0];
@@ -309,18 +310,28 @@ function ProfileView({ user, onSignOut }) {
   );
 }
 
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function daysSince(dateStr) {
+  return Math.floor((Date.now() - new Date(dateStr).getTime()) / 86400000);
+}
+
 // ── Dashboard ─────────────────────────────────────────────────────────────────
 export default function Dashboard() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
-  const [activeTab, setActiveTab] = useState(location.state?.tab || 'home');
+  const [activeTab, setActiveTab] = useState('home');
   const [weekOffset, setWeekOffset] = useState(0);
   const [showRangePicker, setShowRangePicker] = useState(false);
   const [rangeInput, setRangeInput] = useState({ start: '', end: '' });
   const [appliedRange, setAppliedRange] = useState(null);
   const [checkingOnboarding, setCheckingOnboarding] = useState(true);
-  const [showTaskBanner, setShowTaskBanner] = useState(false);
+
+  // Task system state
+  const [isFirstWeek,        setIsFirstWeek]        = useState(false);
+  const [freeDays,            setFreeDays]            = useState(null);   // null=loading, []=none, ['Mon',...]
+  const [showScheduleSurvey,  setShowScheduleSurvey]  = useState(false);
+  const [showFirstWeekPopup,  setShowFirstWeekPopup]  = useState(false);
+  const [tomorrowTask,        setTomorrowTask]        = useState(null);   // task due tomorrow for banner
 
   // ── Onboarding gate ───────────────────────────────────────────────────────
   useEffect(() => {
@@ -335,11 +346,56 @@ export default function Dashboard() {
       });
   }, [user]);
 
-  // ── Task generation (runs once onboarding check is done) ─────────────────
+  // ── Task system boot (runs after onboarding check) ───────────────────────
   useEffect(() => {
     if (!user || checkingOnboarding) return;
-    checkAndGenerateTasks(user.id).then(({ generated }) => {
-      if (generated) setShowTaskBanner(true);
+
+    const joined = user.created_at || user.user_metadata?.created_at;
+    const days   = joined ? daysSince(joined) : 999;
+    const firstWeek = days < 7;
+    setIsFirstWeek(firstWeek);
+
+    // First-week one-time popup
+    const popupKey = `first_week_popup_${user.id}`;
+    if (firstWeek && !localStorage.getItem(popupKey)) {
+      setShowFirstWeekPopup(true);
+      localStorage.setItem(popupKey, 'true');
+    }
+
+    if (firstWeek) { setFreeDays([]); return; }
+
+    // Day 8+: fetch schedule for this week
+    getUserSchedule(user.id).then(async (days) => {
+      if (days === null) {
+        // No schedule set yet → show survey
+        setFreeDays([]);
+        setShowScheduleSurvey(true);
+      } else {
+        setFreeDays(days);
+        if (days.length > 0) {
+          // Generate task if needed
+          await checkAndGenerateTasks(user.id);
+          // Check if there's a task due TOMORROW for in-app banner
+          const tomorrow = new Date();
+          tomorrow.setDate(tomorrow.getDate() + 1);
+          const tomorrowStr = tomorrow.toISOString().split('T')[0];
+          const bannerKey = `tomorrow_banner_${user.id}_${tomorrowStr}`;
+          if (!sessionStorage.getItem(bannerKey)) {
+            const { data } = await supabase
+              .from('user_tasks')
+              .select('task_title, task_description, task_type')
+              .eq('user_id', user.id)
+              .eq('due_date', tomorrowStr)
+              .eq('completed', false)
+              .limit(1)
+              .maybeSingle();
+            if (data) {
+              setTomorrowTask(data);
+              sessionStorage.setItem(bannerKey, 'true');
+            }
+          }
+        }
+      }
     });
   }, [user?.id, checkingOnboarding]);
 
@@ -358,7 +414,83 @@ export default function Dashboard() {
   const navProps = { weekOffset, setWeekOffset, showRangePicker, setShowRangePicker, rangeInput, setRangeInput, appliedRange, setAppliedRange };
 
   return (
-    <div className="min-h-screen relative" style={{ background: '#020c07' }}>
+    <div
+      className="flex flex-col overflow-hidden"
+      style={{ height: '100dvh', background: '#020c07' }}
+    >
+
+      {/* ── First-week popup ── */}
+      {showFirstWeekPopup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-5"
+          style={{ background: 'rgba(2,12,7,0.88)', backdropFilter: 'blur(10px)' }}>
+          <div className="w-full max-w-sm rounded-3xl p-8 text-center"
+            style={{ background: 'linear-gradient(145deg, #0d3320, #0a2318)', border: '1px solid rgba(201,149,42,0.3)' }}>
+            <div className="text-4xl mb-4">🤲</div>
+            <h2 className="text-white font-extrabold text-xl mb-3 tracking-tight">
+              Welcome to Path of Sabr
+            </h2>
+            <p className="text-sm leading-relaxed mb-6" style={{ color: 'rgba(255,255,255,0.45)' }}>
+              Before we give you tasks, we need to get to know you properly. This week — no tasks. Just use the app, talk to your AI companion, and log your prayers.
+            </p>
+            <p className="text-sm leading-relaxed mb-6" style={{ color: 'rgba(255,255,255,0.45)' }}>
+              From next week, your tasks will be completely personal to you — based on your real struggles, not a generic list.
+            </p>
+            <div className="h-px mb-5" style={{ background: 'rgba(201,149,42,0.2)' }} />
+            <p className="text-[11px] mb-6" style={{ color: 'rgba(201,149,42,0.55)' }}>
+              ✦ Week 1 is all about getting to know you
+            </p>
+            <button
+              onClick={() => setShowFirstWeekPopup(false)}
+              className="w-full btn-primary text-white font-bold py-4 rounded-2xl text-sm"
+            >
+              Let's begin →
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Schedule survey ── */}
+      {showScheduleSurvey && !showFirstWeekPopup && (
+        <ScheduleSurvey
+          userId={user?.id}
+          onSave={(days) => {
+            setFreeDays(days);
+            setShowScheduleSurvey(false);
+            if (days.length > 0) checkAndGenerateTasks(user.id);
+          }}
+        />
+      )}
+
+      {/* ── Tomorrow task banner ── */}
+      {tomorrowTask && !showScheduleSurvey && !showFirstWeekPopup && (
+        <div className="fixed inset-0 z-40 flex items-end sm:items-center justify-center p-4"
+          style={{ background: 'rgba(2,12,7,0.75)', backdropFilter: 'blur(8px)' }}>
+          <div className="w-full max-w-sm rounded-3xl p-6"
+            style={{ background: 'linear-gradient(145deg, #0d3320, #0a2318)', border: '1px solid rgba(29,158,117,0.3)' }}>
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">📋</span>
+                <span className="text-[10px] font-bold tracking-widest uppercase px-2.5 py-1 rounded-full"
+                  style={{ background: 'rgba(201,149,42,0.12)', border: '1px solid rgba(201,149,42,0.25)', color: '#C9952A' }}>
+                  Tomorrow's Task
+                </span>
+              </div>
+              <button onClick={() => setTomorrowTask(null)} style={{ color: 'rgba(255,255,255,0.3)' }}>✕</button>
+            </div>
+            <h3 className="text-white font-extrabold text-lg mb-2">{tomorrowTask.task_title}</h3>
+            <p className="text-sm leading-relaxed mb-5" style={{ color: 'rgba(255,255,255,0.4)' }}>
+              {tomorrowTask.task_description}
+            </p>
+            <button
+              onClick={() => { setTomorrowTask(null); handleTabChange('tasks'); }}
+              className="w-full py-3.5 rounded-2xl text-sm font-bold transition-all"
+              style={{ background: 'rgba(29,158,117,0.15)', border: '1px solid rgba(29,158,117,0.3)', color: '#1D9E75' }}
+            >
+              Got it →
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Layered atmospheric glows */}
       <div className="fixed inset-0 pointer-events-none">
@@ -367,51 +499,55 @@ export default function Dashboard() {
         <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 40% 25% at 10% 80%, rgba(29,158,117,0.03) 0%, transparent 60%)' }} />
       </div>
 
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-28 lg:pb-12">
-
-        {/* ── Header ── */}
-        <div className="flex items-center justify-between pt-8 pb-6" style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+      {/* ── Header (always visible, flex-shrink-0) ── */}
+      <div
+        className="relative flex-shrink-0 px-4 sm:px-6 lg:px-8"
+        style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}
+      >
+        <div className="max-w-7xl mx-auto flex items-center justify-between pt-6 pb-5">
           <div className="flex items-center gap-3 flex-shrink-0">
             <img src="/logo.png" alt="Path of Sabr" className="h-9 w-9 rounded-full object-cover shrink-0" />
             <span className="font-bold text-base tracking-tight" style={{ color: '#1D9E75' }}>Path of Sabr</span>
           </div>
 
-          <div className="flex items-center gap-3">
-            {/* Desktop nav */}
-            <div className="hidden lg:flex items-center gap-0.5 rounded-xl p-1" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
-              {[
-                { id: 'home',    label: 'Home' },
-                { id: 'prayers', label: 'Prayers' },
-                { id: 'tasks',   label: 'Tasks' },
-                { id: 'profile', label: 'Profile' },
-              ].map(({ id, label }) => (
-                <button key={id} onClick={() => handleTabChange(id)}
-                  className="px-4 py-2 rounded-lg text-xs font-semibold capitalize transition-all duration-150"
-                  style={activeTab === id
-                    ? { background: 'rgba(29,158,117,0.14)', color: '#1D9E75', border: '1px solid rgba(29,158,117,0.25)' }
-                    : { color: 'rgba(255,255,255,0.3)', border: '1px solid transparent' }}>
-                  {label}
-                </button>
-              ))}
-            </div>
+          {/* Desktop nav */}
+          <div className="hidden lg:flex items-center gap-0.5 rounded-xl p-1" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
+            {[
+              { id: 'home',    label: 'Home' },
+              { id: 'prayers', label: 'Prayers' },
+              { id: 'tasks',   label: 'Tasks' },
+              { id: 'ai',      label: 'AI Companion' },
+              { id: 'profile', label: 'Profile' },
+            ].map(({ id, label }) => (
+              <button key={id} onClick={() => handleTabChange(id)}
+                className="px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-150"
+                style={activeTab === id
+                  ? { background: 'rgba(29,158,117,0.14)', color: '#1D9E75', border: '1px solid rgba(29,158,117,0.25)' }
+                  : { color: 'rgba(255,255,255,0.3)', border: '1px solid transparent' }}>
+                {label}
+              </button>
+            ))}
           </div>
         </div>
+      </div>
+
+      {/* ── AI Companion tab (full remaining height, no padding) ── */}
+      {activeTab === 'ai' && (
+        <div className="flex-1 min-h-0">
+          <Companion userId={user?.id} user={user} embedded />
+        </div>
+      )}
+
+      {/* ── All other tabs (scrollable) ── */}
+      {activeTab !== 'ai' && (
+      <div className="flex-1 min-h-0 overflow-y-auto" style={{ scrollbarWidth: 'none' }}>
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-24 lg:pb-12">
 
         {/* ── HOME ── */}
         {activeTab === 'home' && (
           <>
-            {/* Task banner */}
-            {showTaskBanner && (
-              <div className="mt-6">
-                <TaskBanner
-                  onNavigateToTasks={() => { handleTabChange('tasks'); setShowTaskBanner(false); }}
-                  onDismiss={() => setShowTaskBanner(false)}
-                />
-              </div>
-            )}
-
             {/* Welcome hero */}
-            <div className={`${showTaskBanner ? 'mt-4' : 'mt-10'} mb-8 flex items-center justify-between gap-6`}>
+            <div className="mt-10 mb-8 flex items-center justify-between gap-6">
               {/* Left — greeting */}
               <div>
                 <p className="text-xs font-bold tracking-[0.2em] uppercase mb-3" style={{ color: 'rgba(29,158,117,0.65)' }}>
@@ -431,7 +567,7 @@ export default function Dashboard() {
 
               {/* Right — companion CTA */}
               <button
-                onClick={() => navigate('/companion')}
+                onClick={() => handleTabChange('ai')}
                 className="hidden sm:flex flex-col items-center gap-2 px-8 py-5 rounded-3xl flex-shrink-0 transition-all duration-200 hover:scale-[1.03] active:scale-[0.97]"
                 style={{
                   background: 'linear-gradient(135deg, #C9952A 0%, #e8b84b 100%)',
@@ -483,16 +619,22 @@ export default function Dashboard() {
         {activeTab === 'tasks' && (
           <>
             <div className="mt-10 mb-8">
-              <p className="text-xs font-bold tracking-[0.2em] uppercase mb-3" style={{ color: 'rgba(255,255,255,0.2)' }}>This Week</p>
+              <p className="text-xs font-bold tracking-[0.2em] uppercase mb-3" style={{ color: 'rgba(255,255,255,0.2)' }}>
+                {isFirstWeek ? 'Week 1' : 'Your Task'}
+              </p>
               <h1 className="text-3xl font-extrabold text-white tracking-tight">Tasks</h1>
               <div className="flex items-center gap-3 mt-4">
                 <div className="h-px w-12" style={{ background: 'linear-gradient(to right, rgba(29,158,117,0.5), transparent)' }} />
-                <p className="text-xs" style={{ color: 'rgba(255,255,255,0.2)' }}>Your personalised weekly plan</p>
+                <p className="text-xs" style={{ color: 'rgba(255,255,255,0.2)' }}>
+                  {isFirstWeek ? 'Getting to know you this week' : 'One task. Specific to you. Timed for when you\'re free.'}
+                </p>
               </div>
             </div>
             <TasksView
               userId={user?.id}
-              onGenerated={() => setShowTaskBanner(false)} // banner not needed if user is already on tasks tab
+              isFirstWeek={isFirstWeek}
+              freeDays={freeDays || []}
+              onNeedSchedule={() => setShowScheduleSurvey(true)}
             />
           </>
         )}
@@ -507,11 +649,16 @@ export default function Dashboard() {
             <ProfileView user={user} onSignOut={handleSignOut} />
           </>
         )}
-      </div>
 
-      <div className="lg:hidden">
+      </div>
+      </div>
+      )}
+
+      {/* Bottom nav — part of flex flow, never overlaps content */}
+      <div className="lg:hidden flex-shrink-0">
         <BottomNav activeTab={activeTab} setActiveTab={handleTabChange} />
       </div>
+
     </div>
   );
 }
