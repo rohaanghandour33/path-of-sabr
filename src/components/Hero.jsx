@@ -62,7 +62,7 @@ export default function Hero() {
 
         {/* Subheading — agitate the pain, hint at solution */}
         <p className="animate-fade-in-up delay-200 text-base sm:text-xl text-white/65 leading-relaxed max-w-2xl mx-auto mb-10 sm:mb-12">
-          Still missing salah or delaying it until the time almost passes. Praying but your heart isn't open — just going through the motions. Wanting to be closer to Allah but not knowing how to actually get there. Path of Sabr was built for exactly this.
+          Still missing salah or delaying it until the time almost passes. Praying but your heart isn't open, just going through the motions. Wanting to be closer to Allah but not knowing how to actually get there. Path of Sabr was built for exactly this.
         </p>
 
         {/* Email form */}
@@ -108,6 +108,15 @@ export default function Hero() {
         <p className="animate-fade-in-up delay-400 text-white/35 text-xs mt-4">
           Free to join. No spam. Unsubscribe anytime.
         </p>
+
+        {/* Sadaqah note */}
+        <div className="animate-fade-in-up delay-400 inline-flex items-center gap-2 mt-3 px-4 py-1.5 rounded-full" style={{ background: 'rgba(201,149,42,0.1)', border: '1px solid rgba(201,149,42,0.2)' }}>
+          <span className="text-[#C9952A] text-xs">✦</span>
+          <p className="text-xs font-medium" style={{ color: 'rgba(201,149,42,0.8)' }}>
+            10% of every subscription's profit goes to sadaqah — automatically.
+          </p>
+          <span className="text-[#C9952A] text-xs">✦</span>
+        </div>
 
         {/* Trust stats */}
         <div className="animate-fade-in-up delay-500 mt-10 sm:mt-12 mb-16 grid grid-cols-3 gap-3 sm:gap-6 max-w-xs sm:max-w-sm mx-auto border-t border-white/10 pt-6 sm:pt-8">

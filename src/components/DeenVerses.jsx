@@ -51,7 +51,7 @@ export default function DeenVerses() {
             Why your deen matters more than anything
           </h2>
           <p className="mt-3 text-white/50 max-w-xl mx-auto text-sm sm:text-base">
-            From the Quran and the Prophet ﷺ — reminders that have guided believers for over 1,400 years.
+            From the Quran and the Prophet ﷺ, reminders that have guided believers for over 1,400 years.
           </p>
         </div>
 
