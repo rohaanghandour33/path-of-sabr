@@ -1,27 +1,44 @@
-// Generates 2 personalised Islamic tasks via Claude.
-// All Supabase operations (fetching templates, inserting tasks) are handled client-side.
-// This function only calls the Anthropic API and returns the personalised task objects.
+// Generates 1 personalised Islamic task via Claude.
+// Uses onboarding context + recent AI conversations for deep personalisation.
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { onboardingContext } = req.body || {};
+  const { onboardingContext, recentConversations = '' } = req.body || {};
   const apiKey = process.env.ANTHROPIC_API_KEY;
 
   if (!apiKey) {
     console.error('[generate-tasks] ANTHROPIC_API_KEY not set');
-    return res.status(200).json({ tasks: [] }); // graceful fallback
+    return res.status(200).json({ tasks: [] });
   }
 
-  const prompt = `Generate 2 personalised Islamic self-improvement tasks for a Muslim.${onboardingContext ? ` User context: ${onboardingContext}` : ''}
+  const contextBlock = [
+    onboardingContext ? `Onboarding answers: ${onboardingContext}` : '',
+    recentConversations ? `Recent AI conversations (most relevant): ${recentConversations}` : '',
+  ].filter(Boolean).join('\n\n');
 
-Return ONLY a valid JSON array with exactly 2 task objects. Each object must have:
-- task_title: string (5-8 words, specific and actionable)
-- task_description: string (15-25 words, practical and encouraging, no em dashes)
+  const prompt = `You are generating ONE specific, actionable Islamic self-improvement task for a Muslim based on their personal context.
+
+${contextBlock ? `USER CONTEXT:\n${contextBlock}\n` : ''}
+
+RULES FOR THE TASK:
+- It must target their ACTUAL struggle, not a generic Islamic practice they already do consistently
+- It must be something they can physically complete and tick off — not vague like "work on your prayers"
+- It must be SPECIFIC: "Set an alarm tonight for 30 minutes before Fajr and place your phone across the room" not "improve your Fajr"
+- Do NOT assign a prayer task if their onboarding says they already pray all 5 consistently — target their real weak point instead
+- The task should be completable in one day (today or tomorrow)
+- It should feel like it came from someone who knows them personally
+
+Return ONLY a valid JSON array with exactly 1 task object:
+- task_title: string (6-10 words, specific and actionable)
+- task_description: string (20-35 words, practical, warm, no em dashes, no asterisks)
 - task_type: exactly one of "prayer", "quran", "dhikr", "character", "relationship"
 
-Example:
-[{"task_title":"Complete tasbeeh after every prayer","task_description":"Say Subhanallah, Alhamdulillah, and Allahu Akbar 33 times each after every salah today.","task_type":"dhikr"},{"task_title":"Call a parent this evening","task_description":"Spend 10 minutes speaking with a parent or elder relative to strengthen your family bonds this week.","task_type":"relationship"}]
+Example of a GOOD specific task:
+[{"task_title":"Set your Fajr alarm before sleeping tonight","task_description":"Put your phone on the other side of the room tonight so you have to get up to turn off your alarm. Make wudu immediately when it goes off.","task_type":"prayer"}]
+
+Example of a BAD vague task (never do this):
+[{"task_title":"Work on improving your prayer habits","task_description":"Try to be more consistent with your prayers this week and focus on building better habits.","task_type":"prayer"}]
 
 Return only the JSON array. No explanation, no markdown.`;
 
@@ -35,7 +52,7 @@ Return only the JSON array. No explanation, no markdown.`;
       },
       body: JSON.stringify({
         model: 'claude-opus-4-7',
-        max_tokens: 400,
+        max_tokens: 300,
         messages: [{ role: 'user', content: prompt }],
       }),
     });
@@ -49,18 +66,17 @@ Return only the JSON array. No explanation, no markdown.`;
     const data = await response.json();
     const text = (data.content?.[0]?.text || '').trim();
 
-    // Extract JSON array even if Claude adds any surrounding text
     const jsonMatch = text.match(/\[[\s\S]*\]/);
     if (!jsonMatch) {
-      console.warn('[generate-tasks] No JSON array found in response:', text);
+      console.warn('[generate-tasks] No JSON found:', text);
       return res.status(200).json({ tasks: [] });
     }
 
     const tasks = JSON.parse(jsonMatch[0]);
-    console.log('[generate-tasks] Generated', tasks.length, 'personalised tasks');
+    console.log('[generate-tasks] Generated task:', tasks[0]?.task_title);
     return res.status(200).json({ tasks });
   } catch (e) {
     console.error('[generate-tasks] Error:', e.message);
-    return res.status(200).json({ tasks: [] }); // always return 200 so client degrades gracefully
+    return res.status(200).json({ tasks: [] });
   }
 }

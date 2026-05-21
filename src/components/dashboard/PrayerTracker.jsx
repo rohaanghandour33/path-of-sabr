@@ -2,12 +2,20 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 
 const PRAYERS = [
-  { key: 'fajr',    label: 'Fajr',    time: 'Dawn' },
-  { key: 'dhuhr',   label: 'Dhuhr',   time: 'Midday' },
-  { key: 'asr',     label: 'Asr',     time: 'Afternoon' },
-  { key: 'maghrib', label: 'Maghrib', time: 'Sunset' },
-  { key: 'isha',    label: 'Isha',    time: 'Night' },
+  { key: 'fajr',    label: 'Fajr',    fallback: 'Dawn',      aladhanKey: 'Fajr' },
+  { key: 'dhuhr',   label: 'Dhuhr',   fallback: 'Midday',    aladhanKey: 'Dhuhr' },
+  { key: 'asr',     label: 'Asr',     fallback: 'Afternoon', aladhanKey: 'Asr' },
+  { key: 'maghrib', label: 'Maghrib', fallback: 'Sunset',    aladhanKey: 'Maghrib' },
+  { key: 'isha',    label: 'Isha',    fallback: 'Night',     aladhanKey: 'Isha' },
 ];
+
+function to12h(time24) {
+  if (!time24) return null;
+  const [h, m] = time24.split(':').map(Number);
+  const period = h >= 12 ? 'PM' : 'AM';
+  const h12 = h % 12 || 12;
+  return `${h12}:${m.toString().padStart(2, '0')} ${period}`;
+}
 
 const PRAYER_KEYS = PRAYERS.map((p) => p.key);
 
@@ -95,7 +103,34 @@ export default function PrayerTracker({ userId, weekOffset = 0, customRange = nu
   const [readOnlyRecords, setReadOnlyRecords] = useState([]);
   const [streak, setStreak] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [prayerTimes, setPrayerTimes] = useState({});
   const today = new Date().toISOString().split('T')[0];
+
+  // Fetch prayer times from Aladhan API using geolocation
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      async ({ coords }) => {
+        try {
+          const res = await fetch(
+            `https://api.aladhan.com/v1/timings?latitude=${coords.latitude}&longitude=${coords.longitude}&method=2`
+          );
+          if (!res.ok) return;
+          const json = await res.json();
+          const t = json?.data?.timings;
+          if (!t) return;
+          const mapped = {};
+          PRAYERS.forEach(({ key, aladhanKey }) => {
+            if (t[aladhanKey]) mapped[key] = to12h(t[aladhanKey]);
+          });
+          setPrayerTimes(mapped);
+        } catch {
+          // silently ignore — times just won't show
+        }
+      },
+      () => {} // permission denied — no times shown
+    );
+  }, []);
 
   useEffect(() => {
     if (!userId) return;
@@ -166,15 +201,25 @@ export default function PrayerTracker({ userId, weekOffset = 0, customRange = nu
 
       {/* Prayer rows */}
       <div className="space-y-2.5 flex-1">
-        {PRAYERS.map(({ key, label, time }) => {
+        {PRAYERS.map(({ key, label, fallback }) => {
           const current = prayers[key];
+          const calcTime = prayerTimes[key];
           return (
-            <div key={key} className="rounded-2xl px-4 py-3" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }}>
+            <div key={key} className="rounded-2xl px-4 py-3.5" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }}>
               <div className="flex items-center gap-3">
-                {/* Prayer name */}
-                <div className="w-20 flex-shrink-0">
-                  <p className="text-sm font-semibold text-white/80">{label}</p>
-                  <p className="text-[10px] mt-0.5" style={{ color: 'rgba(255,255,255,0.2)' }}>{time}</p>
+                {/* Prayer name + time */}
+                <div className="w-28 flex-shrink-0">
+                  <p className="text-sm font-bold text-white/85 leading-tight">{label}</p>
+                  {calcTime ? (
+                    <p
+                      className="text-[13px] font-semibold mt-0.5 leading-tight"
+                      style={{ color: '#1D9E75', textShadow: '0 0 8px rgba(29,158,117,0.4)' }}
+                    >
+                      {calcTime}
+                    </p>
+                  ) : (
+                    <p className="text-[10px] mt-0.5" style={{ color: 'rgba(255,255,255,0.2)' }}>{fallback}</p>
+                  )}
                 </div>
 
                 {/* Status buttons */}

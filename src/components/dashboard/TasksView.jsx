@@ -1,237 +1,344 @@
 import { useState, useEffect } from 'react';
-import { CheckCircle2, Circle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { generateTasks } from '../../lib/taskUtils';
+import TrophyShelf from './TrophyShelf';
 
 const TYPE_ICONS  = { prayer: '🕌', quran: '📖', dhikr: '📿', character: '⭐', relationship: '❤️' };
 const TYPE_LABELS = { prayer: 'Prayer', quran: 'Quran', dhikr: 'Dhikr', character: 'Character', relationship: 'Relationships' };
+const TYPE_COLOR  = {
+  prayer:       { accent: '#1D9E75', bg: 'rgba(29,158,117,0.13)',  border: 'rgba(29,158,117,0.28)' },
+  quran:        { accent: '#1D9E75', bg: 'rgba(29,158,117,0.13)',  border: 'rgba(29,158,117,0.28)' },
+  dhikr:        { accent: '#C9952A', bg: 'rgba(201,149,42,0.13)', border: 'rgba(201,149,42,0.28)' },
+  character:    { accent: '#C9952A', bg: 'rgba(201,149,42,0.13)', border: 'rgba(201,149,42,0.28)' },
+  relationship: { accent: '#C9952A', bg: 'rgba(201,149,42,0.13)', border: 'rgba(201,149,42,0.28)' },
+};
 
-function daysUntil(dateStr) {
-  const due = new Date(dateStr + 'T23:59:59');
-  return Math.max(0, Math.ceil((due - new Date()) / 86400000));
-}
+const TROPHY_MESSAGES = [
+  "Allah sees every effort, no matter how small.",
+  "The Prophet ﷺ said the most beloved deeds are those done consistently.",
+  "You took one step toward Allah. He will run to meet you.",
+  "Every good deed is recorded. Nothing is wasted.",
+  "Sabr and action — you are on the path.",
+  "إِنَّ اللَّهَ لَا يُضِيعُ أَجْرَ الْمُحْسِنِينَ",
+  "Allah is Al-Shakur — He appreciates every sincere effort.",
+  "The angels witnessed this deed.",
+  "Consistency is the mark of the sincere believer.",
+  "One step closer to who you want to be for Allah.",
+  "This effort has been written in your book of deeds.",
+  "Allah loves those who keep trying, even when it is hard.",
+  "Small actions done with sincerity are immense with Allah.",
+];
 
-export default function TasksView({ userId, onGenerated }) {
-  const [tasks, setTasks]       = useState([]);
-  const [loading, setLoading]   = useState(true);
-  const [generating, setGenerating] = useState(false);
-  const [error, setError]       = useState('');
+export default function TasksView({ userId, isFirstWeek, freeDays, onNeedSchedule }) {
+  const [task,         setTask]         = useState(null);
+  const [loading,      setLoading]      = useState(true);
+  const [generating,   setGenerating]   = useState(false);
+  const [trophyCount,  setTrophyCount]  = useState(0);
+  const [justDone,     setJustDone]     = useState(false);
+  const [trophyMsg,    setTrophyMsg]    = useState('');
+  const [showShelf,    setShowShelf]    = useState(false);
 
   useEffect(() => {
-    if (userId) fetchTasks();
+    if (userId) { fetchTask(); fetchTrophyCount(); }
   }, [userId]);
 
-  const fetchTasks = async () => {
+  const today = new Date().toISOString().split('T')[0];
+  const tomorrowDate = new Date();
+  tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+  const tomorrow = tomorrowDate.toISOString().split('T')[0];
+
+  const fetchTask = async () => {
     setLoading(true);
-    const today = new Date().toISOString().split('T')[0];
+    // Only show tasks due today or tomorrow
     const { data } = await supabase
       .from('user_tasks')
       .select('*')
       .eq('user_id', userId)
+      .eq('completed', false)
       .gte('due_date', today)
-      .order('is_personalised', { ascending: false }) // personalised tasks last (at bottom)
-      .order('created_at',      { ascending: true });
-    setTasks(data || []);
+      .lte('due_date', tomorrow)
+      .order('due_date', { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    setTask(data || null);
     setLoading(false);
+  };
+
+  const fetchTrophyCount = async () => {
+    const { count } = await supabase
+      .from('user_trophies')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId);
+    setTrophyCount(count || 0);
   };
 
   const handleGenerate = async () => {
     setGenerating(true);
-    setError('');
-    const { generated } = await generateTasks(userId);
-    if (generated) {
-      await fetchTasks();
-      onGenerated?.();
-    } else {
-      setError('Could not generate tasks. Please try again.');
-    }
+    await generateTasks(userId, freeDays);
+    await fetchTask();
     setGenerating(false);
   };
 
-  const toggleTask = async (taskId, current) => {
-    const completed = !current;
-    await supabase
-      .from('user_tasks')
-      .update({ completed, completed_at: completed ? new Date().toISOString() : null })
-      .eq('id', taskId);
-    setTasks((prev) =>
-      prev.map((t) =>
-        t.id === taskId ? { ...t, completed, completed_at: completed ? new Date().toISOString() : null } : t
-      )
-    );
+  const completeTask = async () => {
+    if (!task) return;
+    const newCount = trophyCount + 1;
+    const msg = TROPHY_MESSAGES[Math.floor(Math.random() * TROPHY_MESSAGES.length)];
+
+    await Promise.all([
+      supabase.from('user_tasks')
+        .update({ completed: true, completed_at: new Date().toISOString() })
+        .eq('id', task.id),
+      supabase.from('user_trophies').insert({
+        user_id:       userId,
+        task_title:    task.task_title,
+        trophy_message: msg,
+        trophy_number:  newCount,
+      }),
+    ]);
+
+    setTrophyCount(newCount);
+    setTrophyMsg(msg);
+    setJustDone(true);
+    setTask(null);
   };
+
+  // ── Trophy shelf ──────────────────────────────────────────────────────────
+  if (showShelf) {
+    return <TrophyShelf userId={userId} onBack={() => setShowShelf(false)} />;
+  }
+
+  // ── First week ────────────────────────────────────────────────────────────
+  if (isFirstWeek) {
+    return (
+      <div className="max-w-lg mx-auto">
+        <div
+          className="text-center py-14 px-8 rounded-3xl"
+          style={{
+            background: 'linear-gradient(145deg, rgba(201,149,42,0.07) 0%, rgba(255,255,255,0.02) 100%)',
+            border: '1px solid rgba(201,149,42,0.2)',
+          }}
+        >
+          <div className="text-5xl mb-5">🤲</div>
+          <h2 className="text-white font-extrabold text-xl mb-3">No tasks yet</h2>
+          <p className="text-sm leading-relaxed max-w-xs mx-auto mb-5" style={{ color: 'rgba(255,255,255,0.4)' }}>
+            This week we're getting to know you. Your personalised tasks begin next week, matched to your real struggles and your schedule.
+          </p>
+          <div className="h-px mb-5" style={{ background: 'rgba(201,149,42,0.15)' }} />
+          <p className="text-[11px]" style={{ color: 'rgba(201,149,42,0.55)' }}>
+            ✦ The more you use the AI companion this week, the better your tasks will be
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // ── No schedule set ───────────────────────────────────────────────────────
+  if (!freeDays || freeDays.length === 0) {
+    return (
+      <div className="max-w-lg mx-auto">
+        <div
+          className="text-center py-14 px-8 rounded-3xl"
+          style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)' }}
+        >
+          <div className="text-5xl mb-5">📅</div>
+          <h2 className="text-white font-bold text-xl mb-3">When are you free?</h2>
+          <p className="text-sm leading-relaxed mb-6 max-w-xs mx-auto" style={{ color: 'rgba(255,255,255,0.35)' }}>
+            Tell us which days you have time and we'll schedule your task for exactly the right moment.
+          </p>
+          <button
+            onClick={onNeedSchedule}
+            className="btn-primary text-white font-bold px-8 py-3.5 rounded-xl text-sm"
+          >
+            Set my days →
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Trophy earned celebration ─────────────────────────────────────────────
+  if (justDone) {
+    return (
+      <div className="max-w-lg mx-auto">
+        <div
+          className="text-center py-14 px-8 rounded-3xl"
+          style={{
+            background: 'linear-gradient(145deg, rgba(201,149,42,0.12) 0%, rgba(201,149,42,0.04) 100%)',
+            border: '1px solid rgba(201,149,42,0.3)',
+          }}
+        >
+          <div className="text-6xl mb-4" style={{ animation: 'none' }}>🏆</div>
+          <p
+            className="text-[10px] font-bold tracking-[0.15em] uppercase mb-2"
+            style={{ color: 'rgba(201,149,42,0.6)' }}
+          >
+            Trophy #{trophyCount} Earned
+          </p>
+          <h2 className="text-white font-extrabold text-2xl mb-4">Alhamdulillah!</h2>
+          <p
+            className="text-sm leading-relaxed max-w-xs mx-auto mb-6"
+            style={{ color: 'rgba(255,255,255,0.5)' }}
+          >
+            {trophyMsg}
+          </p>
+          <button
+            onClick={() => { setJustDone(false); setShowShelf(true); }}
+            className="text-sm font-semibold px-6 py-3 rounded-xl transition-all"
+            style={{ background: 'rgba(201,149,42,0.12)', border: '1px solid rgba(201,149,42,0.28)', color: '#C9952A' }}
+          >
+            View Trophy Shelf →
+          </button>
+          <p className="text-xs mt-4" style={{ color: 'rgba(255,255,255,0.18)' }}>
+            or wait — your next task will arrive before your next free day
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   // ── Loading ───────────────────────────────────────────────────────────────
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="w-8 h-8 border-2 rounded-full animate-spin" style={{ borderColor: 'rgba(29,158,117,0.2)', borderTopColor: '#1D9E75' }} />
+        <div className="w-8 h-8 border-2 rounded-full animate-spin"
+          style={{ borderColor: 'rgba(29,158,117,0.2)', borderTopColor: '#1D9E75' }} />
       </div>
     );
   }
 
-  // ── Empty state ───────────────────────────────────────────────────────────
-  if (tasks.length === 0) {
+  // ── No task right now ─────────────────────────────────────────────────────
+  if (!task) {
     return (
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-lg mx-auto">
         <div
-          className="text-center py-16 px-8 rounded-3xl"
-          style={{
-            background: 'linear-gradient(145deg, rgba(29,158,117,0.06) 0%, rgba(255,255,255,0.02) 100%)',
-            border: '1px solid rgba(29,158,117,0.12)',
-          }}
+          className="text-center py-14 px-8 rounded-3xl"
+          style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}
         >
-          <div className="text-5xl mb-5">🌱</div>
-          <h2 className="text-white font-bold text-xl mb-3">No tasks this week</h2>
-          <p className="text-sm mb-8 max-w-sm mx-auto leading-relaxed" style={{ color: 'rgba(255,255,255,0.35)' }}>
-            Let your companion build a personalised plan to help your deen grow, one step at a time.
+          <div className="text-5xl mb-5">✨</div>
+          <h2 className="text-white font-bold text-xl mb-2">No task right now</h2>
+          <p className="text-sm leading-relaxed mb-6 max-w-xs mx-auto" style={{ color: 'rgba(255,255,255,0.3)' }}>
+            Your task will appear here the day before your next free day. Keep making du'a and using the companion in the meantime.
           </p>
-          <button
-            onClick={handleGenerate}
-            disabled={generating}
-            className="btn-primary text-white font-semibold px-8 py-3.5 rounded-xl text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {generating ? 'Building your plan...' : 'Generate my tasks →'}
-          </button>
-          {error && <p className="text-red-400/60 text-xs mt-4">{error}</p>}
+
+          {trophyCount > 0 && (
+            <button
+              onClick={() => setShowShelf(true)}
+              className="flex items-center gap-2 mx-auto text-sm font-semibold px-5 py-2.5 rounded-xl transition-all mb-4"
+              style={{ background: 'rgba(201,149,42,0.1)', border: '1px solid rgba(201,149,42,0.22)', color: '#C9952A' }}
+            >
+              🏆 {trophyCount} {trophyCount === 1 ? 'trophy' : 'trophies'} collected · View shelf
+            </button>
+          )}
+
+          {/* Generate fallback if schedule is set but no task generated yet */}
+          {freeDays && freeDays.length > 0 && (
+            <button
+              onClick={handleGenerate}
+              disabled={generating}
+              className="text-xs font-semibold transition-all disabled:opacity-40"
+              style={{ color: 'rgba(255,255,255,0.2)' }}
+            >
+              {generating ? 'Checking...' : 'Generate task now →'}
+            </button>
+          )}
         </div>
       </div>
     );
   }
 
-  const done    = tasks.filter((t) => t.completed).length;
-  const total   = tasks.length;
-  const pct     = total > 0 ? Math.round((done / total) * 100) : 0;
-  const daysLeft = daysUntil(tasks[0].due_date);
-  const allDone  = done === total;
+  // ── Active task ───────────────────────────────────────────────────────────
+  const c = TYPE_COLOR[task.task_type] || TYPE_COLOR.character;
+  const isToday    = task.due_date === today;
+  const isTomorrow = task.due_date === tomorrow;
 
-  // ── Task list ─────────────────────────────────────────────────────────────
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-lg mx-auto">
 
-      {/* Header */}
-      <div className="flex items-start justify-between mb-6">
-        <div>
-          <h2 className="text-2xl font-extrabold text-white tracking-tight">Your Weekly Tasks</h2>
-          <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.22)' }}>
-            {daysLeft === 0
-              ? 'Expires today'
-              : `${daysLeft} day${daysLeft !== 1 ? 's' : ''} remaining`}
-          </p>
-        </div>
-        <div className="text-right flex-shrink-0">
-          <span className="text-3xl font-extrabold leading-none" style={{ color: '#1D9E75' }}>{done}</span>
-          <span className="text-xl font-semibold" style={{ color: 'rgba(255,255,255,0.18)' }}>/{total}</span>
-          <p className="text-[10px] font-bold tracking-widest uppercase mt-1" style={{ color: 'rgba(255,255,255,0.2)' }}>done</p>
-        </div>
-      </div>
-
-      {/* Progress bar */}
-      <div className="mb-8">
-        <div className="h-2 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.07)' }}>
-          <div
-            className="h-full rounded-full transition-all duration-700"
-            style={{ width: `${pct}%`, background: 'linear-gradient(90deg, #1D9E75, #23c68f)' }}
-          />
-        </div>
-        <p
-          className="text-[10px] font-semibold mt-2"
-          style={{ color: pct === 100 ? '#1D9E75' : 'rgba(255,255,255,0.2)' }}
+      {/* Trophy count pill */}
+      {trophyCount > 0 && (
+        <button
+          onClick={() => setShowShelf(true)}
+          className="flex items-center gap-2 mb-5 text-xs font-semibold px-4 py-2 rounded-full transition-all"
+          style={{ background: 'rgba(201,149,42,0.08)', border: '1px solid rgba(201,149,42,0.18)', color: 'rgba(201,149,42,0.7)' }}
         >
-          {pct}% complete
-        </p>
-      </div>
-
-      {/* Completion celebration */}
-      {allDone && (
-        <div
-          className="mb-6 rounded-2xl p-5 text-center"
-          style={{
-            background: 'linear-gradient(145deg, rgba(29,158,117,0.1) 0%, rgba(29,158,117,0.04) 100%)',
-            border: '1px solid rgba(29,158,117,0.22)',
-          }}
-        >
-          <div className="text-3xl mb-2">🌟</div>
-          <p className="text-white font-bold text-base mb-1">Alhamdulillah.</p>
-          <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.4)' }}>
-            May Allah accept your efforts and make it easy for you to continue. Ameen.
-          </p>
-          <p className="text-sm font-semibold tracking-wider mt-3 arabic-text" style={{ color: 'rgba(29,158,117,0.7)' }}>
-            رَبَّنَا تَقَبَّلْ مِنَّا
-          </p>
-          <p className="text-[11px] mt-1" style={{ color: 'rgba(255,255,255,0.2)' }}>Our Lord, accept from us.</p>
-        </div>
+          🏆 {trophyCount} {trophyCount === 1 ? 'trophy' : 'trophies'} · View shelf →
+        </button>
       )}
 
-      {/* Task list */}
-      <div className="space-y-3">
-        {tasks.map((task) => (
+      {/* Task card */}
+      <div
+        className="rounded-3xl p-7"
+        style={{
+          background: `linear-gradient(145deg, ${c.bg} 0%, rgba(255,255,255,0.02) 100%)`,
+          border: `1px solid ${c.border}`,
+          boxShadow: `0 8px 40px ${c.bg}`,
+        }}
+      >
+        {/* Top row */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-2">
+            <span className="text-xl">{TYPE_ICONS[task.task_type] || '⭐'}</span>
+            <span
+              className="text-[10px] font-bold tracking-widest uppercase px-2.5 py-1 rounded-full"
+              style={{ background: c.bg, border: `1px solid ${c.border}`, color: c.accent }}
+            >
+              {TYPE_LABELS[task.task_type] || task.task_type}
+              {task.is_personalised && ' · For you'}
+            </span>
+          </div>
+          <span
+            className="text-[10px] font-semibold px-2.5 py-1 rounded-full"
+            style={isToday
+              ? { background: 'rgba(29,158,117,0.12)', border: '1px solid rgba(29,158,117,0.25)', color: '#1D9E75' }
+              : { background: 'rgba(201,149,42,0.1)',  border: '1px solid rgba(201,149,42,0.22)', color: '#C9952A' }}
+          >
+            {isToday ? 'Complete today' : "Tomorrow's task"}
+          </span>
+        </div>
+
+        {/* Title */}
+        <h2 className="text-2xl font-extrabold text-white leading-tight mb-3">
+          {task.task_title}
+        </h2>
+
+        {/* Description */}
+        <p className="text-sm leading-relaxed mb-8" style={{ color: 'rgba(255,255,255,0.45)' }}>
+          {task.task_description}
+        </p>
+
+        {/* Action */}
+        {isToday ? (
           <button
-            key={task.id}
-            onClick={() => toggleTask(task.id, task.completed)}
-            className="w-full text-left rounded-2xl p-4 transition-all duration-200 hover:scale-[1.005] active:scale-[0.998]"
+            onClick={completeTask}
+            className="w-full py-4 rounded-2xl text-sm font-bold transition-all duration-200 hover:scale-[1.01] active:scale-[0.99]"
             style={{
-              background: task.completed
-                ? 'linear-gradient(145deg, rgba(29,158,117,0.08) 0%, rgba(29,158,117,0.03) 100%)'
-                : 'linear-gradient(145deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%)',
-              border: task.completed
-                ? '1px solid rgba(29,158,117,0.2)'
-                : '1px solid rgba(255,255,255,0.07)',
+              background: `linear-gradient(135deg, ${c.accent}25, ${c.accent}12)`,
+              border: `1px solid ${c.border}`,
+              color: c.accent,
             }}
           >
-            <div className="flex items-start gap-3.5">
-              {/* Checkbox */}
-              <div className="mt-0.5 flex-shrink-0">
-                {task.completed ? (
-                  <CheckCircle2 size={20} style={{ color: '#1D9E75' }} />
-                ) : (
-                  <Circle size={20} style={{ color: 'rgba(255,255,255,0.2)' }} />
-                )}
-              </div>
-
-              {/* Content */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-sm leading-none">{TYPE_ICONS[task.task_type] || '⭐'}</span>
-                  <span
-                    className="text-[9px] font-bold tracking-widest uppercase"
-                    style={{
-                      color: task.task_type === 'prayer' || task.task_type === 'quran'
-                        ? 'rgba(29,158,117,0.6)'
-                        : 'rgba(201,149,42,0.6)',
-                    }}
-                  >
-                    {TYPE_LABELS[task.task_type] || task.task_type}
-                    {task.is_personalised && ' · For you'}
-                  </span>
-                </div>
-
-                <p
-                  className="font-semibold text-sm leading-snug mb-1"
-                  style={{
-                    color: task.completed ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.88)',
-                    textDecoration: task.completed ? 'line-through' : 'none',
-                  }}
-                >
-                  {task.task_title}
-                </p>
-
-                <p
-                  className="text-xs leading-relaxed"
-                  style={{ color: task.completed ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.35)' }}
-                >
-                  {task.task_description}
-                </p>
-              </div>
-            </div>
+            I did it — tick it off ✓
           </button>
-        ))}
+        ) : (
+          <div
+            className="w-full py-4 rounded-2xl text-center text-sm font-semibold"
+            style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.2)' }}
+          >
+            Ready to complete tomorrow
+          </div>
+        )}
       </div>
 
-      {/* Footer note */}
-      <p className="text-center text-xs mt-8 pb-2" style={{ color: 'rgba(255,255,255,0.1)' }}>
-        New tasks are generated automatically when this week expires.
-      </p>
+      {/* Trophy shelf link for zero-trophy state */}
+      {trophyCount === 0 && (
+        <button
+          onClick={() => setShowShelf(true)}
+          className="w-full mt-4 py-3 text-center text-xs font-semibold rounded-2xl transition-all"
+          style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.18)' }}
+        >
+          🏆 Trophy Shelf — earn your first one by completing this task
+        </button>
+      )}
     </div>
   );
 }

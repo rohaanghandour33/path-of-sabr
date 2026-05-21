@@ -243,7 +243,6 @@ function AILiveMessage({ streamText, isStreaming }) {
   const [phraseIdx, setPhraseIdx] = useState(0);
   const isThinking = !streamText;
 
-  // Cycle phrases — interval lives here so it never resets across phase changes
   useEffect(() => {
     if (!isThinking) return;
     const iv = setInterval(() => {
@@ -276,15 +275,15 @@ function AILiveMessage({ streamText, isStreaming }) {
           to   { opacity: 1; transform: translateY(0); }
         }
       `}</style>
-      <div className="flex justify-start mb-5 gap-3">
+      <div className="flex justify-start items-end mb-3 gap-2">
 
-        {/* Avatar — orbiting star only during thinking */}
-        <div className="relative flex-shrink-0 mt-0.5" style={{ width: 28, height: 28 }}>
+        {/* Avatar */}
+        <div className="relative flex-shrink-0" style={{ width: 28, height: 28 }}>
           <div
             className="w-7 h-7 rounded-full flex items-center justify-center"
             style={{
-              background: 'rgba(201,149,42,0.12)',
-              border: '1px solid rgba(201,149,42,0.25)',
+              background: 'rgba(201,149,42,0.15)',
+              border: '1px solid rgba(201,149,42,0.3)',
               animation: isThinking ? 'hubPulse 2s ease-in-out infinite' : 'none',
             }}
           >
@@ -302,23 +301,31 @@ function AILiveMessage({ streamText, isStreaming }) {
           )}
         </div>
 
-        {/* Content — thinking phrases OR streaming text */}
-        <div className="flex-1 max-w-[82%]">
+        {/* Gold bubble */}
+        <div
+          className="max-w-[78%] px-4 py-3 text-sm leading-relaxed"
+          style={{
+            background: 'linear-gradient(135deg, rgba(201,149,42,0.14) 0%, rgba(201,149,42,0.07) 100%)',
+            border: '1px solid rgba(201,149,42,0.28)',
+            borderRadius: '18px 18px 18px 4px',
+            color: 'rgba(255,255,255,0.88)',
+            boxShadow: '0 2px 12px rgba(201,149,42,0.08)',
+          }}
+        >
           {isThinking ? (
-            <div className="flex items-center gap-1.5 mt-1">
-              {/* key swap triggers phraseIn animation on every word change */}
+            <div className="flex items-center gap-1.5">
               <span
                 key={phraseIdx}
                 className="text-sm"
-                style={{ color: 'rgba(255,255,255,0.4)', animation: 'phraseIn 0.35s ease forwards' }}
+                style={{ color: 'rgba(201,149,42,0.7)', animation: 'phraseIn 0.35s ease forwards' }}
               >
                 {THINKING_PHRASES[phraseIdx]}
               </span>
-              <span className="flex gap-0.5">
+              <span className="flex gap-1">
                 {[0,1,2].map(i => (
                   <span
                     key={i}
-                    className="w-1 h-1 rounded-full animate-bounce"
+                    className="w-1.5 h-1.5 rounded-full animate-bounce"
                     style={{ background: 'rgba(201,149,42,0.55)', animationDelay: `${i * 0.18}s` }}
                   />
                 ))}
@@ -326,12 +333,13 @@ function AILiveMessage({ streamText, isStreaming }) {
             </div>
           ) : (
             paragraphs.map((p, i) => (
-              <p key={i} className="text-sm leading-relaxed mb-3 last:mb-0" style={{ color: 'rgba(255,255,255,0.85)' }}>
+              <p key={i} className="mb-2 last:mb-0">
                 {p}
                 {isStreaming && i === paragraphs.length - 1 && (
                   <span className="inline-flex gap-0.5 ml-1 align-middle">
                     {[0,1,2].map(j => (
-                      <span key={j} className="w-1 h-1 rounded-full bg-white/40 animate-bounce" style={{ animationDelay: `${j * 0.15}s` }} />
+                      <span key={j} className="w-1 h-1 rounded-full animate-bounce"
+                        style={{ background: 'rgba(201,149,42,0.5)', animationDelay: `${j * 0.15}s` }} />
                     ))}
                   </span>
                 )}
@@ -348,17 +356,22 @@ function AILiveMessage({ streamText, isStreaming }) {
 function Bubble({ role, content, isStreaming }) {
   const isUser = role === 'user';
 
-  // Split AI text into paragraphs on double newlines or single newlines
   const paragraphs = !isUser
     ? content.split(/\n\n+/).flatMap(p => p.split(/\n/)).filter(p => p.trim())
     : null;
 
   if (isUser) {
     return (
-      <div className="flex justify-end mb-4">
+      <div className="flex justify-end items-end mb-3 gap-2">
         <div
-          className="max-w-[72%] rounded-2xl rounded-tr-sm px-4 py-3 text-sm leading-relaxed"
-          style={{ background: 'rgba(29,158,117,0.22)', border: '1px solid rgba(29,158,117,0.3)', color: 'rgba(255,255,255,0.92)' }}
+          className="max-w-[78%] px-4 py-3 text-sm leading-relaxed"
+          style={{
+            background: 'linear-gradient(135deg, rgba(29,158,117,0.32) 0%, rgba(29,158,117,0.18) 100%)',
+            border: '1px solid rgba(29,158,117,0.4)',
+            borderRadius: '18px 18px 4px 18px',
+            color: 'rgba(255,255,255,0.95)',
+            boxShadow: '0 2px 12px rgba(29,158,117,0.12)',
+          }}
         >
           {content}
         </div>
@@ -366,26 +379,37 @@ function Bubble({ role, content, isStreaming }) {
     );
   }
 
-  // AI message — no bubble, just avatar + flowing paragraphs (Claude-style)
+  // AI message — gold bubble with avatar
   return (
-    <div className="flex justify-start mb-5 gap-3">
+    <div className="flex justify-start items-end mb-3 gap-2">
+      {/* Avatar */}
       <div
-        className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
-        style={{ background: 'rgba(201,149,42,0.12)', border: '1px solid rgba(201,149,42,0.2)' }}
+        className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
+        style={{ background: 'rgba(201,149,42,0.15)', border: '1px solid rgba(201,149,42,0.3)' }}
       >
         <MoonStarSmall />
       </div>
-      <div className="flex-1 max-w-[82%]">
+      {/* Gold bubble */}
+      <div
+        className="max-w-[78%] px-4 py-3 text-sm leading-relaxed"
+        style={{
+          background: 'linear-gradient(135deg, rgba(201,149,42,0.14) 0%, rgba(201,149,42,0.07) 100%)',
+          border: '1px solid rgba(201,149,42,0.28)',
+          borderRadius: '18px 18px 18px 4px',
+          color: 'rgba(255,255,255,0.88)',
+          boxShadow: '0 2px 12px rgba(201,149,42,0.08)',
+        }}
+      >
         {paragraphs.map((p, i) => (
-          <p key={i} className="text-sm leading-relaxed mb-3 last:mb-0" style={{ color: 'rgba(255,255,255,0.85)' }}>
+          <p key={i} className="mb-2 last:mb-0">
             {p}
             {isStreaming && i === paragraphs.length - 1 && (
               <span className="inline-flex gap-0.5 ml-1 align-middle">
                 {[0, 1, 2].map((j) => (
                   <span
                     key={j}
-                    className="w-1 h-1 rounded-full bg-white/40 animate-bounce"
-                    style={{ animationDelay: `${j * 0.15}s` }}
+                    className="w-1 h-1 rounded-full animate-bounce"
+                    style={{ background: 'rgba(201,149,42,0.5)', animationDelay: `${j * 0.15}s` }}
                   />
                 ))}
               </span>
@@ -411,7 +435,7 @@ function PrayerDot({ status, label }) {
 }
 
 // ─── Main component ───────────────────────────────────────────────────────────
-export default function Companion({ userId, user }) {
+export default function Companion({ userId, user, embedded = false }) {
   const [messages, setMessages]       = useState([]);
   const [input, setInput]             = useState('');
   const [responding, setResponding]   = useState(false);
@@ -639,13 +663,13 @@ export default function Companion({ userId, user }) {
 
   return (
     <div
-      style={{ height: '100dvh', background: '#020c07', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
+      style={{ height: embedded ? '100%' : '100dvh', background: '#020c07', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
     >
       {/* ════════════════════════════════════════════════════════════════════
-          MOBILE HEADER (hidden on desktop — sidebar replaces it)
+          MOBILE HEADER — hidden when embedded (Dashboard header takes over)
           ════════════════════════════════════════════════════════════════════ */}
       <div
-        className="lg:hidden flex-shrink-0 flex items-center justify-between px-4 pt-5 pb-4 border-b"
+        className={`${embedded ? 'hidden' : 'lg:hidden'} flex-shrink-0 flex items-center justify-between px-4 pt-5 pb-4 border-b`}
         style={{ borderColor: 'rgba(255,255,255,0.06)', background: '#020c07' }}
       >
         <div className="flex items-center gap-3">
@@ -879,23 +903,30 @@ export default function Companion({ userId, user }) {
               </div>
             )}
 
-            {/* Bubbles */}
-            {messages.map((m) => (
-              <Bubble key={m.id} role={m.role} content={m.content} />
-            ))}
+            {/* Bubbles — add a gap when sender changes (like iMessage grouping) */}
+            {messages.map((m, idx) => {
+              const prevRole = idx > 0 ? messages[idx - 1].role : null;
+              const senderChanged = prevRole !== m.role;
+              return (
+                <div key={m.id} className={senderChanged && idx > 0 ? 'mt-4' : ''}>
+                  <Bubble role={m.role} content={m.content} />
+                </div>
+              );
+            })}
 
             {/* Single component — mounts once on send, unmounts once response is done */}
             {responding && (
-              <AILiveMessage streamText={streamText} isStreaming={!!streamText} />
+              <div className={messages.length > 0 && messages[messages.length - 1]?.role === 'user' ? 'mt-4' : ''}>
+                <AILiveMessage streamText={streamText} isStreaming={!!streamText} />
+              </div>
             )}
 
             <div ref={messagesEndRef} />
           </div>
 
           {/* ── Input bar ─────────────────────────────────────────────── */}
-          {/* pb-[72px] on mobile clears the fixed BottomNav; lg:pb-4 on desktop */}
           <div
-            className="flex-shrink-0 px-4 lg:px-8 pt-3 pb-safe-nav border-t"
+            className="flex-shrink-0 px-4 lg:px-8 pt-3 pb-4 border-t"
             style={{ borderColor: 'rgba(255,255,255,0.06)' }}
           >
             {atLimit ? (
