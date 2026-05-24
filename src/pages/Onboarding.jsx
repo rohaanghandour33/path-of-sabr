@@ -190,39 +190,98 @@ const QUESTIONS = [
   },
 ];
 
-// ── Progress bar ─────────────────────────────────────────────────────────────
+// ── Question emoji map ────────────────────────────────────────────────────────
+const Q_EMOJI = {
+  q1: '🪞', q2: '🕌', q3: '📖', q4: '🤲', q5: '💚',
+  q6: '🧱', q7: '🌙', q8: '👥', q9: '💭', q10: '🔄',
+  q11: '⏱️', q12: '📅', q13: '🌍', q14: '👋', q15: '🏙️',
+  q16: '✨', q17: '💪', q18: '🌱', q19: '🎯', q20: '🤲',
+};
+
+// ── Card style helper ─────────────────────────────────────────────────────────
+function getCardStyle(selected, hovered) {
+  if (selected) return {
+    background: '#0a2e22',
+    borderTop: '1px solid rgba(29,158,117,0.3)',
+    borderRight: '1px solid rgba(29,158,117,0.3)',
+    borderBottom: '1px solid rgba(29,158,117,0.3)',
+    borderLeft: '3px solid #1D9E75',
+    borderRadius: '14px',
+    boxShadow: '-3px 0 18px rgba(29,158,117,0.18)',
+  };
+  if (hovered) return {
+    background: 'rgba(29,158,117,0.06)',
+    borderTop: '1px solid rgba(255,255,255,0.09)',
+    borderRight: '1px solid rgba(255,255,255,0.09)',
+    borderBottom: '1px solid rgba(255,255,255,0.09)',
+    borderLeft: '3px solid rgba(29,158,117,0.65)',
+    borderRadius: '14px',
+    boxShadow: '-2px 0 12px rgba(29,158,117,0.12)',
+  };
+  return {
+    background: 'rgba(255,255,255,0.03)',
+    borderTop: '1px solid rgba(255,255,255,0.06)',
+    borderRight: '1px solid rgba(255,255,255,0.06)',
+    borderBottom: '1px solid rgba(255,255,255,0.06)',
+    borderLeft: '3px solid rgba(29,158,117,0.28)',
+    borderRadius: '14px',
+  };
+}
+
+// ── Progress bar ──────────────────────────────────────────────────────────────
 function ProgressBar({ step, onBack }) {
   const pct = Math.round(((step + 1) / 20) * 100);
   const sectionIdx = Math.floor(step / 5);
   const questionInSection = (step % 5) + 1;
+
   return (
-    <div className="px-5 pt-12 pb-4">
-      {/* Back button row */}
-      <div className="mb-3 h-6 flex items-center">
+    <div className="px-5 pt-10 pb-5">
+      {/* Back button */}
+      <div className="mb-5 h-6 flex items-center">
         {step > 0 && (
           <button
             onClick={onBack}
-            className="flex items-center gap-1 text-xs font-medium transition-opacity hover:opacity-70 active:opacity-50"
-            style={{ color: 'rgba(255,255,255,0.35)' }}
+            className="flex items-center gap-1.5 text-xs font-medium transition-opacity hover:opacity-70 active:opacity-50"
+            style={{ color: 'rgba(255,255,255,0.3)' }}
           >
             <ChevronLeft size={14} strokeWidth={2} />
             Back
           </button>
         )}
       </div>
-      <div className="flex items-center justify-between mb-2">
-        <div>
-          <p className="text-[10px] font-bold tracking-widest uppercase mb-0.5" style={{ color: 'rgba(201,149,42,0.75)' }}>
-            Section {sectionIdx + 1} of 4 — {SECTIONS[sectionIdx].label}
-          </p>
-          <p className="text-[11px] text-white/30">Question {questionInSection} of 5</p>
+
+      {/* Section header */}
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2.5">
+          <span style={{ color: 'rgba(201,149,42,0.55)', fontSize: '11px' }}>✦</span>
+          <div className="h-px w-5 rounded-full" style={{ background: 'rgba(201,149,42,0.3)' }} />
+          <div>
+            <p
+              className="text-sm font-bold tracking-wider uppercase leading-tight"
+              style={{ color: '#C9952A' }}
+            >
+              Section {sectionIdx + 1} of 4 — {SECTIONS[sectionIdx].label}
+            </p>
+            <p className="text-[11px] mt-0.5" style={{ color: 'rgba(255,255,255,0.25)' }}>
+              Question {questionInSection} of 5
+            </p>
+          </div>
         </div>
-        <span className="text-xs font-semibold" style={{ color: '#C9952A' }}>{pct}%</span>
+        <span className="text-sm font-bold tabular-nums" style={{ color: '#C9952A' }}>{pct}%</span>
       </div>
-      <div className="h-1 rounded-full bg-white/10 overflow-hidden">
+
+      {/* Progress bar — 6px, teal fill with glow */}
+      <div
+        className="rounded-full overflow-hidden"
+        style={{ height: '6px', background: 'rgba(255,255,255,0.07)' }}
+      >
         <div
           className="h-full rounded-full transition-all duration-500"
-          style={{ width: `${pct}%`, background: '#C9952A' }}
+          style={{
+            width: `${pct}%`,
+            background: '#1D9E75',
+            boxShadow: '0 0 10px rgba(29,158,117,0.75)',
+          }}
         />
       </div>
     </div>
@@ -231,33 +290,50 @@ function ProgressBar({ step, onBack }) {
 
 // ── Single select ─────────────────────────────────────────────────────────────
 function SingleSelect({ options, value, onChange }) {
+  const [hovered, setHovered] = useState(null);
   return (
     <div className="space-y-3">
-      {options.map((opt) => (
-        <button
-          key={opt}
-          onClick={() => onChange(opt)}
-          className="w-full text-left px-5 py-4 rounded-2xl border transition-colors text-sm leading-snug"
-          style={
-            value === opt
-              ? { background: 'rgba(201,149,42,0.12)', borderColor: '#C9952A', color: '#C9952A' }
-              : { background: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.7)' }
-          }
-        >
-          {opt}
-        </button>
-      ))}
+      {options.map((opt) => {
+        const selected = value === opt;
+        return (
+          <button
+            key={opt}
+            onClick={() => onChange(opt)}
+            onMouseEnter={() => setHovered(opt)}
+            onMouseLeave={() => setHovered(null)}
+            className="w-full text-left px-5 py-4 transition-all duration-150 flex items-center justify-between gap-4"
+            style={getCardStyle(selected, hovered === opt)}
+          >
+            <span
+              className="text-sm leading-snug font-medium"
+              style={{ color: selected ? '#f0ede6' : '#c4d4cc' }}
+            >
+              {opt}
+            </span>
+            {selected && (
+              <div
+                className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center"
+                style={{ background: '#1D9E75', boxShadow: '0 0 8px rgba(29,158,117,0.5)' }}
+              >
+                <Check size={11} strokeWidth={3} style={{ color: '#020c07' }} />
+              </div>
+            )}
+          </button>
+        );
+      })}
     </div>
   );
 }
 
 // ── Multi select ──────────────────────────────────────────────────────────────
 function MultiSelect({ options, value = [], onChange, maxSelect }) {
+  const [hovered, setHovered] = useState(null);
+
   const toggle = (opt) => {
     if (value.includes(opt)) {
       onChange(value.filter((v) => v !== opt));
     } else {
-      if (maxSelect && value.length >= maxSelect) return; // at cap — ignore tap
+      if (maxSelect && value.length >= maxSelect) return;
       onChange([...value, opt]);
     }
   };
@@ -271,25 +347,29 @@ function MultiSelect({ options, value = [], onChange, maxSelect }) {
           <button
             key={opt}
             onClick={() => toggle(opt)}
+            onMouseEnter={() => !atCap && setHovered(opt)}
+            onMouseLeave={() => setHovered(null)}
             disabled={atCap}
-            className="w-full text-left px-5 py-4 rounded-2xl border transition-colors text-sm leading-snug flex items-start gap-3 disabled:opacity-35 disabled:cursor-default"
-            style={
-              selected
-                ? { background: 'rgba(201,149,42,0.12)', borderColor: '#C9952A', color: '#C9952A' }
-                : { background: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.7)' }
-            }
+            className="w-full text-left px-5 py-4 transition-all duration-150 flex items-center gap-3 disabled:opacity-30 disabled:cursor-default"
+            style={getCardStyle(selected, hovered === opt)}
           >
+            {/* Checkbox */}
             <div
-              className="mt-0.5 w-5 h-5 rounded flex-shrink-0 flex items-center justify-center border transition-colors"
+              className="flex-shrink-0 w-5 h-5 rounded flex items-center justify-center transition-all"
               style={
                 selected
-                  ? { background: '#C9952A', borderColor: '#C9952A' }
-                  : { borderColor: 'rgba(255,255,255,0.25)' }
+                  ? { background: '#1D9E75', border: '1.5px solid #1D9E75', boxShadow: '0 0 8px rgba(29,158,117,0.4)' }
+                  : { border: '1.5px solid rgba(255,255,255,0.2)', background: 'transparent' }
               }
             >
-              {selected && <Check size={11} strokeWidth={3} className="text-white" />}
+              {selected && <Check size={11} strokeWidth={3} style={{ color: '#020c07' }} />}
             </div>
-            <span>{opt}</span>
+            <span
+              className="text-sm leading-snug font-medium"
+              style={{ color: selected ? '#f0ede6' : '#c4d4cc' }}
+            >
+              {opt}
+            </span>
           </button>
         );
       })}
@@ -363,7 +443,7 @@ export default function Onboarding() {
       <div className="min-h-screen flex items-center justify-center" style={{ background: '#020c07' }}>
         <div
           className="w-8 h-8 border-2 rounded-full animate-spin"
-          style={{ borderColor: '#C9952A', borderTopColor: 'transparent' }}
+          style={{ borderColor: 'rgba(29,158,117,0.3)', borderTopColor: '#1D9E75' }}
         />
       </div>
     );
@@ -377,19 +457,28 @@ export default function Onboarding() {
         style={{ background: '#020c07' }}
       >
         <div
-          className="w-16 h-16 rounded-full flex items-center justify-center mb-6"
-          style={{ background: 'rgba(201,149,42,0.15)' }}
+          className="fixed inset-0 pointer-events-none"
+          style={{ background: 'radial-gradient(ellipse 70% 50% at 50% 50%, rgba(8,80,65,0.2) 0%, transparent 70%)' }}
+        />
+        <div
+          className="w-16 h-16 rounded-full flex items-center justify-center mb-6 relative"
+          style={{ background: 'rgba(29,158,117,0.15)', boxShadow: '0 0 40px rgba(29,158,117,0.2)' }}
         >
-          <Check size={28} style={{ color: '#C9952A' }} />
+          <Check size={28} style={{ color: '#1D9E75' }} />
         </div>
         <p className="text-white/50 text-xs font-bold tracking-widest uppercase mb-3">All done</p>
         <h1 className="text-2xl font-bold text-white mb-2">Jazakallah khayrun.</h1>
         <p className="text-white/50 text-base mb-10">Your companion is ready for you.</p>
         <button
           onClick={() => navigate('/dashboard')}
-          className="btn-primary text-white font-semibold px-10 py-4 rounded-2xl"
+          className="font-bold px-10 py-4 rounded-2xl text-sm transition-all duration-200 hover:opacity-90 active:scale-[0.98]"
+          style={{
+            background: '#1D9E75',
+            color: '#020c07',
+            boxShadow: '0 4px 24px rgba(29,158,117,0.4)',
+          }}
         >
-          Enter Path of Sabr
+          Enter Path of Sabr →
         </button>
       </div>
     );
@@ -397,67 +486,122 @@ export default function Onboarding() {
 
   // ── Survey ────────────────────────────────────────────────────────────────
   const q = QUESTIONS[step];
+  const ready = canContinue();
 
   return (
     <div className="fixed inset-0 flex flex-col" style={{ background: '#020c07' }}>
 
+      {/* Ambient background glow */}
+      <div
+        className="fixed inset-0 pointer-events-none"
+        style={{
+          background: 'radial-gradient(ellipse 85% 55% at 50% 58%, rgba(8,80,65,0.22) 0%, transparent 70%)',
+        }}
+      />
+
       {/* Fixed progress bar */}
-      <div className="flex-shrink-0">
-        <ProgressBar step={step} onBack={handleBack} />
+      <div className="flex-shrink-0 relative">
+        <div className="max-w-[600px] mx-auto w-full">
+          <ProgressBar step={step} onBack={handleBack} />
+        </div>
       </div>
 
       {/* Scrollable content */}
-      <div className="flex-1 overflow-y-auto px-5 pt-4 pb-32">
-        <h2 className="text-xl font-bold text-white leading-snug" style={{ marginBottom: q.hint ? '8px' : '24px' }}>
-          {q.question}
-        </h2>
+      <div className="flex-1 overflow-y-auto pb-36">
+        <div className="max-w-[600px] mx-auto w-full px-5 pt-6">
 
-        {q.hint && (
-          <p className="text-xs mb-5" style={{ color: 'rgba(255,255,255,0.35)' }}>{q.hint}</p>
-        )}
+          {/* Question */}
+          <div className="flex items-start gap-3 mb-7">
+            <span className="text-2xl flex-shrink-0 mt-0.5 leading-none">{Q_EMOJI[q.id]}</span>
+            <h2
+              className="text-[1.5rem] font-bold leading-snug tracking-tight"
+              style={{ color: '#f0ede6', marginBottom: q.hint ? '0' : undefined }}
+            >
+              {q.question}
+            </h2>
+          </div>
 
-        {q.type === 'single' && (
-          <SingleSelect
-            options={q.options}
-            value={responses[q.id]}
-            onChange={(v) => update(q.id, v)}
-          />
-        )}
+          {q.hint && (
+            <p className="text-xs mb-5 ml-9" style={{ color: 'rgba(255,255,255,0.3)' }}>{q.hint}</p>
+          )}
 
-        {q.type === 'multi' && (
-          <MultiSelect
-            options={q.options}
-            value={responses[q.id] || []}
-            onChange={(v) => update(q.id, v)}
-            maxSelect={q.maxSelect}
-          />
-        )}
+          {q.type === 'single' && (
+            <SingleSelect
+              options={q.options}
+              value={responses[q.id]}
+              onChange={(v) => update(q.id, v)}
+            />
+          )}
 
-        {q.type === 'text' && (
-          <textarea
-            value={responses[q.id]}
-            onChange={(e) => update(q.id, e.target.value)}
-            placeholder={q.placeholder}
-            rows={5}
-            className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-4 text-white placeholder-white/25 text-sm resize-none focus:outline-none transition-colors"
-            onFocus={(e) => (e.target.style.borderColor = 'rgba(201,149,42,0.5)')}
-            onBlur={(e) => (e.target.style.borderColor = 'rgba(255,255,255,0.1)')}
-          />
-        )}
+          {q.type === 'multi' && (
+            <MultiSelect
+              options={q.options}
+              value={responses[q.id] || []}
+              onChange={(v) => update(q.id, v)}
+              maxSelect={q.maxSelect}
+            />
+          )}
+
+          {q.type === 'text' && (
+            <textarea
+              value={responses[q.id]}
+              onChange={(e) => update(q.id, e.target.value)}
+              placeholder={q.placeholder}
+              rows={5}
+              className="w-full rounded-2xl px-5 py-4 text-sm resize-none focus:outline-none transition-all duration-200"
+              style={{
+                background: 'rgba(255,255,255,0.03)',
+                borderTop: '1px solid rgba(255,255,255,0.07)',
+                borderRight: '1px solid rgba(255,255,255,0.07)',
+                borderBottom: '1px solid rgba(255,255,255,0.07)',
+                borderLeft: '3px solid rgba(29,158,117,0.3)',
+                borderRadius: '14px',
+                color: '#f0ede6',
+              }}
+              onFocus={(e) => {
+                e.target.style.borderLeftColor = '#1D9E75';
+                e.target.style.background = 'rgba(29,158,117,0.04)';
+                e.target.style.boxShadow = '-3px 0 16px rgba(29,158,117,0.12)';
+              }}
+              onBlur={(e) => {
+                e.target.style.borderLeftColor = 'rgba(29,158,117,0.3)';
+                e.target.style.background = 'rgba(255,255,255,0.03)';
+                e.target.style.boxShadow = 'none';
+              }}
+            />
+          )}
+        </div>
       </div>
 
       {/* Fixed bottom button */}
       <div
-        className="flex-shrink-0 px-5 pb-10 pt-4"
-        style={{ background: 'linear-gradient(to top, #020c07 70%, transparent)' }}
+        className="flex-shrink-0 pt-4 pb-10 relative"
+        style={{ background: 'linear-gradient(to top, #020c07 65%, transparent)' }}
       >
-        <button
-          onClick={handleNext}
-          disabled={!canContinue() || saving}
-          className="btn-primary w-full py-4 rounded-2xl text-white font-semibold text-sm disabled:opacity-30 disabled:cursor-not-allowed"
-        >
-          {saving ? 'Saving...' : step === 19 ? 'Complete' : 'Continue'}
-        </button>
+        <div className="max-w-[600px] mx-auto w-full px-5">
+          <button
+            onClick={handleNext}
+            disabled={!ready || saving}
+            className="w-full py-4 rounded-2xl font-bold text-sm transition-all duration-200 disabled:cursor-not-allowed active:scale-[0.99]"
+            style={
+              ready && !saving
+                ? {
+                    background: '#1D9E75',
+                    color: '#020c07',
+                    boxShadow: '0 4px 24px rgba(29,158,117,0.4)',
+                    opacity: 1,
+                  }
+                : {
+                    background: 'rgba(255,255,255,0.05)',
+                    border: '1px solid rgba(255,255,255,0.07)',
+                    color: 'rgba(255,255,255,0.2)',
+                    opacity: 1,
+                  }
+            }
+          >
+            {saving ? 'Saving...' : step === 19 ? 'Complete →' : 'Continue →'}
+          </button>
+        </div>
       </div>
     </div>
   );
