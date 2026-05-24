@@ -30,7 +30,7 @@ export default function Signup() {
   };
 
   // ── COMING SOON — set to false to re-enable signup form ──────────────────
-  const COMING_SOON = true;
+  const COMING_SOON = false;
 
   if (COMING_SOON) {
     return (
