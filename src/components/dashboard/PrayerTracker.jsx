@@ -66,11 +66,8 @@ const DHIKR_ITEMS = [
   { field: 'morning_adhkar', label: 'Morning Adhkar', sub: 'After Fajr',        icon: '📿' },
   { field: 'evening_adhkar', label: 'Evening Adhkar', sub: 'After Asr/Maghrib', icon: '🌅' },
 ];
-const WITR_OPTIONS = [1, 3, 5, 7, 9]; // odd rakat only
-
 const EXTRA_PRAYERS = [
-  { field: 'tahajjud', label: 'Tahajjud', sub: 'Night prayer', icon: '⭐' },
-  { field: 'duha',     label: 'Duha',     sub: '2–12 rakat',   icon: '☀️' },
+  { field: 'duha', label: 'Duha', sub: '2–12 rakat · mid-morning', icon: '☀️' },
 ];
 
 const CARD = {
@@ -291,8 +288,7 @@ export default function PrayerTracker({ userId, weekOffset = 0, customRange = nu
   const loggedCount  = PRAYER_KEYS.filter((k) => prayers[k]).length;
   const masjidCount  = PRAYER_KEYS.filter((k) => prayers[`${k}_masjid`]).length;
   const rawatib      = calcRawatib(prayers);
-  const witrRakat    = prayers.witr_rakat || 0;
-  const totalSunnah  = totalSunnahRakat(prayers) + witrRakat;
+  const totalSunnah  = totalSunnahRakat(prayers);
 
   return (
     <div className="rounded-3xl p-6 flex flex-col" style={CARD}>
@@ -470,54 +466,42 @@ export default function PrayerTracker({ userId, weekOffset = 0, customRange = nu
           })}
         </div>
 
-        {/* Witr — rakat selector */}
-        <div className="rounded-xl px-3 py-2.5 mb-2"
-          style={(prayers.witr_rakat || 0) > 0
-            ? { background: 'rgba(201,149,42,0.1)', border: '1px solid rgba(201,149,42,0.25)' }
+        {/* Tahajjud — dedicated card with hadith */}
+        <button
+          onClick={() => toggleField('tahajjud')}
+          className="w-full rounded-xl px-4 py-3 text-left transition-all duration-150 mb-2"
+          style={prayers['tahajjud']
+            ? { background: 'rgba(29,158,117,0.12)', border: '1px solid rgba(29,158,117,0.3)' }
             : { background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }
           }
         >
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-1.5">
-              <span className="text-sm leading-none">🌙</span>
-              <span className="text-[11px] font-bold" style={{ color: (prayers.witr_rakat || 0) > 0 ? '#C9952A' : 'rgba(255,255,255,0.4)' }}>
-                Witr
+          <div className="flex items-center justify-between mb-1.5">
+            <div className="flex items-center gap-2">
+              <span className="text-base leading-none">⭐</span>
+              <span
+                className="text-[12px] font-bold"
+                style={{ color: prayers['tahajjud'] ? '#1D9E75' : 'rgba(255,255,255,0.5)' }}
+              >
+                Tahajjud
               </span>
+              {prayers['tahajjud'] && (
+                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                  style={{ background: 'rgba(29,158,117,0.2)', color: '#1D9E75' }}>
+                  ✓ Prayed
+                </span>
+              )}
             </div>
-            <span className="text-[9px]" style={{ color: 'rgba(255,255,255,0.2)' }}>Best final prayer of the night</span>
+            <span className="text-[9px]" style={{ color: 'rgba(255,255,255,0.18)' }}>Optional · Night prayer</span>
           </div>
-          <div className="flex gap-1.5">
-            {/* None */}
-            <button
-              onClick={async () => { setPrayers(p => ({...p, witr_rakat: 0})); await supabase.from('prayers').upsert({ user_id: userId, date: today, witr_rakat: 0 }, { onConflict: 'user_id,date' }); onUpdate?.(); }}
-              className="flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all duration-150"
-              style={noneStyle((prayers.witr_rakat || 0) === 0)}
-            >—</button>
-            {WITR_OPTIONS.map((n) => {
-              const active = (prayers.witr_rakat || 0) === n;
-              return (
-                <button
-                  key={n}
-                  onClick={async () => {
-                    const nv = active ? 0 : n;
-                    setPrayers(p => ({...p, witr_rakat: nv}));
-                    await supabase.from('prayers').upsert({ user_id: userId, date: today, witr_rakat: nv }, { onConflict: 'user_id,date' });
-                    onUpdate?.();
-                  }}
-                  className="flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all duration-150"
-                  style={active
-                    ? { background: 'rgba(201,149,42,0.2)', border: '1px solid rgba(201,149,42,0.5)', color: '#C9952A', boxShadow: '0 0 10px rgba(201,149,42,0.18)' }
-                    : { background: 'rgba(201,149,42,0.04)', border: '1px solid rgba(201,149,42,0.14)', color: 'rgba(201,149,42,0.45)' }
-                  }
-                  title={n === 1 ? 'Minimum Witr' : n === 3 ? 'Most common — Prophet ﷺ often prayed 3' : `${n} rakat Witr`}
-                >{n}</button>
-              );
-            })}
-          </div>
-        </div>
+          <p className="text-[9px] leading-relaxed italic" style={{ color: 'rgba(255,255,255,0.22)' }}>
+            "In the last third of every night, Allah descends to the lowest heaven and asks:
+            'Who is calling upon Me that I may answer? Who is asking of Me that I may give?
+            Who is seeking forgiveness that I may forgive?'" — Bukhari & Muslim
+          </p>
+        </button>
 
-        {/* Extra prayers — 2 columns */}
-        <div className="grid grid-cols-2 gap-2">
+        {/* Duha + other extras */}
+        <div className="grid grid-cols-1 gap-2">
           {EXTRA_PRAYERS.map(({ field, label, sub, icon }) => {
             const on = !!prayers[field];
             return (
