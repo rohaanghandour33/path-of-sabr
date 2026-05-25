@@ -720,7 +720,7 @@ export default function Dashboard() {
             <div className="animate-fade-in-up delay-200 grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-5 items-stretch">
               <PrayerTracker    userId={user?.id} weekOffset={0} customRange={null} onUpdate={refreshStats} />
               <DailyCheckIn     userId={user?.id} weekOffset={0} customRange={null} onUpdate={refreshStats} />
-              <WeeklyPrayerRing userId={user?.id} />
+              <WeeklyPrayerRing userId={user?.id} refreshKey={statsRefreshKey} />
             </div>
 
             {/* ── Progress summary ── */}

@@ -14,9 +14,10 @@ const CARD = {
 const CX = 50, CY = 50, R = 38, SW = 7;
 const CIRC = 2 * Math.PI * R; // ≈ 238.76
 
-export default function WeeklyPrayerRing({ userId }) {
+export default function WeeklyPrayerRing({ userId, refreshKey = 0 }) {
   const [onTime, setOnTime] = useState(0);
   const [late, setLate]     = useState(0);
+  const [missed, setMissed] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -30,18 +31,20 @@ export default function WeeklyPrayerRing({ userId }) {
       .gte('date', start.toISOString().split('T')[0])
       .lte('date', today.toISOString().split('T')[0])
       .then(({ data }) => {
-        let ot = 0, lt = 0;
+        let ot = 0, lt = 0, ms = 0;
         (data || []).forEach((r) => {
           PRAYER_KEYS.forEach((p) => {
             if (r[p] === 'on_time') ot++;
             else if (r[p] === 'late') lt++;
+            else if (r[p] === 'missed') ms++;
           });
         });
         setOnTime(ot);
         setLate(lt);
+        setMissed(ms);
         setLoading(false);
       });
-  }, [userId]);
+  }, [userId, refreshKey]);
 
   if (loading) return null;
 
@@ -113,9 +116,9 @@ export default function WeeklyPrayerRing({ userId }) {
         {/* Stat row */}
         <div className="w-full grid grid-cols-3 gap-2 text-center">
           {[
-            { label: 'On time', value: onTime,                  color: '#1D9E75', bg: 'rgba(29,158,117,0.08)',  border: 'rgba(29,158,117,0.15)' },
-            { label: 'Late',    value: late,                    color: '#C9952A', bg: 'rgba(201,149,42,0.08)', border: 'rgba(201,149,42,0.15)' },
-            { label: 'Total',   value: TOTAL_POSSIBLE - onTime - late, color: 'rgba(255,255,255,0.3)', bg: 'rgba(255,255,255,0.03)', border: 'rgba(255,255,255,0.06)' },
+            { label: 'On time', value: onTime,  color: '#1D9E75',               bg: 'rgba(29,158,117,0.08)',  border: 'rgba(29,158,117,0.15)' },
+            { label: 'Late',    value: late,    color: '#C9952A',               bg: 'rgba(201,149,42,0.08)', border: 'rgba(201,149,42,0.15)' },
+            { label: 'Missed',  value: missed,  color: 'rgba(229,115,104,0.8)', bg: 'rgba(192,57,43,0.07)',  border: 'rgba(192,57,43,0.12)' },
           ].map(({ label, value, color, bg, border }) => (
             <div key={label} className="rounded-2xl py-3" style={{ background: bg, border: `1px solid ${border}` }}>
               <p className="text-lg font-extrabold leading-none" style={{ color }}>{value}</p>

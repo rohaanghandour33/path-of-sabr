@@ -6,7 +6,7 @@ const PRAYER_KEYS = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
 function calcPrayerDayStreak(prayerHistory) {
   const dateMap = {};
   prayerHistory.forEach((r) => {
-    dateMap[r.date] = PRAYER_KEYS.filter((k) => r[k]).length;
+    dateMap[r.date] = PRAYER_KEYS.filter((k) => r[k] === 'on_time' || r[k] === 'late').length;
   });
   let streak = 0;
   const today = new Date();
