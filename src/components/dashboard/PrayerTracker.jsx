@@ -15,7 +15,7 @@ const PRAYER_META = {
   fajr:    { icon: '🌙', bg: 'rgba(120,80,220,0.14)',  border: 'rgba(120,80,220,0.28)'  },
   dhuhr:   { icon: '☀️', bg: 'rgba(201,149,42,0.14)',  border: 'rgba(201,149,42,0.28)'  },
   asr:     { icon: '🌤️', bg: 'rgba(255,175,50,0.13)',  border: 'rgba(255,175,50,0.24)'  },
-  maghrib: { icon: '🌅', bg: 'rgba(220,100,65,0.13)',  border: 'rgba(220,100,65,0.24)'  },
+  maghrib: { icon: '🌇', bg: 'rgba(220,100,65,0.13)',  border: 'rgba(220,100,65,0.24)'  },
   isha:    { icon: '✨', bg: 'rgba(60,130,220,0.14)',   border: 'rgba(60,130,220,0.26)'  },
 };
 
