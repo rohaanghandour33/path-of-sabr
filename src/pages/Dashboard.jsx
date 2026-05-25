@@ -708,22 +708,32 @@ export default function Dashboard() {
               </button>
             </div>
 
-            {/* ── Today section header ── */}
-            <div className="animate-fade-in-up delay-200 flex items-center gap-4 mb-5">
-              <p className="text-[10px] font-bold tracking-[0.2em] uppercase flex-shrink-0" style={{ color: 'rgba(255,255,255,0.18)' }}>
-                Today's Dashboard
-              </p>
-              <div className="h-px flex-1" style={{ background: 'linear-gradient(to right, rgba(255,255,255,0.06), transparent)' }} />
+            {/* ══ SECTION: Salah ══ */}
+            <div className="animate-fade-in-up delay-200 mb-8">
+              <div className="flex items-center gap-3 mb-5">
+                <span style={{ color: 'rgba(29,158,117,0.5)', fontSize: '9px' }}>✦</span>
+                <p className="text-[10px] font-bold tracking-[0.2em] uppercase" style={{ color: 'rgba(255,255,255,0.18)' }}>Salah</p>
+                <div className="h-px flex-1" style={{ background: 'linear-gradient(to right, rgba(29,158,117,0.2), transparent)' }} />
+              </div>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-5 items-start">
+                <div className="lg:col-span-2">
+                  <PrayerTracker userId={user?.id} weekOffset={0} customRange={null} onUpdate={refreshStats} />
+                </div>
+                <WeeklyPrayerRing userId={user?.id} refreshKey={statsRefreshKey} />
+              </div>
             </div>
 
-            {/* ── Widget grid — always shows today ── */}
-            <div className="animate-fade-in-up delay-200 grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-5 items-stretch">
-              <PrayerTracker    userId={user?.id} weekOffset={0} customRange={null} onUpdate={refreshStats} />
-              <DailyCheckIn     userId={user?.id} weekOffset={0} customRange={null} onUpdate={refreshStats} />
-              <WeeklyPrayerRing userId={user?.id} refreshKey={statsRefreshKey} />
+            {/* ══ SECTION: Daily Reflection ══ */}
+            <div className="animate-fade-in-up delay-300 mb-8">
+              <div className="flex items-center gap-3 mb-5">
+                <span style={{ color: 'rgba(201,149,42,0.5)', fontSize: '9px' }}>✦</span>
+                <p className="text-[10px] font-bold tracking-[0.2em] uppercase" style={{ color: 'rgba(255,255,255,0.18)' }}>Daily Reflection</p>
+                <div className="h-px flex-1" style={{ background: 'linear-gradient(to right, rgba(201,149,42,0.2), transparent)' }} />
+              </div>
+              <DailyCheckIn userId={user?.id} weekOffset={0} customRange={null} onUpdate={refreshStats} />
             </div>
 
-            {/* ── Progress summary ── */}
+            {/* ══ SECTION: Your Progress ══ */}
             <div className="animate-fade-in-up delay-400">
               <HomeSummaryCards userId={user?.id} onViewTasks={() => handleTabChange('tasks')} refreshKey={statsRefreshKey} />
             </div>
