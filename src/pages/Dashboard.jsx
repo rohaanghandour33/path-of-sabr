@@ -729,13 +729,11 @@ export default function Dashboard() {
                 <div className="lg:col-span-2">
                   <PrayerTracker userId={user?.id} weekOffset={0} customRange={null} onUpdate={refreshStats} />
                 </div>
-                <WeeklyPrayerRing userId={user?.id} refreshKey={statsRefreshKey} />
+                <div className="flex flex-col gap-4">
+                  <WeeklyPrayerRing userId={user?.id} refreshKey={statsRefreshKey} />
+                  <HomeSummaryCards userId={user?.id} onViewTasks={() => handleTabChange('tasks')} refreshKey={statsRefreshKey} />
+                </div>
               </div>
-            </div>
-
-            {/* ══ SECTION: Your Progress ══ */}
-            <div className="animate-fade-in-up delay-400">
-              <HomeSummaryCards userId={user?.id} onViewTasks={() => handleTabChange('tasks')} refreshKey={statsRefreshKey} />
             </div>
 
           </>
