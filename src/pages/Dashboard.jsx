@@ -28,6 +28,23 @@ const GOLD_CARD = {
   boxShadow: '0 1px 0 rgba(201,149,42,0.06) inset, 0 20px 60px rgba(0,0,0,0.28)',
 };
 
+const DAILY_QUOTES = [
+  { text: "Indeed, with hardship comes ease.", ref: "Al-Inshirah 94:6" },
+  { text: "And Allah is with the patient.", ref: "Al-Baqarah 2:153" },
+  { text: "Verily, the remembrance of Allah is the greatest.", ref: "Al-Ankabut 29:45" },
+  { text: "Allah does not burden a soul beyond that it can bear.", ref: "Al-Baqarah 2:286" },
+  { text: "So remember Me; I will remember you.", ref: "Al-Baqarah 2:152" },
+  { text: "And He found you lost and guided you.", ref: "Ad-Duha 93:7" },
+  { text: "Your Lord has not taken leave of you, nor has He detested you.", ref: "Ad-Duha 93:3" },
+  { text: "Put your trust in Allah. Indeed, Allah loves those who trust in Him.", ref: "Al-Imran 3:159" },
+  { text: "He knows what is in every heart.", ref: "Al-Mulk 67:13" },
+  { text: "Whoever relies upon Allah — He is sufficient for him.", ref: "At-Talaq 65:3" },
+  { text: "Do not lose hope, nor be sad. You will surely be victorious if you are true believers.", ref: "Al-Imran 3:139" },
+  { text: "And when My servants ask you about Me — I am near.", ref: "Al-Baqarah 2:186" },
+  { text: "Every soul will taste death. Then to Us will you be returned.", ref: "Al-Ankabut 29:57" },
+  { text: "And it is He who created the night and the day and the sun and the moon.", ref: "Al-Anbiya 21:33" },
+];
+
 function fmtDate(d) { return d.toISOString().split('T')[0]; }
 
 function getWeekBounds(offset) {
@@ -413,6 +430,10 @@ export default function Dashboard() {
   const firstName = displayName.split(' ')[0];
   const navProps = { weekOffset, setWeekOffset, showRangePicker, setShowRangePicker, rangeInput, setRangeInput, appliedRange, setAppliedRange };
 
+  // Daily rotating ayah — changes each calendar day
+  const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0)) / 86400000);
+  const dailyQuote = DAILY_QUOTES[dayOfYear % DAILY_QUOTES.length];
+
   return (
     <div
       className="flex flex-col overflow-hidden"
@@ -546,53 +567,112 @@ export default function Dashboard() {
         {/* ── HOME ── */}
         {activeTab === 'home' && (
           <>
-            {/* Welcome hero */}
-            <div className="mt-10 mb-8 flex items-center justify-between gap-6">
-              {/* Left — greeting */}
-              <div>
-                <p className="text-xs font-bold tracking-[0.2em] uppercase mb-3" style={{ color: 'rgba(29,158,117,0.65)' }}>
+
+            {/* ── Hero ── */}
+            <div className="animate-fade-in-up mt-8 mb-10">
+
+              {/* Date pill */}
+              <div
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-8"
+                style={{ background: 'rgba(29,158,117,0.08)', border: '1px solid rgba(29,158,117,0.15)' }}
+              >
+                <span style={{ color: 'rgba(29,158,117,0.7)', fontSize: '9px' }}>✦</span>
+                <span className="text-xs font-semibold tracking-wide" style={{ color: 'rgba(29,158,117,0.85)' }}>
                   {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
-                </p>
-                <h1 className="text-3xl lg:text-4xl font-extrabold text-white leading-tight tracking-tight">
-                  Assalamu Alaykum,
-                </h1>
-                <h1 className="text-3xl lg:text-4xl font-extrabold leading-tight tracking-tight" style={{ color: '#C9952A' }}>
-                  {firstName}.
-                </h1>
-                <div className="flex items-center gap-3 mt-4">
-                  <div className="h-px w-12" style={{ background: 'linear-gradient(to right, rgba(201,149,42,0.5), transparent)' }} />
-                  <p className="text-xs" style={{ color: 'rgba(255,255,255,0.2)' }}>Your deen journey continues today</p>
-                </div>
+                </span>
               </div>
 
-              {/* Right — companion CTA */}
-              <button
-                onClick={() => handleTabChange('ai')}
-                className="hidden sm:flex flex-col items-center gap-2 px-8 py-5 rounded-3xl flex-shrink-0 transition-all duration-200 hover:scale-[1.03] active:scale-[0.97]"
+              {/* Greeting row */}
+              <div className="flex items-start justify-between gap-8 mb-8">
+                <div>
+                  <h1 className="text-[2.6rem] lg:text-[3.4rem] font-extrabold text-white leading-[1.05] tracking-tight">
+                    Assalamu Alaykum,
+                  </h1>
+                  <h1
+                    className="text-[2.6rem] lg:text-[3.4rem] font-extrabold leading-[1.05] tracking-tight mb-5"
+                    style={{ color: '#C9952A', textShadow: '0 0 60px rgba(201,149,42,0.3)' }}
+                  >
+                    {firstName}.
+                  </h1>
+                  <div className="flex items-center gap-3">
+                    <div className="h-px w-10 rounded-full" style={{ background: 'linear-gradient(to right, rgba(201,149,42,0.5), transparent)' }} />
+                    <p className="text-sm" style={{ color: 'rgba(255,255,255,0.2)' }}>Your deen journey continues today</p>
+                  </div>
+                </div>
+
+                {/* Desktop companion CTA */}
+                <button
+                  onClick={() => handleTabChange('ai')}
+                  className="hidden sm:flex flex-col items-center gap-2.5 px-7 py-6 rounded-3xl flex-shrink-0 transition-all duration-200 hover:scale-[1.04] active:scale-[0.97]"
+                  style={{
+                    background: 'linear-gradient(150deg, #C9952A 0%, #e8b84b 100%)',
+                    boxShadow: '0 0 50px rgba(201,149,42,0.4), 0 12px 32px rgba(0,0,0,0.5)',
+                  }}
+                >
+                  <span className="text-3xl">☽</span>
+                  <span className="text-sm font-extrabold tracking-wide text-center leading-snug" style={{ color: '#020c07' }}>
+                    Deen<br />Companion
+                  </span>
+                  <span className="text-[9px] font-bold tracking-[0.15em] uppercase" style={{ color: 'rgba(2,12,7,0.5)' }}>
+                    Talk now →
+                  </span>
+                </button>
+              </div>
+
+              {/* Daily ayah strip */}
+              <div
+                className="rounded-2xl px-5 py-4 mb-4"
                 style={{
-                  background: 'linear-gradient(135deg, #C9952A 0%, #e8b84b 100%)',
-                  boxShadow: '0 0 40px rgba(201,149,42,0.35), 0 8px 24px rgba(0,0,0,0.4)',
+                  background: 'linear-gradient(135deg, rgba(201,149,42,0.07) 0%, rgba(201,149,42,0.02) 100%)',
+                  border: '1px solid rgba(201,149,42,0.14)',
                 }}
               >
-                <span className="text-2xl">☽</span>
-                <span className="text-sm font-extrabold tracking-wide text-center leading-snug" style={{ color: '#020c07' }}>
-                  Meet Your<br />Deen Companion
-                </span>
-                <span className="text-[10px] font-bold tracking-widest uppercase" style={{ color: 'rgba(2,12,7,0.55)' }}>
-                  Talk now →
-                </span>
+                <p className="text-[9px] font-bold tracking-[0.2em] uppercase mb-2" style={{ color: 'rgba(201,149,42,0.5)' }}>
+                  ✦ Today's Reminder
+                </p>
+                <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.55)', fontStyle: 'italic' }}>
+                  "{dailyQuote.text}"
+                </p>
+                <p className="text-[10px] mt-2" style={{ color: 'rgba(201,149,42,0.45)' }}>
+                  — {dailyQuote.ref}
+                </p>
+              </div>
+
+              {/* Mobile companion CTA */}
+              <button
+                onClick={() => handleTabChange('ai')}
+                className="sm:hidden w-full py-4 rounded-2xl flex items-center justify-center gap-3 transition-all duration-200 active:scale-[0.98]"
+                style={{
+                  background: 'linear-gradient(135deg, rgba(201,149,42,0.12), rgba(201,149,42,0.05))',
+                  border: '1px solid rgba(201,149,42,0.22)',
+                }}
+              >
+                <span className="text-lg">☽</span>
+                <span className="text-sm font-bold" style={{ color: '#C9952A' }}>Open Deen Companion</span>
+                <span className="text-xs" style={{ color: 'rgba(201,149,42,0.5)' }}>→</span>
               </button>
             </div>
 
-            <NavBar {...navProps} />
+            {/* ── Today section header ── */}
+            <div className="animate-fade-in-up delay-200 flex items-center gap-4 mb-5">
+              <p className="text-[10px] font-bold tracking-[0.2em] uppercase flex-shrink-0" style={{ color: 'rgba(255,255,255,0.18)' }}>
+                Today's Dashboard
+              </p>
+              <div className="h-px flex-1" style={{ background: 'linear-gradient(to right, rgba(255,255,255,0.06), transparent)' }} />
+            </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-5 items-stretch">
-              <PrayerTracker    userId={user?.id} weekOffset={weekOffset} customRange={appliedRange} />
-              <DailyCheckIn     userId={user?.id} weekOffset={weekOffset} customRange={appliedRange} />
+            {/* ── Widget grid — always shows today ── */}
+            <div className="animate-fade-in-up delay-200 grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-5 items-stretch">
+              <PrayerTracker    userId={user?.id} weekOffset={0} customRange={null} />
+              <DailyCheckIn     userId={user?.id} weekOffset={0} customRange={null} />
               <WeeklyPrayerRing userId={user?.id} />
             </div>
 
-            <HomeSummaryCards userId={user?.id} onViewTasks={() => handleTabChange('tasks')} />
+            {/* ── Progress summary ── */}
+            <div className="animate-fade-in-up delay-400">
+              <HomeSummaryCards userId={user?.id} onViewTasks={() => handleTabChange('tasks')} />
+            </div>
+
           </>
         )}
 

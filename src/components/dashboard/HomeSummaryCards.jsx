@@ -3,23 +3,18 @@ import { supabase } from '../../lib/supabase';
 
 const PRAYER_KEYS = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
 
-// Consecutive days (going back from today) where user logged at least 3 prayers
 function calcPrayerDayStreak(prayerHistory) {
   const dateMap = {};
   prayerHistory.forEach((r) => {
     dateMap[r.date] = PRAYER_KEYS.filter((k) => r[k]).length;
   });
-
   let streak = 0;
   const today = new Date();
-
   for (let i = 0; i < 31; i++) {
     const d = new Date(today);
     d.setDate(today.getDate() - i);
     const dateStr = d.toISOString().split('T')[0];
     const count = dateMap[dateStr] || 0;
-
-    // Skip today if they haven't logged enough yet — don't break the streak
     if (i === 0 && count < 3) continue;
     if (count >= 3) streak++;
     else break;
@@ -27,7 +22,6 @@ function calcPrayerDayStreak(prayerHistory) {
   return streak;
 }
 
-// Consecutive days (going back from today) with a mood/check-in entry
 function calcCheckInStreak(moods) {
   const dateSet = new Set(moods.map((m) => m.date));
   let streak = 0;
@@ -41,187 +35,279 @@ function calcCheckInStreak(moods) {
   return streak;
 }
 
+// ── Animated ring ─────────────────────────────────────────────────────────────
+function Ring({ pct, color, size = 72, stroke = 6 }) {
+  const [drawn, setDrawn] = useState(false);
+  useEffect(() => { const t = setTimeout(() => setDrawn(true), 80); return () => clearTimeout(t); }, []);
+  const cx = size / 2, cy = size / 2, r = (size - stroke * 2) / 2;
+  const circ = 2 * Math.PI * r;
+  const offset = circ * (1 - (drawn ? pct / 100 : 0));
+  return (
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={stroke} />
+      {pct > 0 && (
+        <circle
+          cx={cx} cy={cy} r={r}
+          fill="none"
+          stroke={color}
+          strokeWidth={stroke}
+          strokeLinecap="round"
+          strokeDasharray={circ}
+          strokeDashoffset={offset}
+          transform={`rotate(-90 ${cx} ${cy})`}
+          style={{
+            transition: 'stroke-dashoffset 1.1s cubic-bezier(0.4,0,0.2,1)',
+            filter: `drop-shadow(0 0 4px ${color})`,
+          }}
+        />
+      )}
+    </svg>
+  );
+}
+
 export default function HomeSummaryCards({ userId, onViewTasks }) {
   const [stats, setStats] = useState(null);
+  const [barReady, setBarReady] = useState(false);
 
   useEffect(() => {
     if (!userId) return;
-
     const today = new Date().toISOString().split('T')[0];
-    const weekStart = new Date();
-    weekStart.setDate(weekStart.getDate() - 6);
-    const weekStartStr = weekStart.toISOString().split('T')[0];
-    const monthStart = new Date();
-    monthStart.setDate(monthStart.getDate() - 30);
-    const monthStartStr = monthStart.toISOString().split('T')[0];
+    const weekStart = new Date(); weekStart.setDate(weekStart.getDate() - 6);
+    const monthStart = new Date(); monthStart.setDate(monthStart.getDate() - 30);
 
     Promise.all([
-      supabase.from('prayers').select('*').eq('user_id', userId).gte('date', weekStartStr).lte('date', today),
-      supabase.from('moods').select('date').eq('user_id', userId).gte('date', monthStartStr).lte('date', today),
-      supabase.from('user_tasks').select('id, completed').eq('user_id', userId).gte('due_date', today),
+      supabase.from('prayers').select('*').eq('user_id', userId)
+        .gte('date', weekStart.toISOString().split('T')[0]).lte('date', today),
+      supabase.from('moods').select('date').eq('user_id', userId)
+        .gte('date', monthStart.toISOString().split('T')[0]).lte('date', today),
+      supabase.from('user_tasks').select('id, completed').eq('user_id', userId)
+        .gte('due_date', today),
     ]).then(([{ data: prayers }, { data: moods }, { data: tasks }]) => {
-      // ── Prayer consistency score (50 pts) ─────────────────────────────────
       let onTime = 0, totalLogged = 0;
       (prayers || []).forEach((r) => {
         PRAYER_KEYS.forEach((p) => {
           if (r[p]) { totalLogged++; if (r[p] === 'on_time') onTime++; }
         });
       });
-      const prayerScore = totalLogged > 0 ? (onTime / totalLogged) * 50 : 0;
-
-      // ── Check-in streak score (25 pts) ───────────────────────────────────
-      const checkInStreak = calcCheckInStreak(moods || []);
-      const streakScore   = Math.min(checkInStreak / 7, 1) * 25;
-
-      // ── Task completion score (25 pts) ───────────────────────────────────
-      const totalTasks = (tasks || []).length;
-      const doneTasks  = (tasks || []).filter((t) => t.completed).length;
-      const taskScore  = totalTasks > 0 ? (doneTasks / totalTasks) * 25 : 0;
-
-      // ── Prayer day streak ────────────────────────────────────────────────
+      const prayerScore    = totalLogged > 0 ? (onTime / totalLogged) * 50 : 0;
+      const checkInStreak  = calcCheckInStreak(moods || []);
+      const streakScore    = Math.min(checkInStreak / 7, 1) * 25;
+      const totalTasks     = (tasks || []).length;
+      const doneTasks      = (tasks || []).filter((t) => t.completed).length;
+      const taskScore      = totalTasks > 0 ? (doneTasks / totalTasks) * 25 : 0;
       const prayerDayStreak = calcPrayerDayStreak(prayers || []);
 
       setStats({
         imanScore: Math.round(prayerScore + streakScore + taskScore),
         prayerDayStreak,
+        checkInStreak,
         totalTasks,
         doneTasks,
+        totalLogged,
+        onTime,
       });
     });
   }, [userId]);
 
+  // Trigger animated bars after stats load
+  useEffect(() => {
+    if (stats) { const t = setTimeout(() => setBarReady(true), 120); return () => clearTimeout(t); }
+  }, [stats]);
+
   if (!stats) return null;
 
-  const { imanScore, prayerDayStreak, totalTasks, doneTasks } = stats;
-  const taskPct  = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
+  const { imanScore, prayerDayStreak, checkInStreak, totalTasks, doneTasks, totalLogged, onTime } = stats;
+  const taskPct     = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
+  const prayerPct   = totalLogged > 0 ? Math.round((onTime / totalLogged) * 100) : 0;
+
   const streakMsg =
-    prayerDayStreak === 0 ? 'Log 3 or more prayers daily to start your streak.'
-    : prayerDayStreak < 7 ? 'Keep going. Your streak is building.'
-    : 'Alhamdulillah. Beautiful consistency.';
+    prayerDayStreak === 0 ? 'Log 3+ prayers daily to start your streak'
+    : prayerDayStreak < 7 ? 'Keep going — your streak is building'
+    : 'Alhamdulillah. Beautiful consistency';
 
   return (
-    <div className="mt-8 mb-4">
+    <div className="mt-10 mb-4">
+
       {/* Section label */}
-      <div className="flex items-center gap-3 mb-4">
-        <p className="text-[10px] font-bold tracking-[0.16em] uppercase" style={{ color: 'rgba(255,255,255,0.22)' }}>
+      <div className="flex items-center gap-3 mb-6">
+        <span style={{ color: 'rgba(201,149,42,0.45)', fontSize: '9px' }}>✦</span>
+        <p className="text-[10px] font-bold tracking-[0.2em] uppercase" style={{ color: 'rgba(255,255,255,0.2)' }}>
           Your Progress
         </p>
-        <div className="h-px flex-1" style={{ background: 'linear-gradient(to right, rgba(201,149,42,0.2), transparent)' }} />
+        <div className="h-px flex-1" style={{ background: 'linear-gradient(to right, rgba(201,149,42,0.18), transparent)' }} />
       </div>
 
-      {/* Cards — 3-col on md+, stacked on mobile */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+      {/* ── 3 stat cards ── */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 
-        {/* ── Card 1: Iman Score ──────────────────────────────────────────── */}
+        {/* Card 1 — Action Score */}
         <div
-          className="rounded-2xl p-5 flex flex-col"
+          className="rounded-3xl p-6 flex flex-col relative overflow-hidden"
           style={{
-            background: 'linear-gradient(145deg, rgba(201,149,42,0.09) 0%, rgba(255,255,255,0.02) 100%)',
-            border: '1px solid rgba(201,149,42,0.16)',
-            boxShadow: '0 1px 0 rgba(201,149,42,0.05) inset, 0 8px 32px rgba(0,0,0,0.2)',
+            background: 'linear-gradient(145deg, rgba(201,149,42,0.1) 0%, rgba(201,149,42,0.03) 100%)',
+            border: '1px solid rgba(201,149,42,0.18)',
+            boxShadow: '0 8px 40px rgba(0,0,0,0.25)',
           }}
         >
-          <p className="text-[9px] font-bold tracking-[0.18em] uppercase mb-4" style={{ color: 'rgba(255,255,255,0.22)' }}>
+          {/* Decorative glow blob */}
+          <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full pointer-events-none"
+            style={{ background: 'radial-gradient(circle, rgba(201,149,42,0.18) 0%, transparent 70%)' }} />
+
+          <p className="text-[9px] font-bold tracking-[0.2em] uppercase mb-5" style={{ color: 'rgba(255,255,255,0.22)' }}>
             Action Score
           </p>
 
-          <span
-            className="font-extrabold leading-none mb-3"
-            style={{ fontSize: '3.2rem', color: '#C9952A', lineHeight: 1 }}
-          >
-            {imanScore}
-          </span>
+          {/* Ring + number */}
+          <div className="flex items-center gap-5 mb-5">
+            <div className="relative flex-shrink-0">
+              <Ring pct={imanScore} color="#C9952A" size={80} stroke={7} />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-lg font-extrabold" style={{ color: '#C9952A' }}>{imanScore}</span>
+              </div>
+            </div>
+            <div>
+              <p className="text-4xl font-extrabold leading-none mb-1" style={{ color: '#C9952A' }}>
+                {imanScore}
+                <span className="text-base font-semibold ml-1" style={{ color: 'rgba(201,149,42,0.4)' }}>/100</span>
+              </p>
+              <p className="text-xs" style={{ color: 'rgba(255,255,255,0.25)' }}>this week</p>
+            </div>
+          </div>
 
-          {/* Gold progress bar */}
-          <div className="h-1.5 rounded-full mb-4 overflow-hidden" style={{ background: 'rgba(255,255,255,0.07)' }}>
+          {/* Progress bar */}
+          <div className="h-1.5 rounded-full overflow-hidden mb-3" style={{ background: 'rgba(255,255,255,0.07)' }}>
             <div
-              className="h-full rounded-full transition-all duration-1000"
-              style={{ width: `${imanScore}%`, background: 'linear-gradient(90deg, #C9952A, #e8b84b)' }}
+              className="h-full rounded-full"
+              style={{
+                width: barReady ? `${imanScore}%` : '0%',
+                background: 'linear-gradient(90deg, #C9952A, #e8b84b)',
+                boxShadow: '0 0 8px rgba(201,149,42,0.6)',
+                transition: 'width 1.1s cubic-bezier(0.4,0,0.2,1)',
+              }}
             />
           </div>
 
-          <p className="text-[11px] leading-relaxed mt-auto" style={{ color: 'rgba(255,255,255,0.22)' }}>
-            Based on your actions. Only Allah knows what's in the heart.
+          <p className="text-[10px] leading-relaxed mt-auto" style={{ color: 'rgba(255,255,255,0.2)' }}>
+            Based on your actions this week. Only Allah knows what's in the heart.
           </p>
         </div>
 
-        {/* ── Card 2: Prayer Streak ───────────────────────────────────────── */}
+        {/* Card 2 — Prayer Streak */}
         <div
-          className="rounded-2xl p-5 flex flex-col"
+          className="rounded-3xl p-6 flex flex-col relative overflow-hidden"
           style={{
-            background: 'linear-gradient(145deg, rgba(29,158,117,0.09) 0%, rgba(255,255,255,0.02) 100%)',
-            border: '1px solid rgba(29,158,117,0.16)',
-            boxShadow: '0 1px 0 rgba(29,158,117,0.05) inset, 0 8px 32px rgba(0,0,0,0.2)',
+            background: 'linear-gradient(145deg, rgba(29,158,117,0.1) 0%, rgba(29,158,117,0.03) 100%)',
+            border: '1px solid rgba(29,158,117,0.18)',
+            boxShadow: '0 8px 40px rgba(0,0,0,0.25)',
           }}
         >
-          <p className="text-[9px] font-bold tracking-[0.18em] uppercase mb-4" style={{ color: 'rgba(255,255,255,0.22)' }}>
+          <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full pointer-events-none"
+            style={{ background: 'radial-gradient(circle, rgba(29,158,117,0.18) 0%, transparent 70%)' }} />
+
+          <p className="text-[9px] font-bold tracking-[0.2em] uppercase mb-5" style={{ color: 'rgba(255,255,255,0.22)' }}>
             Prayer Streak
           </p>
 
-          <div className="flex items-baseline gap-2.5 mb-1">
-            <span
-              className="font-extrabold leading-none"
-              style={{ fontSize: '3.2rem', color: '#1D9E75', lineHeight: 1 }}
-            >
-              {prayerDayStreak}
-            </span>
-            <span className="text-2xl leading-none" style={{ marginBottom: '2px' }}>⭐</span>
+          <div className="flex items-center gap-5 mb-5">
+            <div className="relative flex-shrink-0">
+              <Ring pct={Math.min(prayerDayStreak * 10, 100)} color="#1D9E75" size={80} stroke={7} />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-lg font-extrabold" style={{ color: '#1D9E75' }}>
+                  {prayerDayStreak > 9 ? '🔥' : prayerDayStreak}
+                </span>
+              </div>
+            </div>
+            <div>
+              <div className="flex items-baseline gap-1.5 mb-1">
+                <span className="text-4xl font-extrabold leading-none" style={{ color: '#1D9E75' }}>
+                  {prayerDayStreak}
+                </span>
+                {prayerDayStreak > 0 && <span className="text-lg">⭐</span>}
+              </div>
+              <p className="text-xs" style={{ color: 'rgba(255,255,255,0.25)' }}>consecutive days</p>
+            </div>
           </div>
 
-          <p className="text-xs font-semibold mb-4" style={{ color: 'rgba(255,255,255,0.28)' }}>
-            consecutive days
-          </p>
+          {/* Prayer accuracy bar */}
+          <div className="h-1.5 rounded-full overflow-hidden mb-3" style={{ background: 'rgba(255,255,255,0.07)' }}>
+            <div
+              className="h-full rounded-full"
+              style={{
+                width: barReady ? `${prayerPct}%` : '0%',
+                background: 'linear-gradient(90deg, #1D9E75, #23c68f)',
+                boxShadow: '0 0 8px rgba(29,158,117,0.6)',
+                transition: 'width 1.1s cubic-bezier(0.4,0,0.2,1)',
+              }}
+            />
+          </div>
 
-          <p className="text-[11px] leading-relaxed mt-auto" style={{ color: 'rgba(255,255,255,0.22)' }}>
+          <p className="text-[10px] leading-relaxed mt-auto" style={{ color: 'rgba(255,255,255,0.2)' }}>
             {streakMsg}
           </p>
         </div>
 
-        {/* ── Card 3: Tasks This Week ─────────────────────────────────────── */}
+        {/* Card 3 — Tasks + Check-in */}
         <div
-          className="rounded-2xl p-5 flex flex-col"
+          className="rounded-3xl p-6 flex flex-col relative overflow-hidden"
           style={{
-            background: 'linear-gradient(145deg, rgba(29,158,117,0.09) 0%, rgba(255,255,255,0.02) 100%)',
-            border: '1px solid rgba(29,158,117,0.16)',
-            boxShadow: '0 1px 0 rgba(29,158,117,0.05) inset, 0 8px 32px rgba(0,0,0,0.2)',
+            background: 'linear-gradient(145deg, rgba(29,158,117,0.08) 0%, rgba(255,255,255,0.02) 100%)',
+            border: '1px solid rgba(29,158,117,0.15)',
+            boxShadow: '0 8px 40px rgba(0,0,0,0.25)',
           }}
         >
-          <p className="text-[9px] font-bold tracking-[0.18em] uppercase mb-4" style={{ color: 'rgba(255,255,255,0.22)' }}>
-            Tasks This Week
+          <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full pointer-events-none"
+            style={{ background: 'radial-gradient(circle, rgba(29,158,117,0.12) 0%, transparent 70%)' }} />
+
+          <p className="text-[9px] font-bold tracking-[0.2em] uppercase mb-5" style={{ color: 'rgba(255,255,255,0.22)' }}>
+            This Week
           </p>
 
-          {totalTasks === 0 ? (
-            <p className="text-sm flex-1" style={{ color: 'rgba(255,255,255,0.2)' }}>
-              No tasks generated yet.
-            </p>
-          ) : (
-            <>
-              <div className="flex items-baseline gap-1.5 mb-3">
-                <span
-                  className="font-extrabold leading-none"
-                  style={{ fontSize: '3.2rem', color: '#1D9E75', lineHeight: 1 }}
-                >
-                  {doneTasks}
-                </span>
-                <span className="text-xl font-semibold" style={{ color: 'rgba(255,255,255,0.2)' }}>
-                  of {totalTasks}
-                </span>
+          {/* Check-in streak mini stat */}
+          <div className="flex items-center justify-between mb-5">
+            <div>
+              <p className="text-[10px] uppercase tracking-widest mb-1" style={{ color: 'rgba(255,255,255,0.2)' }}>Check-ins</p>
+              <div className="flex items-baseline gap-1">
+                <span className="text-3xl font-extrabold leading-none" style={{ color: '#1D9E75' }}>{checkInStreak}</span>
+                <span className="text-xs" style={{ color: 'rgba(255,255,255,0.2)' }}>day streak</span>
               </div>
+            </div>
+            <div className="w-px self-stretch mx-3" style={{ background: 'rgba(255,255,255,0.06)' }} />
+            <div>
+              <p className="text-[10px] uppercase tracking-widest mb-1" style={{ color: 'rgba(255,255,255,0.2)' }}>Tasks</p>
+              {totalTasks === 0 ? (
+                <span className="text-xs" style={{ color: 'rgba(255,255,255,0.2)' }}>None yet</span>
+              ) : (
+                <div className="flex items-baseline gap-1">
+                  <span className="text-3xl font-extrabold leading-none" style={{ color: '#1D9E75' }}>{doneTasks}</span>
+                  <span className="text-xs" style={{ color: 'rgba(255,255,255,0.2)' }}>of {totalTasks}</span>
+                </div>
+              )}
+            </div>
+          </div>
 
-              {/* Task progress bar */}
-              <div className="h-1.5 rounded-full mb-4 overflow-hidden" style={{ background: 'rgba(255,255,255,0.07)' }}>
+          {/* Task progress bar */}
+          {totalTasks > 0 && (
+            <>
+              <div className="h-1.5 rounded-full overflow-hidden mb-3" style={{ background: 'rgba(255,255,255,0.07)' }}>
                 <div
-                  className="h-full rounded-full transition-all duration-1000"
-                  style={{ width: `${taskPct}%`, background: 'linear-gradient(90deg, #1D9E75, #23c68f)' }}
+                  className="h-full rounded-full"
+                  style={{
+                    width: barReady ? `${taskPct}%` : '0%',
+                    background: 'linear-gradient(90deg, #1D9E75, #23c68f)',
+                    boxShadow: '0 0 8px rgba(29,158,117,0.6)',
+                    transition: 'width 1.1s cubic-bezier(0.4,0,0.2,1)',
+                  }}
                 />
               </div>
+              <p className="text-[10px] mb-4" style={{ color: 'rgba(255,255,255,0.2)' }}>
+                {taskPct}% complete
+              </p>
             </>
           )}
 
-          {/* View Tasks button — always shown */}
           <button
             onClick={onViewTasks}
-            className="mt-auto w-full py-2.5 rounded-xl text-xs font-semibold transition-all duration-150 hover:scale-[1.02] active:scale-[0.98]"
+            className="mt-auto w-full py-3 rounded-2xl text-xs font-bold transition-all duration-150 hover:scale-[1.02] active:scale-[0.98]"
             style={{
               background: 'rgba(29,158,117,0.12)',
               border: '1px solid rgba(29,158,117,0.28)',
@@ -232,6 +318,16 @@ export default function HomeSummaryCards({ userId, onViewTasks }) {
           </button>
         </div>
 
+      </div>
+
+      {/* Arabic footer */}
+      <div className="mt-8 text-center">
+        <p className="arabic-text text-lg mb-1" style={{ color: 'rgba(201,149,42,0.2)' }}>
+          وَاللَّهُ يُحِبُّ الصَّابِرِينَ
+        </p>
+        <p className="text-[10px] tracking-widest uppercase" style={{ color: 'rgba(255,255,255,0.08)' }}>
+          And Allah loves the patient — Al-Imran 3:146
+        </p>
       </div>
     </div>
   );
