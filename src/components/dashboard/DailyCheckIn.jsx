@@ -77,7 +77,7 @@ const CARD_STYLE = {
   boxShadow: '0 1px 0 rgba(255,255,255,0.04) inset, 0 20px 60px rgba(0,0,0,0.28)',
 };
 
-export default function DailyCheckIn({ userId, weekOffset = 0, customRange = null }) {
+export default function DailyCheckIn({ userId, weekOffset = 0, customRange = null, onUpdate }) {
   const [qStep, setQStep]   = useState(0);
   const [data, setData]     = useState({ connection: 0, struggles: [], heartStates: [], pulledAway: null, pulledAwayText: '', needs: [] });
   const [done, setDone]     = useState(false);
@@ -137,7 +137,7 @@ export default function DailyCheckIn({ userId, weekOffset = 0, customRange = nul
         notes: JSON.stringify({ struggles: data.struggles, pulledAway: data.pulledAway, pulledAwayText: data.pulledAwayText }) },
       { onConflict: 'user_id,date' }
     );
-    setSaving(false); setDone(true);
+    setSaving(false); setDone(true); onUpdate?.();
   };
 
   if (loading) return null;

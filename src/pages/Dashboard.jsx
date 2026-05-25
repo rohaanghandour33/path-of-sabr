@@ -343,6 +343,10 @@ export default function Dashboard() {
   const [appliedRange, setAppliedRange] = useState(null);
   const [checkingOnboarding, setCheckingOnboarding] = useState(true);
 
+  // Live stats refresh — incremented whenever prayers or check-in are saved
+  const [statsRefreshKey, setStatsRefreshKey] = useState(0);
+  const refreshStats = () => setStatsRefreshKey((k) => k + 1);
+
   // Task system state
   const [isFirstWeek,        setIsFirstWeek]        = useState(false);
   const [freeDays,            setFreeDays]            = useState(null);   // null=loading, []=none, ['Mon',...]
@@ -663,14 +667,14 @@ export default function Dashboard() {
 
             {/* ── Widget grid — always shows today ── */}
             <div className="animate-fade-in-up delay-200 grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-5 items-stretch">
-              <PrayerTracker    userId={user?.id} weekOffset={0} customRange={null} />
-              <DailyCheckIn     userId={user?.id} weekOffset={0} customRange={null} />
+              <PrayerTracker    userId={user?.id} weekOffset={0} customRange={null} onUpdate={refreshStats} />
+              <DailyCheckIn     userId={user?.id} weekOffset={0} customRange={null} onUpdate={refreshStats} />
               <WeeklyPrayerRing userId={user?.id} />
             </div>
 
             {/* ── Progress summary ── */}
             <div className="animate-fade-in-up delay-400">
-              <HomeSummaryCards userId={user?.id} onViewTasks={() => handleTabChange('tasks')} />
+              <HomeSummaryCards userId={user?.id} onViewTasks={() => handleTabChange('tasks')} refreshKey={statsRefreshKey} />
             </div>
 
           </>

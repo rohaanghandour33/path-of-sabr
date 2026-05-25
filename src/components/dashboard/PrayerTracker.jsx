@@ -98,7 +98,7 @@ function PrayerSummaryCard({ records, title, subtitle }) {
   );
 }
 
-export default function PrayerTracker({ userId, weekOffset = 0, customRange = null }) {
+export default function PrayerTracker({ userId, weekOffset = 0, customRange = null, onUpdate }) {
   const [prayers, setPrayers] = useState({});
   const [readOnlyRecords, setReadOnlyRecords] = useState([]);
   const [streak, setStreak] = useState(0);
@@ -171,6 +171,7 @@ export default function PrayerTracker({ userId, weekOffset = 0, customRange = nu
     const newStatus = prayers[prayer] === status ? null : status;
     setPrayers((prev) => ({ ...prev, [prayer]: newStatus }));
     await supabase.from('prayers').upsert({ user_id: userId, date: today, [prayer]: newStatus }, { onConflict: 'user_id,date' });
+    onUpdate?.();
   };
 
   if (loading) return null;

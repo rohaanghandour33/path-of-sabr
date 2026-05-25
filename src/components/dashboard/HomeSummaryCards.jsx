@@ -65,12 +65,13 @@ function Ring({ pct, color, size = 72, stroke = 6 }) {
   );
 }
 
-export default function HomeSummaryCards({ userId, onViewTasks }) {
+export default function HomeSummaryCards({ userId, onViewTasks, refreshKey = 0 }) {
   const [stats, setStats] = useState(null);
   const [barReady, setBarReady] = useState(false);
 
   useEffect(() => {
     if (!userId) return;
+    setBarReady(false); // re-animate bars on every refresh
     const today = new Date().toISOString().split('T')[0];
     const weekStart = new Date(); weekStart.setDate(weekStart.getDate() - 6);
     const monthStart = new Date(); monthStart.setDate(monthStart.getDate() - 30);
@@ -107,7 +108,7 @@ export default function HomeSummaryCards({ userId, onViewTasks }) {
         onTime,
       });
     });
-  }, [userId]);
+  }, [userId, refreshKey]);
 
   // Trigger animated bars after stats load
   useEffect(() => {
