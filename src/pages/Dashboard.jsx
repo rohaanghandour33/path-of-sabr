@@ -29,20 +29,61 @@ const GOLD_CARD = {
 };
 
 const DAILY_QUOTES = [
-  { text: "Indeed, with hardship comes ease.", ref: "Al-Inshirah 94:6" },
-  { text: "And Allah is with the patient.", ref: "Al-Baqarah 2:153" },
-  { text: "Verily, the remembrance of Allah is the greatest.", ref: "Al-Ankabut 29:45" },
-  { text: "Allah does not burden a soul beyond that it can bear.", ref: "Al-Baqarah 2:286" },
-  { text: "So remember Me; I will remember you.", ref: "Al-Baqarah 2:152" },
-  { text: "And He found you lost and guided you.", ref: "Ad-Duha 93:7" },
-  { text: "Your Lord has not taken leave of you, nor has He detested you.", ref: "Ad-Duha 93:3" },
-  { text: "Put your trust in Allah. Indeed, Allah loves those who trust in Him.", ref: "Al-Imran 3:159" },
-  { text: "He knows what is in every heart.", ref: "Al-Mulk 67:13" },
-  { text: "Whoever relies upon Allah — He is sufficient for him.", ref: "At-Talaq 65:3" },
-  { text: "Do not lose hope, nor be sad. You will surely be victorious if you are true believers.", ref: "Al-Imran 3:139" },
-  { text: "And when My servants ask you about Me — I am near.", ref: "Al-Baqarah 2:186" },
-  { text: "Every soul will taste death. Then to Us will you be returned.", ref: "Al-Ankabut 29:57" },
-  { text: "And it is He who created the night and the day and the sun and the moon.", ref: "Al-Anbiya 21:33" },
+  // ── Quran ──────────────────────────────────────────────────────────────────
+  { type: 'quran',  text: "Indeed, with hardship comes ease.",                                                              ref: "Al-Inshirah 94:6" },
+  { type: 'quran',  text: "And Allah is with the patient.",                                                                  ref: "Al-Baqarah 2:153" },
+  { type: 'quran',  text: "Verily, the remembrance of Allah is the greatest.",                                               ref: "Al-Ankabut 29:45" },
+  { type: 'quran',  text: "Allah does not burden a soul beyond that it can bear.",                                           ref: "Al-Baqarah 2:286" },
+  { type: 'quran',  text: "So remember Me; I will remember you.",                                                            ref: "Al-Baqarah 2:152" },
+  { type: 'quran',  text: "And He found you lost and guided you.",                                                           ref: "Ad-Duha 93:7" },
+  { type: 'quran',  text: "Your Lord has not taken leave of you, nor has He detested you.",                                  ref: "Ad-Duha 93:3" },
+  { type: 'quran',  text: "Put your trust in Allah. Indeed, Allah loves those who trust in Him.",                            ref: "Al-Imran 3:159" },
+  { type: 'quran',  text: "Whoever relies upon Allah — He is sufficient for him.",                                           ref: "At-Talaq 65:3" },
+  { type: 'quran',  text: "Do not lose hope, nor be sad. You will surely be victorious if you are true believers.",          ref: "Al-Imran 3:139" },
+  { type: 'quran',  text: "And when My servants ask you about Me — I am near.",                                              ref: "Al-Baqarah 2:186" },
+  { type: 'quran',  text: "Indeed, the patient will be given their reward without account.",                                 ref: "Az-Zumar 39:10" },
+  { type: 'quran',  text: "And whoever fears Allah — He will make for him a way out.",                                       ref: "At-Talaq 65:2" },
+  { type: 'quran',  text: "And He is with you wherever you are.",                                                            ref: "Al-Hadid 57:4" },
+  { type: 'quran',  text: "Call upon Me; I will respond to you.",                                                            ref: "Ghafir 40:60" },
+  { type: 'quran',  text: "My mercy encompasses all things.",                                                                ref: "Al-A'raf 7:156" },
+  { type: 'quran',  text: "And do not despair of relief from Allah. Indeed, no one despairs of His relief except the disbelieving people.", ref: "Yusuf 12:87" },
+  { type: 'quran',  text: "So be patient. Indeed, the promise of Allah is truth.",                                           ref: "Ghafir 40:55" },
+  { type: 'quran',  text: "And seek help through patience and prayer.",                                                      ref: "Al-Baqarah 2:45" },
+  { type: 'quran',  text: "He knows what is in every heart.",                                                                ref: "Al-Mulk 67:13" },
+  { type: 'quran',  text: "And speak to people good words.",                                                                 ref: "Al-Baqarah 2:83" },
+  { type: 'quran',  text: "Indeed, prayer prohibits immorality and wrongdoing, and the remembrance of Allah is greater.",   ref: "Al-Ankabut 29:45" },
+  { type: 'quran',  text: "Every soul will taste death. Then to Us you will be returned.",                                   ref: "Al-Ankabut 29:57" },
+  { type: 'quran',  text: "So verily, with every difficulty there is relief.",                                               ref: "Al-Inshirah 94:5" },
+  { type: 'quran',  text: "And your Lord is going to give you, and you will be satisfied.",                                  ref: "Ad-Duha 93:5" },
+  { type: 'quran',  text: "And whoever does an atom's weight of good will see it.",                                          ref: "Az-Zalzalah 99:7" },
+  { type: 'quran',  text: "Indeed, Allah will not change the condition of a people until they change what is in themselves.", ref: "Ar-Ra'd 13:11" },
+  { type: 'quran',  text: "And He found you poor and made you self-sufficient.",                                             ref: "Ad-Duha 93:8" },
+  // ── Hadith ─────────────────────────────────────────────────────────────────
+  { type: 'hadith', text: "The most beloved deeds to Allah are those done most consistently, even if they are small.",      ref: "Prophet ﷺ — Bukhari & Muslim" },
+  { type: 'hadith', text: "None of you truly believes until he loves for his brother what he loves for himself.",            ref: "Prophet ﷺ — Bukhari & Muslim" },
+  { type: 'hadith', text: "Speak good or remain silent.",                                                                    ref: "Prophet ﷺ — Bukhari & Muslim" },
+  { type: 'hadith', text: "The strong person is not the one who overcomes people. The strong person is the one who controls himself when angry.", ref: "Prophet ﷺ — Bukhari & Muslim" },
+  { type: 'hadith', text: "Every act of goodness is a charity.",                                                            ref: "Prophet ﷺ — Muslim" },
+  { type: 'hadith', text: "Smiling at your brother is an act of charity.",                                                  ref: "Prophet ﷺ — Tirmidhi" },
+  { type: 'hadith', text: "He who does not show mercy will not be shown mercy.",                                             ref: "Prophet ﷺ — Bukhari & Muslim" },
+  { type: 'hadith', text: "Allah is gentle and loves gentleness in all matters.",                                           ref: "Prophet ﷺ — Bukhari" },
+  { type: 'hadith', text: "Make du'a to Allah while being certain of a response.",                                          ref: "Prophet ﷺ — Tirmidhi" },
+  { type: 'hadith', text: "The one who remembers Allah and the one who does not are like the living and the dead.",         ref: "Prophet ﷺ — Bukhari" },
+  { type: 'hadith', text: "A good character is the heaviest thing placed on the scale of deeds.",                          ref: "Prophet ﷺ — Tirmidhi" },
+  { type: 'hadith', text: "Be in this world as though you are a stranger or a traveller passing through.",                  ref: "Prophet ﷺ — Bukhari" },
+  { type: 'hadith', text: "Verily, Allah does not look at your bodies or your forms. He looks at your hearts and your actions.", ref: "Prophet ﷺ — Muslim" },
+  { type: 'hadith', text: "Modesty brings nothing but good.",                                                               ref: "Prophet ﷺ — Bukhari & Muslim" },
+  { type: 'hadith', text: "The best of you are those who learn the Quran and teach it.",                                    ref: "Prophet ﷺ — Bukhari" },
+  { type: 'hadith', text: "Make things easy, do not make them difficult.",                                                  ref: "Prophet ﷺ — Bukhari" },
+  { type: 'hadith', text: "The best of people are those who are most beneficial to people.",                                ref: "Prophet ﷺ — Al-Mu'jam al-Awsat" },
+  { type: 'hadith', text: "Guard yourself from the Fire, even if it be with half a date.",                                  ref: "Prophet ﷺ — Bukhari & Muslim" },
+  { type: 'hadith', text: "The dua of a Muslim for his brother in his absence is answered.",                                ref: "Prophet ﷺ — Muslim" },
+  { type: 'hadith', text: "Take benefit of five before five: your youth, your health, your wealth, your free time, and your life.", ref: "Prophet ﷺ — Al-Hakim" },
+  { type: 'hadith', text: "Whoever believes in Allah and the Last Day, let him speak good or remain silent.",               ref: "Prophet ﷺ — Bukhari & Muslim" },
+  { type: 'hadith', text: "The world is a prison for the believer and a paradise for the disbeliever.",                    ref: "Prophet ﷺ — Muslim" },
+  { type: 'hadith', text: "Feed the hungry, visit the sick, and free those in captivity.",                                 ref: "Prophet ﷺ — Bukhari" },
+  { type: 'hadith', text: "Allah loves that when any of you does a deed, he does it with excellence.",                     ref: "Prophet ﷺ — Bayhaqi" },
+  { type: 'hadith', text: "Whoever is not grateful to people is not grateful to Allah.",                                    ref: "Prophet ﷺ — Abu Dawud & Tirmidhi" },
 ];
 
 function fmtDate(d) { return d.toISOString().split('T')[0]; }
@@ -623,21 +664,31 @@ export default function Dashboard() {
                 </button>
               </div>
 
-              {/* Daily ayah strip */}
+              {/* Daily reminder strip */}
               <div
                 className="rounded-2xl px-5 py-4 mb-4"
                 style={{
-                  background: 'linear-gradient(135deg, rgba(201,149,42,0.07) 0%, rgba(201,149,42,0.02) 100%)',
-                  border: '1px solid rgba(201,149,42,0.14)',
+                  background: dailyQuote.type === 'hadith'
+                    ? 'linear-gradient(135deg, rgba(29,158,117,0.07) 0%, rgba(29,158,117,0.02) 100%)'
+                    : 'linear-gradient(135deg, rgba(201,149,42,0.07) 0%, rgba(201,149,42,0.02) 100%)',
+                  border: dailyQuote.type === 'hadith'
+                    ? '1px solid rgba(29,158,117,0.15)'
+                    : '1px solid rgba(201,149,42,0.14)',
                 }}
               >
-                <p className="text-[9px] font-bold tracking-[0.2em] uppercase mb-2" style={{ color: 'rgba(201,149,42,0.5)' }}>
-                  ✦ Today's Reminder
+                <p
+                  className="text-[9px] font-bold tracking-[0.2em] uppercase mb-2.5"
+                  style={{ color: dailyQuote.type === 'hadith' ? 'rgba(29,158,117,0.6)' : 'rgba(201,149,42,0.55)' }}
+                >
+                  ✦ {dailyQuote.type === 'hadith' ? 'Hadith' : 'Quranic Verse'}
                 </p>
-                <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.55)', fontStyle: 'italic' }}>
+                <p className="text-sm leading-relaxed mb-2" style={{ color: 'rgba(255,255,255,0.6)', fontStyle: 'italic' }}>
                   "{dailyQuote.text}"
                 </p>
-                <p className="text-[10px] mt-2" style={{ color: 'rgba(201,149,42,0.45)' }}>
+                <p
+                  className="text-[10px]"
+                  style={{ color: dailyQuote.type === 'hadith' ? 'rgba(29,158,117,0.5)' : 'rgba(201,149,42,0.45)' }}
+                >
                   — {dailyQuote.ref}
                 </p>
               </div>
