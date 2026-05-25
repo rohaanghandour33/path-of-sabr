@@ -14,7 +14,7 @@ const PRAYER_KEYS = PRAYERS.map((p) => p.key);
 // opts: available rakat choices  |  emp: highlighted as mu'akkadah (emphasized)
 const SUNNAH = {
   fajr:    { before: { opts: [2],    emp: [2] }, after: null },
-  dhuhr:   { before: { opts: [2, 4], emp: [4] }, after: { opts: [2, 4], emp: [2] } },
+  dhuhr:   { before: { opts: [4, 6], emp: [4] }, after: { opts: [2, 4], emp: [2] } },
   asr:     { before: { opts: [2, 4], emp: [] },  after: null },
   maghrib: { before: { opts: [2],    emp: [] },  after: { opts: [2, 4], emp: [2] } },
   isha:    { before: { opts: [2, 4], emp: [] },  after: { opts: [2, 4], emp: [2] } },
@@ -23,8 +23,8 @@ const SUNNAH = {
 // Tooltip text shown on hover for each specific rakat count
 const TIPS = {
   fajr_before_2:    "Sunnah Mu'akkadah · \"Better than the world and all it contains\"",
-  dhuhr_before_2:   'Non-emphasized Sunnah',
-  dhuhr_before_4:   "Sunnah Mu'akkadah · 4 before + 4 after → protected from the Hellfire",
+  dhuhr_before_4:   "Sunnah Mu'akkadah · Part of 12 daily Rawatib",
+  dhuhr_before_6:   "4 confirmed Sunnah + 2 extra Nafl · 4+4 total → protected from the Hellfire (Tirmidhi)",
   dhuhr_after_2:    "Sunnah Mu'akkadah · Part of the 12 daily Rawatib",
   dhuhr_after_4:    '4 before + 4 after → protected from the Hellfire',
   asr_before_2:     'Optional Sunnah',
@@ -66,8 +66,9 @@ const DHIKR_ITEMS = [
   { field: 'morning_adhkar', label: 'Morning Adhkar', sub: 'After Fajr',        icon: '📿' },
   { field: 'evening_adhkar', label: 'Evening Adhkar', sub: 'After Asr/Maghrib', icon: '🌅' },
 ];
+const WITR_OPTIONS = [1, 3, 5, 7, 9]; // odd rakat only
+
 const EXTRA_PRAYERS = [
-  { field: 'witr',     label: 'Witr',     sub: '3 rakat',     icon: '🌙' },
   { field: 'tahajjud', label: 'Tahajjud', sub: 'Night prayer', icon: '⭐' },
   { field: 'duha',     label: 'Duha',     sub: '2–12 rakat',   icon: '☀️' },
 ];
@@ -290,7 +291,8 @@ export default function PrayerTracker({ userId, weekOffset = 0, customRange = nu
   const loggedCount  = PRAYER_KEYS.filter((k) => prayers[k]).length;
   const masjidCount  = PRAYER_KEYS.filter((k) => prayers[`${k}_masjid`]).length;
   const rawatib      = calcRawatib(prayers);
-  const totalSunnah  = totalSunnahRakat(prayers);
+  const witrRakat    = prayers.witr_rakat || 0;
+  const totalSunnah  = totalSunnahRakat(prayers) + witrRakat;
 
   return (
     <div className="rounded-3xl p-6 flex flex-col" style={CARD}>
@@ -468,21 +470,69 @@ export default function PrayerTracker({ userId, weekOffset = 0, customRange = nu
           })}
         </div>
 
-        {/* Extra prayers — 3 columns */}
-        <div className="grid grid-cols-3 gap-2">
+        {/* Witr — rakat selector */}
+        <div className="rounded-xl px-3 py-2.5 mb-2"
+          style={(prayers.witr_rakat || 0) > 0
+            ? { background: 'rgba(201,149,42,0.1)', border: '1px solid rgba(201,149,42,0.25)' }
+            : { background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }
+          }
+        >
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-1.5">
+              <span className="text-sm leading-none">🌙</span>
+              <span className="text-[11px] font-bold" style={{ color: (prayers.witr_rakat || 0) > 0 ? '#C9952A' : 'rgba(255,255,255,0.4)' }}>
+                Witr
+              </span>
+            </div>
+            <span className="text-[9px]" style={{ color: 'rgba(255,255,255,0.2)' }}>Best final prayer of the night</span>
+          </div>
+          <div className="flex gap-1.5">
+            {/* None */}
+            <button
+              onClick={async () => { setPrayers(p => ({...p, witr_rakat: 0})); await supabase.from('prayers').upsert({ user_id: userId, date: today, witr_rakat: 0 }, { onConflict: 'user_id,date' }); onUpdate?.(); }}
+              className="flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all duration-150"
+              style={noneStyle((prayers.witr_rakat || 0) === 0)}
+            >—</button>
+            {WITR_OPTIONS.map((n) => {
+              const active = (prayers.witr_rakat || 0) === n;
+              return (
+                <button
+                  key={n}
+                  onClick={async () => {
+                    const nv = active ? 0 : n;
+                    setPrayers(p => ({...p, witr_rakat: nv}));
+                    await supabase.from('prayers').upsert({ user_id: userId, date: today, witr_rakat: nv }, { onConflict: 'user_id,date' });
+                    onUpdate?.();
+                  }}
+                  className="flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all duration-150"
+                  style={active
+                    ? { background: 'rgba(201,149,42,0.2)', border: '1px solid rgba(201,149,42,0.5)', color: '#C9952A', boxShadow: '0 0 10px rgba(201,149,42,0.18)' }
+                    : { background: 'rgba(201,149,42,0.04)', border: '1px solid rgba(201,149,42,0.14)', color: 'rgba(201,149,42,0.45)' }
+                  }
+                  title={n === 1 ? 'Minimum Witr' : n === 3 ? 'Most common — Prophet ﷺ often prayed 3' : `${n} rakat Witr`}
+                >{n}</button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Extra prayers — 2 columns */}
+        <div className="grid grid-cols-2 gap-2">
           {EXTRA_PRAYERS.map(({ field, label, sub, icon }) => {
             const on = !!prayers[field];
             return (
               <button key={field} onClick={() => toggleField(field)}
-                className="flex flex-col items-center gap-1 py-2.5 rounded-xl transition-all duration-150"
+                className="flex items-center gap-2 px-3 py-2.5 rounded-xl transition-all duration-150"
                 style={on
                   ? { background: 'rgba(201,149,42,0.12)', border: '1px solid rgba(201,149,42,0.3)', color: '#C9952A' }
                   : { background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.25)' }
                 }
               >
-                <span className="text-lg leading-none">{icon}</span>
-                <p className="text-[10px] font-bold leading-tight">{label}</p>
-                <p className="text-[9px] opacity-50">{sub}</p>
+                <span className="text-base leading-none flex-shrink-0">{icon}</span>
+                <div>
+                  <p className="text-[11px] font-bold leading-tight">{label}</p>
+                  <p className="text-[9px] opacity-55 mt-0.5">{sub}</p>
+                </div>
               </button>
             );
           })}
