@@ -205,6 +205,7 @@ export default function PrayerTracker({ userId, weekOffset = 0, customRange = nu
   const [streak, setStreak] = useState(0);
   const [loading, setLoading] = useState(true);
   const [prayerTimes, setPrayerTimes] = useState({});
+  const [showSunnah, setShowSunnah] = useState(false);
   const today = new Date().toISOString().split('T')[0];
   const isJummah = new Date().getDay() === 5;
 
@@ -326,13 +327,6 @@ export default function PrayerTracker({ userId, weekOffset = 0, customRange = nu
         </div>
       </div>
 
-      {/* ── Rawatib legend ── */}
-      <div className="mb-3 px-1">
-        <p className="text-[9px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.15)' }}>
-          Gold options are Sunnah Mu'akkadah (highly confirmed). Hover for reward details.
-        </p>
-      </div>
-
       {/* ── Fard prayer rows ── */}
       <div className="space-y-2">
         {PRAYERS.map(({ key, label, fallback }) => {
@@ -372,8 +366,8 @@ export default function PrayerTracker({ userId, weekOffset = 0, customRange = nu
                 </div>
               </div>
 
-              {/* Sunnah + Masjid sub-row */}
-              <div className="mt-2.5 space-y-1.5">
+              {/* Sunnah + Masjid sub-row — only when expanded */}
+              {showSunnah && <div className="mt-2.5 space-y-1.5">
                 {/* Before sunnah */}
                 <div className="flex items-center gap-2 flex-wrap">
                   <SunnahRow
@@ -425,21 +419,42 @@ export default function PrayerTracker({ userId, weekOffset = 0, customRange = nu
                 )}
 
                 {/* Forbidden time notice */}
-                {!cfg.after && key !== 'fajr' && key !== 'asr' ? null : (
-                  !cfg.after && (key === 'fajr' || key === 'asr') && (
-                    <p className="text-[9px]" style={{ color: 'rgba(255,255,255,0.12)' }}>
-                      {key === 'fajr' ? '⚠ No nafl after Fajr until sun rises' : '⚠ No nafl after Asr until sunset'}
-                    </p>
-                  )
+                {!cfg.after && (key === 'fajr' || key === 'asr') && (
+                  <p className="text-[9px]" style={{ color: 'rgba(255,255,255,0.12)' }}>
+                    {key === 'fajr' ? '⚠ No nafl after Fajr until sun rises' : '⚠ No nafl after Asr until sunset'}
+                  </p>
                 )}
-              </div>
+              </div>}
             </div>
           );
         })}
       </div>
 
-      {/* ── More Ibadah ── */}
-      <div className="mt-4 pt-4" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+      {/* ── Sunnah toggle ── */}
+      <button
+        onClick={() => setShowSunnah((s) => !s)}
+        className="mt-3 w-full py-2.5 rounded-2xl flex items-center justify-center gap-2 text-[11px] font-semibold transition-all duration-200"
+        style={showSunnah
+          ? { background: 'rgba(201,149,42,0.1)',  border: '1px solid rgba(201,149,42,0.28)', color: 'rgba(201,149,42,0.85)' }
+          : totalSunnah > 0
+            ? { background: 'rgba(201,149,42,0.07)', border: '1px solid rgba(201,149,42,0.2)',  color: 'rgba(201,149,42,0.7)' }
+            : { background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.3)' }
+        }
+      >
+        <span>📿</span>
+        <span>
+          {showSunnah
+            ? 'Hide Sunnah & More'
+            : totalSunnah > 0
+              ? `Sunnah & More  ·  ${totalSunnah} rakat logged`
+              : 'Log Sunnah & More'
+          }
+        </span>
+        <span style={{ fontSize: '10px', opacity: 0.55 }}>{showSunnah ? '↑' : '↓'}</span>
+      </button>
+
+      {/* ── More Ibadah (only when expanded) ── */}
+      {showSunnah && <div className="mt-4 pt-4" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
         <p className="text-[9px] font-bold tracking-[0.18em] uppercase mb-3" style={{ color: 'rgba(255,255,255,0.14)' }}>
           More Ibadah
         </p>
@@ -537,36 +552,33 @@ export default function PrayerTracker({ userId, weekOffset = 0, customRange = nu
             {prayers['jummah'] && <span>✓</span>}
           </button>
         )}
-      </div>
 
-      {/* ── Rawatib summary banner ── */}
-      {totalSunnah > 0 && (
-        <div className="mt-3 px-4 py-3 rounded-2xl"
-          style={rawatib === 12
-            ? { background: 'rgba(201,149,42,0.1)', border: '1px solid rgba(201,149,42,0.25)' }
-            : { background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.06)' }
-          }>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-[10px] font-bold" style={{ color: rawatib === 12 ? '#C9952A' : 'rgba(255,255,255,0.35)' }}>
-                {rawatib === 12 ? '🌟 All 12 Rawatib complete' : `${rawatib}/12 Rawatib prayed`}
-              </p>
-              <p className="text-[9px] mt-0.5" style={{ color: 'rgba(255,255,255,0.18)' }}>
-                {rawatib === 12
-                  ? 'A house in Jannah — Prophet ﷺ'
-                  : `${totalSunnah} total sunnah rakat today`
-                }
-              </p>
-            </div>
-            {rawatib < 12 && (
-              <div className="text-right">
-                <p className="text-xs font-extrabold" style={{ color: 'rgba(201,149,42,0.5)' }}>{totalSunnah}</p>
-                <p className="text-[9px]" style={{ color: 'rgba(255,255,255,0.15)' }}>rakat</p>
+        {/* Rawatib summary banner */}
+        {totalSunnah > 0 && (
+          <div className="mt-3 px-4 py-3 rounded-2xl"
+            style={rawatib === 12
+              ? { background: 'rgba(201,149,42,0.1)', border: '1px solid rgba(201,149,42,0.25)' }
+              : { background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.06)' }
+            }>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[10px] font-bold" style={{ color: rawatib === 12 ? '#C9952A' : 'rgba(255,255,255,0.35)' }}>
+                  {rawatib === 12 ? '🌟 All 12 Rawatib complete' : `${rawatib}/12 Rawatib prayed`}
+                </p>
+                <p className="text-[9px] mt-0.5" style={{ color: 'rgba(255,255,255,0.18)' }}>
+                  {rawatib === 12 ? 'A house in Jannah — Prophet ﷺ' : `${totalSunnah} total sunnah rakat today`}
+                </p>
               </div>
-            )}
+              {rawatib < 12 && (
+                <div className="text-right">
+                  <p className="text-xs font-extrabold" style={{ color: 'rgba(201,149,42,0.5)' }}>{totalSunnah}</p>
+                  <p className="text-[9px]" style={{ color: 'rgba(255,255,255,0.15)' }}>rakat</p>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>}
 
       {/* ── Streak footer ── */}
       {streak > 0 && (

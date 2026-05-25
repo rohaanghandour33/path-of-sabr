@@ -708,8 +708,18 @@ export default function Dashboard() {
               </button>
             </div>
 
-            {/* ══ SECTION: Salah ══ */}
+            {/* ══ SECTION: Daily Reflection ══ */}
             <div className="animate-fade-in-up delay-200 mb-8">
+              <div className="flex items-center gap-3 mb-5">
+                <span style={{ color: 'rgba(201,149,42,0.5)', fontSize: '9px' }}>✦</span>
+                <p className="text-[10px] font-bold tracking-[0.2em] uppercase" style={{ color: 'rgba(255,255,255,0.18)' }}>Daily Reflection</p>
+                <div className="h-px flex-1" style={{ background: 'linear-gradient(to right, rgba(201,149,42,0.2), transparent)' }} />
+              </div>
+              <DailyCheckIn userId={user?.id} weekOffset={0} customRange={null} onUpdate={refreshStats} />
+            </div>
+
+            {/* ══ SECTION: Salah ══ */}
+            <div className="animate-fade-in-up delay-300 mb-8">
               <div className="flex items-center gap-3 mb-5">
                 <span style={{ color: 'rgba(29,158,117,0.5)', fontSize: '9px' }}>✦</span>
                 <p className="text-[10px] font-bold tracking-[0.2em] uppercase" style={{ color: 'rgba(255,255,255,0.18)' }}>Salah</p>
@@ -721,16 +731,6 @@ export default function Dashboard() {
                 </div>
                 <WeeklyPrayerRing userId={user?.id} refreshKey={statsRefreshKey} />
               </div>
-            </div>
-
-            {/* ══ SECTION: Daily Reflection ══ */}
-            <div className="animate-fade-in-up delay-300 mb-8">
-              <div className="flex items-center gap-3 mb-5">
-                <span style={{ color: 'rgba(201,149,42,0.5)', fontSize: '9px' }}>✦</span>
-                <p className="text-[10px] font-bold tracking-[0.2em] uppercase" style={{ color: 'rgba(255,255,255,0.18)' }}>Daily Reflection</p>
-                <div className="h-px flex-1" style={{ background: 'linear-gradient(to right, rgba(201,149,42,0.2), transparent)' }} />
-              </div>
-              <DailyCheckIn userId={user?.id} weekOffset={0} customRange={null} onUpdate={refreshStats} />
             </div>
 
             {/* ══ SECTION: Your Progress ══ */}
