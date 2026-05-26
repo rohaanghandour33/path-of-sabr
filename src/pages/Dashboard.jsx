@@ -10,6 +10,7 @@ import DailyCheckIn from '../components/dashboard/DailyCheckIn';
 import BottomNav from '../components/dashboard/BottomNav';
 import WeeklyPrayerRing from '../components/dashboard/WeeklyPrayerRing';
 import HomeSummaryCards from '../components/dashboard/HomeSummaryCards';
+import SurgicalTracker from '../components/dashboard/SurgicalTracker';
 import TasksView from '../components/dashboard/TasksView';
 import ScheduleSurvey from '../components/dashboard/ScheduleSurvey';
 
@@ -718,15 +719,15 @@ export default function Dashboard() {
               <DailyCheckIn userId={user?.id} weekOffset={0} customRange={null} onUpdate={refreshStats} />
             </div>
 
-            {/* ══ SECTION: Salah ══ */}
+            {/* ══ SECTION: Progress ══ */}
             <div className="animate-fade-in-up delay-300 mb-8">
               <div className="flex items-center gap-3 mb-5">
                 <span style={{ color: 'rgba(29,158,117,0.5)', fontSize: '9px' }}>✦</span>
-                <p className="text-[10px] font-bold tracking-[0.2em] uppercase" style={{ color: 'rgba(255,255,255,0.18)' }}>Salah</p>
+                <p className="text-[10px] font-bold tracking-[0.2em] uppercase" style={{ color: 'rgba(255,255,255,0.18)' }}>Progress</p>
                 <div className="h-px flex-1" style={{ background: 'linear-gradient(to right, rgba(29,158,117,0.2), transparent)' }} />
               </div>
-              {/* Prayer tracker — full width */}
-              <PrayerTracker userId={user?.id} weekOffset={0} customRange={null} onUpdate={refreshStats} compact />
+              {/* Surgical tracker — full width */}
+              <SurgicalTracker userId={user?.id} refreshKey={statsRefreshKey} />
               {/* Stats row below */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-5 mt-4">
                 {/* Left: Weekly Ring + View Tasks card */}
