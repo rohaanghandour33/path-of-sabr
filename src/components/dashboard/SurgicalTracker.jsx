@@ -94,9 +94,7 @@ export default function SurgicalTracker({ userId, refreshKey = 0 }) {
       ? new Date(firstRow.date + 'T12:00:00')
       : (() => { const d = new Date(); d.setDate(d.getDate() - 29); return d; })();
 
-    // Cap at 90 days back
-    const cap = new Date(); cap.setDate(cap.getDate() - 89);
-    const startDate = earliest > cap ? earliest : cap;
+    const startDate = earliest;
     const startStr  = startDate.toISOString().split('T')[0];
 
     const [{ data: prayers }, { data: moods }, { data: tasks }] = await Promise.all([
