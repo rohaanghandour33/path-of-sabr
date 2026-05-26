@@ -725,14 +725,12 @@ export default function Dashboard() {
                 <p className="text-[10px] font-bold tracking-[0.2em] uppercase" style={{ color: 'rgba(255,255,255,0.18)' }}>Salah</p>
                 <div className="h-px flex-1" style={{ background: 'linear-gradient(to right, rgba(29,158,117,0.2), transparent)' }} />
               </div>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-5 items-start">
-                <div>
-                  <PrayerTracker userId={user?.id} weekOffset={0} customRange={null} onUpdate={refreshStats} />
-                </div>
-                <div className="flex flex-col gap-4">
-                  <WeeklyPrayerRing userId={user?.id} refreshKey={statsRefreshKey} />
-                  <HomeSummaryCards userId={user?.id} onViewTasks={() => handleTabChange('tasks')} refreshKey={statsRefreshKey} />
-                </div>
+              {/* Prayer tracker — full width */}
+              <PrayerTracker userId={user?.id} weekOffset={0} customRange={null} onUpdate={refreshStats} compact />
+              {/* Stats row below */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-5 mt-4">
+                <WeeklyPrayerRing userId={user?.id} refreshKey={statsRefreshKey} />
+                <HomeSummaryCards userId={user?.id} onViewTasks={() => handleTabChange('tasks')} refreshKey={statsRefreshKey} />
               </div>
             </div>
 

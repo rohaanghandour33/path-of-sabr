@@ -212,7 +212,7 @@ function PrayerSummaryCard({ records, title, subtitle }) {
 }
 
 // ── Main component ─────────────────────────────────────────────────────────────
-export default function PrayerTracker({ userId, weekOffset = 0, customRange = null, onUpdate }) {
+export default function PrayerTracker({ userId, weekOffset = 0, customRange = null, onUpdate, compact = false }) {
   const [prayers, setPrayers] = useState({});
   const [readOnlyRecords, setReadOnlyRecords] = useState([]);
   const [streak, setStreak] = useState(0);
@@ -320,7 +320,7 @@ export default function PrayerTracker({ userId, weekOffset = 0, customRange = nu
           )}
         </div>
         <div className="flex items-center gap-2">
-          {rawatib > 0 && (
+          {!compact && rawatib > 0 && (
             <span className="text-[10px] font-semibold px-2.5 py-1 rounded-full"
               title="Sunnah Rawatib — 12 daily rakat the Prophet ﷺ never left"
               style={rawatib === 12
@@ -389,7 +389,7 @@ export default function PrayerTracker({ userId, weekOffset = 0, customRange = nu
               </div>
 
               {/* Status buttons */}
-              <div className="flex gap-1.5 px-4 pb-4">
+              <div className="flex gap-1.5 px-4 pb-3">
                 {STATUSES.map((s) => {
                   const isActive = current === s.key;
                   return (
@@ -405,29 +405,30 @@ export default function PrayerTracker({ userId, weekOffset = 0, customRange = nu
                 })}
               </div>
 
-              {/* Sunnah sub-section (when expanded) */}
-              {showSunnah && (
+              {/* Masjid toggle — always visible */}
+              <div className="px-4 pb-3.5">
+                <button onClick={() => toggleField(`${key}_masjid`)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-semibold transition-all duration-150"
+                  style={masjidOn
+                    ? { background: 'rgba(29,158,117,0.14)', border: '1px solid rgba(29,158,117,0.35)', color: '#1D9E75' }
+                    : { background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.2)' }
+                  }>
+                  🕌 Prayed at Masjid
+                </button>
+              </div>
+
+              {/* Sunnah sub-section (non-compact mode only, when expanded) */}
+              {!compact && showSunnah && (
                 <div className="px-4 pb-4 pt-2.5 space-y-1.5" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
                   <SunnahRow label="Bef" prayerKey={key} type="before" config={cfg.before} value={valBefore} onSet={(n) => setSunnah(key, 'before', n)} />
                   {cfg.after && (
                     <SunnahRow label="Aft" prayerKey={key} type="after" config={cfg.after} value={valAfter} onSet={(n) => setSunnah(key, 'after', n)} />
                   )}
-                  {/* Masjid toggle */}
-                  <div className="flex items-center justify-between pt-0.5">
-                    <button onClick={() => toggleField(`${key}_masjid`)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-semibold transition-all duration-150"
-                      style={masjidOn
-                        ? { background: 'rgba(29,158,117,0.14)', border: '1px solid rgba(29,158,117,0.35)', color: '#1D9E75' }
-                        : { background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.22)' }
-                      }>
-                      🕌 Prayed at Masjid
-                    </button>
-                    {(key === 'fajr' || key === 'asr') && (
-                      <p className="text-[9px]" style={{ color: 'rgba(255,255,255,0.12)' }}>
-                        {key === 'fajr' ? '⚠ No nafl after Fajr' : '⚠ No nafl after Asr'}
-                      </p>
-                    )}
-                  </div>
+                  {(key === 'fajr' || key === 'asr') && (
+                    <p className="text-[9px] pt-0.5" style={{ color: 'rgba(255,255,255,0.12)' }}>
+                      {key === 'fajr' ? '⚠ No nafl after Fajr until sun rises' : '⚠ No nafl after Asr until sunset'}
+                    </p>
+                  )}
                 </div>
               )}
             </div>
@@ -435,8 +436,8 @@ export default function PrayerTracker({ userId, weekOffset = 0, customRange = nu
         })}
       </div>
 
-      {/* ── Sunnah toggle ── */}
-      <button
+      {/* ── Sunnah toggle (Prayers tab only) ── */}
+      {!compact && <button
         onClick={() => setShowSunnah((s) => !s)}
         className="mt-3.5 w-full py-3 rounded-2xl flex items-center justify-center gap-2 text-[11px] font-semibold transition-all duration-200 hover:scale-[1.01] active:scale-[0.99]"
         style={showSunnah
@@ -455,10 +456,10 @@ export default function PrayerTracker({ userId, weekOffset = 0, customRange = nu
           }
         </span>
         <span style={{ fontSize: '10px', opacity: 0.5 }}>{showSunnah ? '↑' : '↓'}</span>
-      </button>
+      </button>}
 
-      {/* ── More Ibadah (expanded) ── */}
-      {showSunnah && (
+      {/* ── More Ibadah (expanded, Prayers tab only) ── */}
+      {!compact && showSunnah && (
         <div className="mt-4 pt-4" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
           <p className="text-[9px] font-bold tracking-[0.18em] uppercase mb-3" style={{ color: 'rgba(255,255,255,0.14)' }}>
             More Ibadah
