@@ -729,7 +729,38 @@ export default function Dashboard() {
               <PrayerTracker userId={user?.id} weekOffset={0} customRange={null} onUpdate={refreshStats} compact />
               {/* Stats row below */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-5 mt-4">
-                <WeeklyPrayerRing userId={user?.id} refreshKey={statsRefreshKey} />
+                {/* Left: Weekly Ring + View Tasks card */}
+                <div className="flex flex-col gap-4">
+                  <WeeklyPrayerRing userId={user?.id} refreshKey={statsRefreshKey} />
+                  <button
+                    onClick={() => handleTabChange('tasks')}
+                    className="flex-1 rounded-3xl p-6 flex flex-col text-left transition-all duration-200 hover:scale-[1.01] active:scale-[0.99]"
+                    style={{
+                      background: 'linear-gradient(145deg, rgba(29,158,117,0.09) 0%, rgba(29,158,117,0.02) 100%)',
+                      border: '1px solid rgba(29,158,117,0.16)',
+                      boxShadow: '0 8px 40px rgba(0,0,0,0.25)',
+                    }}
+                  >
+                    <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full pointer-events-none"
+                      style={{ background: 'radial-gradient(circle, rgba(29,158,117,0.12) 0%, transparent 70%)' }} />
+                    <p className="text-[9px] font-bold tracking-[0.2em] uppercase mb-4" style={{ color: 'rgba(255,255,255,0.22)' }}>
+                      Tasks
+                    </p>
+                    <span className="text-3xl mb-3 block">📋</span>
+                    <p className="text-white font-extrabold text-xl mb-2 tracking-tight leading-tight">Weekly Tasks</p>
+                    <p className="text-xs leading-relaxed mb-6" style={{ color: 'rgba(255,255,255,0.3)' }}>
+                      Personal deen goals tailored to your schedule and journey.
+                    </p>
+                    <div className="mt-auto flex items-center justify-between">
+                      <span className="text-sm font-bold" style={{ color: '#1D9E75' }}>View Tasks →</span>
+                      <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
+                        style={{ background: 'rgba(29,158,117,0.12)', border: '1px solid rgba(29,158,117,0.25)' }}>
+                        <span style={{ color: '#1D9E75', fontSize: '14px' }}>→</span>
+                      </div>
+                    </div>
+                  </button>
+                </div>
+                {/* Right: Action Score + Prayer Streak */}
                 <HomeSummaryCards userId={user?.id} onViewTasks={() => handleTabChange('tasks')} refreshKey={statsRefreshKey} />
               </div>
             </div>

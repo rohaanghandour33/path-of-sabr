@@ -127,10 +127,10 @@ export default function HomeSummaryCards({ userId, onViewTasks, refreshKey = 0 }
     : 'Alhamdulillah. Beautiful consistency';
 
   return (
-    <div className="mt-10 mb-4">
+    <div className="flex flex-col h-full">
 
       {/* Section label */}
-      <div className="flex items-center gap-3 mb-6">
+      <div className="flex items-center gap-3 mb-4">
         <span style={{ color: 'rgba(201,149,42,0.45)', fontSize: '9px' }}>✦</span>
         <p className="text-[10px] font-bold tracking-[0.2em] uppercase" style={{ color: 'rgba(255,255,255,0.2)' }}>
           Your Progress
@@ -138,12 +138,12 @@ export default function HomeSummaryCards({ userId, onViewTasks, refreshKey = 0 }
         <div className="h-px flex-1" style={{ background: 'linear-gradient(to right, rgba(201,149,42,0.18), transparent)' }} />
       </div>
 
-      {/* ── 3 stat cards ── */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {/* ── 2 stat cards ── */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1">
 
         {/* Card 1 — Action Score */}
         <div
-          className="rounded-3xl p-6 flex flex-col relative overflow-hidden"
+          className="rounded-3xl p-6 flex flex-col relative overflow-hidden h-full"
           style={{
             background: 'linear-gradient(145deg, rgba(201,149,42,0.1) 0%, rgba(201,149,42,0.03) 100%)',
             border: '1px solid rgba(201,149,42,0.18)',
@@ -195,7 +195,7 @@ export default function HomeSummaryCards({ userId, onViewTasks, refreshKey = 0 }
 
         {/* Card 2 — Prayer Streak */}
         <div
-          className="rounded-3xl p-6 flex flex-col relative overflow-hidden"
+          className="rounded-3xl p-6 flex flex-col relative overflow-hidden h-full"
           style={{
             background: 'linear-gradient(145deg, rgba(29,158,117,0.1) 0%, rgba(29,158,117,0.03) 100%)',
             border: '1px solid rgba(29,158,117,0.18)',
@@ -247,88 +247,6 @@ export default function HomeSummaryCards({ userId, onViewTasks, refreshKey = 0 }
           </p>
         </div>
 
-        {/* Card 3 — Tasks + Check-in */}
-        <div
-          className="rounded-3xl p-6 flex flex-col relative overflow-hidden"
-          style={{
-            background: 'linear-gradient(145deg, rgba(29,158,117,0.08) 0%, rgba(255,255,255,0.02) 100%)',
-            border: '1px solid rgba(29,158,117,0.15)',
-            boxShadow: '0 8px 40px rgba(0,0,0,0.25)',
-          }}
-        >
-          <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full pointer-events-none"
-            style={{ background: 'radial-gradient(circle, rgba(29,158,117,0.12) 0%, transparent 70%)' }} />
-
-          <p className="text-[9px] font-bold tracking-[0.2em] uppercase mb-5" style={{ color: 'rgba(255,255,255,0.22)' }}>
-            This Week
-          </p>
-
-          {/* Check-in streak mini stat */}
-          <div className="flex items-center justify-between mb-5">
-            <div>
-              <p className="text-[10px] uppercase tracking-widest mb-1" style={{ color: 'rgba(255,255,255,0.2)' }}>Check-ins</p>
-              <div className="flex items-baseline gap-1">
-                <span className="text-3xl font-extrabold leading-none" style={{ color: '#1D9E75' }}>{checkInStreak}</span>
-                <span className="text-xs" style={{ color: 'rgba(255,255,255,0.2)' }}>day streak</span>
-              </div>
-            </div>
-            <div className="w-px self-stretch mx-3" style={{ background: 'rgba(255,255,255,0.06)' }} />
-            <div>
-              <p className="text-[10px] uppercase tracking-widest mb-1" style={{ color: 'rgba(255,255,255,0.2)' }}>Tasks</p>
-              {totalTasks === 0 ? (
-                <span className="text-xs" style={{ color: 'rgba(255,255,255,0.2)' }}>None yet</span>
-              ) : (
-                <div className="flex items-baseline gap-1">
-                  <span className="text-3xl font-extrabold leading-none" style={{ color: '#1D9E75' }}>{doneTasks}</span>
-                  <span className="text-xs" style={{ color: 'rgba(255,255,255,0.2)' }}>of {totalTasks}</span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Task progress bar */}
-          {totalTasks > 0 && (
-            <>
-              <div className="h-1.5 rounded-full overflow-hidden mb-3" style={{ background: 'rgba(255,255,255,0.07)' }}>
-                <div
-                  className="h-full rounded-full"
-                  style={{
-                    width: barReady ? `${taskPct}%` : '0%',
-                    background: 'linear-gradient(90deg, #1D9E75, #23c68f)',
-                    boxShadow: '0 0 8px rgba(29,158,117,0.6)',
-                    transition: 'width 1.1s cubic-bezier(0.4,0,0.2,1)',
-                  }}
-                />
-              </div>
-              <p className="text-[10px] mb-4" style={{ color: 'rgba(255,255,255,0.2)' }}>
-                {taskPct}% complete
-              </p>
-            </>
-          )}
-
-          <button
-            onClick={onViewTasks}
-            className="mt-auto w-full py-3 rounded-2xl text-xs font-bold transition-all duration-150 hover:scale-[1.02] active:scale-[0.98]"
-            style={{
-              background: 'rgba(29,158,117,0.12)',
-              border: '1px solid rgba(29,158,117,0.28)',
-              color: '#1D9E75',
-            }}
-          >
-            View Tasks →
-          </button>
-        </div>
-
-      </div>
-
-      {/* Arabic footer */}
-      <div className="mt-8 text-center">
-        <p className="arabic-text text-lg mb-1" style={{ color: 'rgba(201,149,42,0.2)' }}>
-          وَاللَّهُ يُحِبُّ الصَّابِرِينَ
-        </p>
-        <p className="text-[10px] tracking-widest uppercase" style={{ color: 'rgba(255,255,255,0.08)' }}>
-          And Allah loves the patient — Al-Imran 3:146
-        </p>
       </div>
     </div>
   );
