@@ -131,13 +131,24 @@ export default function DailyCheckIn({ userId, weekOffset = 0, customRange = nul
   const handleNext = async () => {
     if (qStep < QUESTIONS.length - 1) { advance(); return; }
     setSaving(true);
-    await supabase.from('moods').upsert(
-      { user_id: userId, date: today, mood_score: data.connection,
-        mood_label: JSON.stringify({ heartStates: data.heartStates, needs: data.needs }),
-        notes: JSON.stringify({ struggles: data.struggles, pulledAway: data.pulledAway, pulledAwayText: data.pulledAwayText }) },
+    const { error } = await supabase.from('moods').upsert(
+      {
+        user_id:    userId,
+        date:       today,
+        mood_score: data.connection,
+        notes:      JSON.stringify({
+          heartStates:     data.heartStates,
+          needs:           data.needs,
+          struggles:       data.struggles,
+          pulledAway:      data.pulledAway,
+          pulledAwayText:  data.pulledAwayText,
+        }),
+      },
       { onConflict: 'user_id,date' }
     );
-    setSaving(false); setDone(true); onUpdate?.();
+    setSaving(false);
+    if (error) { console.error('[DailyCheckIn] upsert failed:', error.message); return; }
+    setDone(true); onUpdate?.();
   };
 
   if (loading) return null;

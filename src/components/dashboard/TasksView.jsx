@@ -86,7 +86,7 @@ export default function TasksView({ userId, isFirstWeek, freeDays, onNeedSchedul
 
     await Promise.all([
       supabase.from('user_tasks')
-        .update({ completed: true, completed_at: new Date().toISOString() })
+        .update({ completed: true })
         .eq('id', task.id),
       supabase.from('user_trophies').insert({
         user_id:       userId,

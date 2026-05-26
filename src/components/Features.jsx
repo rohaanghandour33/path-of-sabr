@@ -59,6 +59,39 @@ export default function Features() {
           {features.map((f) => <FeatureCard key={f.title} {...f} />)}
         </div>
 
+        {/* Sadaqah banner card */}
+        <div
+          className="mt-3 sm:mt-4 rounded-2xl px-6 sm:px-10 py-6 sm:py-7 flex flex-col sm:flex-row items-center justify-between gap-4 sm:gap-8"
+          style={{
+            background: 'linear-gradient(135deg, rgba(201,149,42,0.12) 0%, rgba(201,149,42,0.04) 100%)',
+            border: '1px solid rgba(201,149,42,0.3)',
+            boxShadow: '0 0 40px rgba(201,149,42,0.06)',
+          }}
+        >
+          <div className="flex items-center gap-4">
+            <div
+              className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 text-xl"
+              style={{ background: 'rgba(201,149,42,0.15)', border: '1px solid rgba(201,149,42,0.3)' }}
+            >
+              🤲
+            </div>
+            <div>
+              <p className="text-white font-bold text-sm sm:text-base">10% of every subscription's profit goes to sadaqah</p>
+              <p className="text-xs sm:text-sm mt-0.5 leading-relaxed" style={{ color: 'rgba(255,255,255,0.45)' }}>
+                Calculated on profit, not revenue — so this commitment holds at every stage of growth. Automatically, every month.
+              </p>
+            </div>
+          </div>
+          <div className="flex-shrink-0">
+            <span
+              className="inline-flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-full whitespace-nowrap"
+              style={{ background: 'rgba(201,149,42,0.15)', border: '1px solid rgba(201,149,42,0.3)', color: '#C9952A' }}
+            >
+              ✦ Always automatic
+            </span>
+          </div>
+        </div>
+
         {/* Quranic quote */}
         <div className="mt-10 sm:mt-14 text-center px-2">
           <div

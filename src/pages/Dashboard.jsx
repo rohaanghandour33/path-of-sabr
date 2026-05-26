@@ -15,7 +15,7 @@ import TasksView from '../components/dashboard/TasksView';
 import ScheduleSurvey from '../components/dashboard/ScheduleSurvey';
 
 const PRAYER_KEYS = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
-const TODAY = new Date().toISOString().split('T')[0];
+function getToday() { return new Date().toISOString().split('T')[0]; }
 
 const CARD = {
   background: 'linear-gradient(145deg, rgba(255,255,255,0.055) 0%, rgba(255,255,255,0.018) 100%)',
@@ -150,14 +150,14 @@ function NavBar({ weekOffset, setWeekOffset, showRangePicker, setShowRangePicker
         <div className="flex flex-col sm:flex-row gap-3 mb-4">
           <div className="flex-1">
             <p className="text-[10px] font-semibold tracking-widest uppercase mb-2" style={{ color: 'rgba(255,255,255,0.25)' }}>From</p>
-            <input type="date" value={rangeInput.start} max={rangeInput.end || TODAY}
+            <input type="date" value={rangeInput.start} max={rangeInput.end || getToday()}
               onChange={(e) => setRangeInput(r => ({ ...r, start: e.target.value }))}
               className="w-full rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none"
               style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', colorScheme: 'dark' }} />
           </div>
           <div className="flex-1">
             <p className="text-[10px] font-semibold tracking-widest uppercase mb-2" style={{ color: 'rgba(255,255,255,0.25)' }}>To</p>
-            <input type="date" value={rangeInput.end} min={rangeInput.start} max={TODAY}
+            <input type="date" value={rangeInput.end} min={rangeInput.start} max={getToday()}
               onChange={(e) => setRangeInput(r => ({ ...r, end: e.target.value }))}
               className="w-full rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none"
               style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', colorScheme: 'dark' }} />
@@ -213,7 +213,7 @@ function NavBar({ weekOffset, setWeekOffset, showRangePicker, setShowRangePicker
 }
 
 // ── Prayer History ────────────────────────────────────────────────────────────
-function PrayerHistory({ userId, weekOffset, customRange }) {
+function PrayerHistory({ userId, weekOffset, customRange, refreshKey = 0 }) {
   const [records, setRecords] = useState([]);
 
   useEffect(() => {
@@ -223,7 +223,7 @@ function PrayerHistory({ userId, weekOffset, customRange }) {
     else { const { start, end } = getWeekBounds(weekOffset); startStr = fmtDate(start); endStr = fmtDate(end); }
     supabase.from('prayers').select('*').eq('user_id', userId).gte('date', startStr).lte('date', endStr)
       .order('date', { ascending: false }).then(({ data }) => setRecords(data || []));
-  }, [userId, weekOffset, customRange?.start, customRange?.end]);
+  }, [userId, weekOffset, customRange?.start, customRange?.end, refreshKey]);
 
   if (customRange) {
     let total = 0, onTime = 0, late = 0, missed = 0;
@@ -520,10 +520,10 @@ export default function Dashboard() {
       {showScheduleSurvey && !showFirstWeekPopup && (
         <ScheduleSurvey
           userId={user?.id}
-          onSave={(days) => {
+          onSave={async (days) => {
             setFreeDays(days);
             setShowScheduleSurvey(false);
-            if (days.length > 0) checkAndGenerateTasks(user.id);
+            if (days.length > 0) await checkAndGenerateTasks(user.id);
           }}
         />
       )}
@@ -783,7 +783,7 @@ export default function Dashboard() {
             <NavBar {...navProps} />
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-5 items-stretch">
               <PrayerTracker userId={user?.id} weekOffset={weekOffset} customRange={appliedRange} />
-              <PrayerHistory userId={user?.id} weekOffset={weekOffset} customRange={appliedRange} />
+              <PrayerHistory userId={user?.id} weekOffset={weekOffset} customRange={appliedRange} refreshKey={statsRefreshKey} />
             </div>
           </>
         )}

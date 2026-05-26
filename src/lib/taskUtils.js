@@ -112,7 +112,7 @@ export async function generateTasks(userId, freeDays) {
       .map(m => m.content.slice(0, 120))
       .join(' | ') || '';
 
-    const fullContext = [onboardingStr, prayerSummary].filter(Boolean).join('\n');
+    const fullContext = [onboardingStr, prayerSummary, recentConvStr].filter(Boolean).join('\n');
 
     // ── 3. Try to get tasks already assigned (avoid repeats) ─────────────
     const { data: usedRows } = await supabase
@@ -153,15 +153,12 @@ export async function generateTasks(userId, freeDays) {
         const t = Array.isArray(json.tasks) ? json.tasks[0] : null;
         if (t?.task_title && !usedTitles.has(t.task_title)) {
           task = {
-            user_id:            userId,
-            task_title:         t.task_title,
-            task_description:   t.task_description || '',
-            task_type:          t.task_type || 'character',
-            frequency_per_week: 1,
-            assigned_date:      today,
-            due_date:           nextFreeDay,
-            completed:          false,
-            is_personalised:    true,
+            user_id:          userId,
+            task_title:       t.task_title,
+            task_description: t.task_description || '',
+            task_type:        t.task_type || 'character',
+            due_date:         nextFreeDay,
+            completed:        false,
           };
         }
       }
@@ -200,15 +197,12 @@ export async function generateTasks(userId, freeDays) {
 
       if (picked) {
         task = {
-          user_id:            userId,
-          task_title:         picked.task_title,
-          task_description:   picked.task_description,
-          task_type:          picked.task_type,
-          frequency_per_week: picked.frequency_per_week,
-          assigned_date:      today,
-          due_date:           nextFreeDay,
-          completed:          false,
-          is_personalised:    false,
+          user_id:          userId,
+          task_title:       picked.task_title,
+          task_description: picked.task_description,
+          task_type:        picked.task_type,
+          due_date:         nextFreeDay,
+          completed:        false,
         };
       }
     }

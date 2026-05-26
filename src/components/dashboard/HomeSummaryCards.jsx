@@ -82,7 +82,7 @@ export default function HomeSummaryCards({ userId, onViewTasks, refreshKey = 0 }
       supabase.from('moods').select('date').eq('user_id', userId)
         .gte('date', monthStart.toISOString().split('T')[0]).lte('date', today),
       supabase.from('user_tasks').select('id, completed').eq('user_id', userId)
-        .gte('due_date', today),
+        .gte('due_date', weekStart.toISOString().split('T')[0]).lte('due_date', today),
     ]).then(([{ data: prayers }, { data: moods }, { data: tasks }]) => {
       let onTime = 0, totalLogged = 0;
       (prayers || []).forEach((r) => {
