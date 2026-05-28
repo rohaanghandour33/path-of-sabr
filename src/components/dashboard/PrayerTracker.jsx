@@ -2,6 +2,63 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 
+// ── Aladhan calculation method per country ────────────────────────────────────
+// method: Aladhan method ID
+// tune:   comma-separated minute offsets (imsak,fajr,sunrise,dhuhr,asr,maghrib,sunset,isha,midnight)
+//         Applied on top of the base method to match each country's official authority.
+//
+// UAE tune (0,1,-4,3,1,3,0,-2,0) verified against Khaleej Times / IACAD Dubai — exact match.
+const PRAYER_METHOD = {
+  // ── Gulf / Arabian Peninsula ─────────────────────────────────────────────
+  'United Arab Emirates': { method: 4, tune: '0,1,-4,3,1,3,0,-2,0' }, // IACAD — matches Khaleej Times exactly
+  'Saudi Arabia':         { method: 4 },   // Umm Al-Qura
+  'Kuwait':               { method: 9 },
+  'Qatar':                { method: 10 },
+  'Bahrain':              { method: 8 },   // Gulf Region
+  'Oman':                 { method: 8 },   // Gulf Region
+  'Yemen':                { method: 4 },
+  // ── South Asia ───────────────────────────────────────────────────────────
+  'Pakistan':             { method: 1 },   // University of Islamic Sciences, Karachi
+  'Bangladesh':           { method: 1 },
+  'India':                { method: 1 },
+  'Afghanistan':          { method: 1 },
+  'Sri Lanka':            { method: 1 },
+  // ── North Africa / Middle East ────────────────────────────────────────────
+  'Egypt':                { method: 5 },   // Egyptian General Authority
+  'Libya':                { method: 5 },
+  'Sudan':                { method: 5 },
+  'Algeria':              { method: 5 },
+  'Tunisia':              { method: 5 },
+  'Morocco':              { method: 5 },
+  'Jordan':               { method: 5 },
+  'Syria':                { method: 5 },
+  'Iraq':                 { method: 5 },
+  'Lebanon':              { method: 5 },
+  'Palestine':            { method: 5 },
+  // ── South-East Asia ───────────────────────────────────────────────────────
+  'Malaysia':             { method: 3 },
+  'Indonesia':            { method: 3 },
+  'Singapore':            { method: 11 },
+  'Brunei':               { method: 11 },
+  // ── Europe ───────────────────────────────────────────────────────────────
+  'United Kingdom':       { method: 15 },  // Moonsighting Committee Worldwide
+  'France':               { method: 12 },  // Union Organisation Islamique de France
+  'Turkey':               { method: 13 },  // Diyanet İşleri
+  'Russia':               { method: 14 },
+  'Germany':              { method: 3 },
+  'Netherlands':          { method: 3 },
+  'Belgium':              { method: 12 },
+  // ── North America ────────────────────────────────────────────────────────
+  'United States':        { method: 2 },   // ISNA
+  'Canada':               { method: 2 },
+  // ── Default (Muslim World League) — works well globally ──────────────────
+};
+const DEFAULT_METHOD = { method: 3 };
+
+function getMethodForCountry(country) {
+  return PRAYER_METHOD[country] || DEFAULT_METHOD;
+}
+
 const PRAYERS = [
   { key: 'fajr',    label: 'Fajr',    fallback: 'Pre-dawn',  aladhanKey: 'Fajr' },
   { key: 'dhuhr',   label: 'Dhuhr',   fallback: 'Midday',    aladhanKey: 'Dhuhr' },
@@ -315,10 +372,11 @@ export default function PrayerTracker({ userId, weekOffset = 0, customRange = nu
     // ── Primary: use stored city + country (no permission needed) ────────────
     if (city && country) {
       try {
-        // No date in URL — Aladhan defaults to today server-side (avoids date-format issues)
-        const res = await fetch(
-          `https://api.aladhan.com/v1/timingsByCity?city=${encodeURIComponent(city)}&country=${encodeURIComponent(country)}&method=3`
-        );
+        const { method, tune } = getMethodForCountry(country);
+        let url = `https://api.aladhan.com/v1/timingsByCity?city=${encodeURIComponent(city)}&country=${encodeURIComponent(country)}&method=${method}`;
+        if (tune) url += `&tune=${tune}`;
+
+        const res = await fetch(url);
         if (res.ok) {
           const t = (await res.json())?.data?.timings;
           if (t) {
@@ -464,10 +522,24 @@ export default function PrayerTracker({ userId, weekOffset = 0, customRange = nu
 
       {/* ── Location setup for existing users with no city/country ── */}
       {showLocationSetup && Object.keys(prayerTimes).length === 0 && (
-        <LocationSetup onSave={(city, country) => {
+        <LocationSetup onSave={async (city, country) => {
           setShowLocationSetup(false);
           setLocationLabel(`${city}, ${country}`);
-          fetchPrayerTimes();
+          // Fetch immediately with the just-saved values (don't wait for user metadata refresh)
+          try {
+            const { method, tune } = getMethodForCountry(country);
+            let url = `https://api.aladhan.com/v1/timingsByCity?city=${encodeURIComponent(city)}&country=${encodeURIComponent(country)}&method=${method}`;
+            if (tune) url += `&tune=${tune}`;
+            const res = await fetch(url);
+            if (res.ok) {
+              const t = (await res.json())?.data?.timings;
+              if (t) {
+                const mapped = {};
+                PRAYERS.forEach(({ key, aladhanKey }) => { if (t[aladhanKey]) mapped[key] = to12h(t[aladhanKey]); });
+                setPrayerTimes(mapped);
+              }
+            }
+          } catch { /* silent */ }
         }} />
       )}
 
