@@ -212,6 +212,76 @@ function PrayerSummaryCard({ records, title, subtitle }) {
   );
 }
 
+// ── Location setup prompt (for existing users with no city/country stored) ──────
+function LocationSetup({ onSave }) {
+  const COUNTRIES = [
+    'Afghanistan','Albania','Algeria','Azerbaijan','Bahrain','Bangladesh','Bosnia and Herzegovina',
+    'Brunei','Chad','Comoros','Djibouti','Egypt','Gambia','Guinea','Indonesia','Iran','Iraq',
+    'Jordan','Kazakhstan','Kosovo','Kuwait','Kyrgyzstan','Lebanon','Libya','Malaysia','Maldives',
+    'Mali','Mauritania','Morocco','Niger','Nigeria','Oman','Pakistan','Palestine','Qatar',
+    'Saudi Arabia','Senegal','Sierra Leone','Somalia','Sudan','Syria','Tajikistan','Tunisia',
+    'Turkey','Turkmenistan','United Arab Emirates','Uzbekistan','Western Sahara','Yemen',
+    'Argentina','Australia','Austria','Belgium','Brazil','Canada','China','Denmark','Ethiopia',
+    'Finland','France','Germany','Ghana','Greece','Hungary','India','Ireland','Israel','Italy',
+    'Japan','Kenya','Mexico','Netherlands','New Zealand','Norway','Philippines','Poland',
+    'Portugal','Russia','South Africa','South Korea','Spain','Sri Lanka','Sweden','Switzerland',
+    'Tanzania','Thailand','Uganda','Ukraine','United Kingdom','United States','Vietnam','Zimbabwe',
+  ].sort();
+
+  const [city,    setCity]    = useState('');
+  const [country, setCountry] = useState('');
+  const [saving,  setSaving]  = useState(false);
+
+  const save = async () => {
+    if (!city.trim() || !country) return;
+    setSaving(true);
+    const { error } = await supabase.auth.updateUser({
+      data: { city: city.trim(), country },
+    });
+    if (!error) onSave(city.trim(), country);
+    setSaving(false);
+  };
+
+  return (
+    <div className="rounded-2xl p-4 mb-4" style={{ background: 'rgba(29,158,117,0.06)', border: '1px solid rgba(29,158,117,0.18)' }}>
+      <div className="flex items-center gap-2 mb-3">
+        <span>🕌</span>
+        <p className="text-xs font-semibold" style={{ color: 'rgba(255,255,255,0.55)' }}>
+          Add your city for accurate prayer times
+        </p>
+      </div>
+      <div className="grid grid-cols-2 gap-2 mb-3">
+        <select
+          value={country}
+          onChange={e => setCountry(e.target.value)}
+          className="w-full rounded-xl px-3 py-2 text-sm text-white focus:outline-none"
+          style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', colorScheme: 'dark' }}
+        >
+          <option value="">Country</option>
+          {COUNTRIES.map(c => <option key={c} value={c}>{c}</option>)}
+        </select>
+        <input
+          type="text"
+          value={city}
+          onChange={e => setCity(e.target.value)}
+          placeholder="City"
+          className="w-full rounded-xl px-3 py-2 text-sm text-white placeholder-white/25 focus:outline-none"
+          style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
+          onKeyDown={e => e.key === 'Enter' && save()}
+        />
+      </div>
+      <button
+        onClick={save}
+        disabled={!city.trim() || !country || saving}
+        className="w-full py-2 rounded-xl text-xs font-bold transition-all disabled:opacity-30"
+        style={{ background: 'rgba(29,158,117,0.18)', border: '1px solid rgba(29,158,117,0.3)', color: '#1D9E75' }}
+      >
+        {saving ? 'Saving…' : 'Save & show prayer times →'}
+      </button>
+    </div>
+  );
+}
+
 // ── Main component ─────────────────────────────────────────────────────────────
 export default function PrayerTracker({ userId, weekOffset = 0, customRange = null, onUpdate, compact = false }) {
   const { user } = useAuth();
@@ -221,6 +291,7 @@ export default function PrayerTracker({ userId, weekOffset = 0, customRange = nu
   const [loading, setLoading] = useState(true);
   const [prayerTimes, setPrayerTimes] = useState({});
   const [locationLabel, setLocationLabel] = useState('');
+  const [showLocationSetup, setShowLocationSetup] = useState(false);
   const [showSunnah, setShowSunnah] = useState(false);
 
   const tz    = user?.user_metadata?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -235,6 +306,11 @@ export default function PrayerTracker({ userId, weekOffset = 0, customRange = nu
   async function fetchPrayerTimes() {
     const city    = user?.user_metadata?.city?.trim();
     const country = user?.user_metadata?.country?.trim();
+
+    // No location stored — show the inline setup prompt
+    if (!city || !country) {
+      setShowLocationSetup(true);
+    }
 
     // ── Primary: use stored city + country (no permission needed) ────────────
     if (city && country) {
@@ -385,6 +461,15 @@ export default function PrayerTracker({ userId, weekOffset = 0, customRange = nu
           )}
         </div>
       </div>
+
+      {/* ── Location setup for existing users with no city/country ── */}
+      {showLocationSetup && Object.keys(prayerTimes).length === 0 && (
+        <LocationSetup onSave={(city, country) => {
+          setShowLocationSetup(false);
+          setLocationLabel(`${city}, ${country}`);
+          fetchPrayerTimes();
+        }} />
+      )}
 
       {/* ── Fard prayer rows ── */}
       <div className="space-y-2.5">
