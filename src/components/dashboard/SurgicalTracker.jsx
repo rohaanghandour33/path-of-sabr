@@ -108,10 +108,13 @@ const VW = 600, VH = 160, PX = 6, PXR = 6, PY = 8, PYB = 8;
 const chartW = VW - PX - PXR;
 const chartH = VH - PY - PYB;
 
-// Scale runs 1–100 so the bottom label is "1" not "0"
+// Scale runs 1–100
 const SCALE_MIN = 1, SCALE_MAX = 100;
 function toSvgY(s) { return PY + (1 - (s - SCALE_MIN) / (SCALE_MAX - SCALE_MIN)) * chartH; }
 function toTopPct(s) { return (toSvgY(s) / VH) * 100; }
+
+// Y-axis shows only milestone levels — no grid lines, no "1"
+const Y_AXIS_LABELS = [100, 90, 70, 50, 30, 20, 10];
 
 function smoothPath(pts) {
   if (!pts.length) return '';
@@ -227,7 +230,8 @@ export default function SurgicalTracker({ userId, refreshKey = 0 }) {
     : '#e57368';
 
   const trendArrow = summary.trend === 'up' ? '↑' : summary.trend === 'down' ? '↓' : '→';
-  const trendColor = summary.trend === 'up' ? '#1D9E75'
+  // Gold for up, red for down — no purple
+  const trendColor = summary.trend === 'up' ? '#C9952A'
     : summary.trend === 'down' ? '#e57368'
     : 'rgba(255,255,255,0.3)';
 
@@ -236,8 +240,22 @@ export default function SurgicalTracker({ userId, refreshKey = 0 }) {
     ? [...LEVEL_BENCHMARKS].reverse().find(b => cl >= b.lvl)
     : null;
 
+  // First milestone the user hasn't yet reached — highlighted in gold
+  const nextMilestoneLvl = cl !== null
+    ? (LEVEL_BENCHMARKS.find(b => b.lvl > cl)?.lvl ?? null)
+    : LEVEL_BENCHMARKS[0].lvl;
+
   return (
     <div className="rounded-3xl p-5" style={CARD_STYLE}>
+
+      {/* Pulse animation for the live dot */}
+      <style>{`
+        @keyframes sc-pulse {
+          0%, 100% { opacity: 0.7; r: 6; }
+          50%       { opacity: 0;   r: 12; }
+        }
+        .sc-pulse-ring { animation: sc-pulse 2.2s ease-out infinite; }
+      `}</style>
 
       {/* ── Header ── */}
       <div className="flex items-start justify-between mb-4">
@@ -271,57 +289,58 @@ export default function SurgicalTracker({ userId, refreshKey = 0 }) {
         )}
       </div>
 
-      {/* ── Chart ── */}
+      {/* ── Chart — height +20% (160 → 192px), no grid lines ── */}
       <div className="flex rounded-2xl overflow-hidden mb-1"
-        style={{ height: 160, background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.04)' }}>
+        style={{ height: 192, background: 'rgba(0,0,0,0.18)', border: '1px solid rgba(255,255,255,0.04)' }}>
 
-        {/* Y-axis labels — aligned with SVG gridlines via toTopPct */}
-        <div className="relative flex-shrink-0" style={{ width: 34 }}>
-          {Y_LEVELS.map(lvl => (
-            <span key={lvl} className="absolute w-full text-right tabular-nums leading-none select-none"
+        {/* Y-axis — milestone levels only, small muted grey */}
+        <div className="relative flex-shrink-0" style={{ width: 30 }}>
+          {Y_AXIS_LABELS.map(lvl => (
+            <span key={lvl}
+              className="absolute w-full text-right tabular-nums leading-none select-none"
               style={{
-                top: `${toTopPct(lvl)}%`, transform: 'translateY(-50%)',
-                paddingRight: 5, fontSize: 9,
-                fontWeight: lvl === 1 || lvl === 50 || lvl === 100 ? 700 : 400,
-                color: lvl === 1 || lvl === 50 || lvl === 100
-                  ? 'rgba(255,255,255,0.38)'
-                  : 'rgba(255,255,255,0.15)',
+                top: `${toTopPct(lvl)}%`,
+                transform: 'translateY(-50%)',
+                paddingRight: 4,
+                fontSize: 8,
+                fontWeight: 400,
+                color: 'rgba(255,255,255,0.17)',
               }}>
               {lvl}
             </span>
           ))}
         </div>
 
-        {/* SVG */}
+        {/* SVG — no grid lines at all */}
         <div className="flex-1">
           <svg viewBox={`0 0 ${VW} ${VH}`} preserveAspectRatio="none"
             style={{ width: '100%', height: '100%', display: 'block' }}>
             <defs>
               <linearGradient id="sc-fill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%"   stopColor={lineColor} stopOpacity="0.25" />
+                <stop offset="0%"   stopColor={lineColor} stopOpacity="0.18" />
+                <stop offset="55%"  stopColor={lineColor} stopOpacity="0.03" />
                 <stop offset="100%" stopColor={lineColor} stopOpacity="0"    />
               </linearGradient>
             </defs>
 
-            {Y_LEVELS.map(lvl => {
-              const y = toSvgY(lvl).toFixed(1);
-              const bold = lvl === 50 || lvl === 100;
-              return (
-                <line key={lvl} x1="0" y1={y} x2={VW} y2={y}
-                  stroke={bold ? 'rgba(255,255,255,0.09)' : 'rgba(255,255,255,0.04)'}
-                  strokeWidth="1" strokeDasharray={bold ? '0' : '3 6'} />
-              );
-            })}
+            {/* No grid lines */}
 
             {pts.length >= 2 && (
               <g>
                 <path d={areaPath(pts)} fill="url(#sc-fill)" />
-                <path d={smoothPath(pts)} fill="none" stroke={lineColor} strokeWidth="2" strokeLinecap="round"
+                <path d={smoothPath(pts)} fill="none" stroke={lineColor} strokeWidth="2.5" strokeLinecap="round"
                   style={{ filter: `drop-shadow(0 0 5px ${lineColor}80)` }} />
+                {/* Pulsing glow ring + solid dot at end */}
                 {(() => {
                   const [lx, ly] = pts[pts.length - 1];
-                  return <circle cx={lx.toFixed(1)} cy={ly.toFixed(1)} r="3.5" fill={lineColor}
-                    style={{ filter: `drop-shadow(0 0 7px ${lineColor})` }} />;
+                  return (
+                    <g>
+                      <circle className="sc-pulse-ring" cx={lx.toFixed(1)} cy={ly.toFixed(1)} r="6"
+                        fill={lineColor} />
+                      <circle cx={lx.toFixed(1)} cy={ly.toFixed(1)} r="3.5" fill={lineColor}
+                        style={{ filter: `drop-shadow(0 0 6px ${lineColor})` }} />
+                    </g>
+                  );
                 })()}
               </g>
             )}
@@ -334,7 +353,7 @@ export default function SurgicalTracker({ userId, refreshKey = 0 }) {
       </div>
 
       {/* Week axis */}
-      <div className="flex justify-between mb-4 pr-1" style={{ paddingLeft: 34 }}>
+      <div className="flex justify-between mb-7 pr-1" style={{ paddingLeft: 30 }}>
         <span className="text-[9px]" style={{ color: 'rgba(255,255,255,0.13)' }}>
           {summary.startLabel}
         </span>
@@ -343,49 +362,103 @@ export default function SurgicalTracker({ userId, refreshKey = 0 }) {
         </span>
       </div>
 
-      {/* ── What the numbers reflect ── */}
-      <div className="mb-4 rounded-2xl px-3 py-3"
-        style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.05)' }}>
-        <p className="text-[9px] font-bold tracking-[0.15em] uppercase mb-2.5"
+      {/* ── What the numbers reflect — milestone cards ── */}
+      <div className="mb-5">
+        <p className="text-[9px] font-bold tracking-[0.15em] uppercase mb-3"
           style={{ color: 'rgba(255,255,255,0.15)' }}>
           What the numbers reflect
         </p>
-        <div className="space-y-1.5">
+
+        {/* Mobile: horizontal scroll · Desktop: 2-column grid */}
+        <div
+          className="grid gap-2"
+          style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}
+        >
           {LEVEL_BENCHMARKS.map(({ lvl, desc }) => {
-            const reached = cl !== null && lvl <= cl;
-            const isCurrent = currentBenchmark?.lvl === lvl;
+            const achieved = cl !== null && cl >= lvl;
+            const isNext   = lvl === nextMilestoneLvl;
+
+            let cardBg, cardBorder, numColor, descColor, glow = 'none';
+            if (achieved) {
+              cardBg = 'rgba(29,158,117,0.09)';
+              cardBorder = '1px solid rgba(29,158,117,0.2)';
+              numColor = '#1D9E75';
+              descColor = 'rgba(255,255,255,0.28)';
+            } else if (isNext) {
+              cardBg = 'rgba(201,149,42,0.1)';
+              cardBorder = '1px solid rgba(201,149,42,0.35)';
+              numColor = '#C9952A';
+              descColor = 'rgba(255,255,255,0.45)';
+              glow = '0 0 18px rgba(201,149,42,0.13)';
+            } else {
+              cardBg = 'rgba(255,255,255,0.02)';
+              cardBorder = '1px solid rgba(255,255,255,0.05)';
+              numColor = 'rgba(255,255,255,0.14)';
+              descColor = 'rgba(255,255,255,0.11)';
+            }
+
             return (
-              <div key={lvl} className="flex items-start gap-3">
-                <span className="text-[9px] tabular-nums font-extrabold w-6 flex-shrink-0 text-right mt-px"
-                  style={{ color: isCurrent ? lineColor : reached ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.12)' }}>
+              <div key={lvl} className="rounded-2xl px-3 py-3"
+                style={{ background: cardBg, border: cardBorder, boxShadow: glow }}>
+                <p className="text-xl font-extrabold tabular-nums leading-none mb-1.5"
+                  style={{ color: numColor }}>
                   {lvl}
-                </span>
+                </p>
                 <p className="text-[9px] leading-snug"
-                  style={{ color: isCurrent ? 'rgba(255,255,255,0.55)' : reached ? 'rgba(255,255,255,0.28)' : 'rgba(255,255,255,0.13)' }}>
+                  style={{ color: descColor }}>
                   {desc}
                 </p>
               </div>
             );
           })}
         </div>
+
         <p className="text-[8px] mt-3 leading-relaxed" style={{ color: 'rgba(255,255,255,0.1)' }}>
           The number moves slowly — one good week barely shifts it, one bad week barely drops it.
           Only sustained change over several weeks moves you up or down.
         </p>
       </div>
 
-      {/* ── Chips ── */}
+      {/* ── Bottom cards — Now · Best · Trend ── */}
       <div className="grid grid-cols-3 gap-2">
         {[
-          { label: 'Now',        value: cl ?? '—',                           color: lineColor,  bg: 'rgba(29,158,117,0.07)',  border: 'rgba(29,158,117,0.15)'  },
-          { label: 'Best',       value: summary.best || '—',                 color: '#9B7EFF',  bg: 'rgba(155,126,255,0.07)', border: 'rgba(155,126,255,0.15)' },
-          { label: 'Trend',      value: summary.trend ? trendArrow : '—',    color: trendColor, bg: 'rgba(96,165,224,0.07)',  border: 'rgba(96,165,224,0.15)'  },
-        ].map(({ label, value, color, bg, border }) => (
-          <div key={label} className="text-center rounded-2xl py-3 px-1"
-            style={{ background: bg, border: `1px solid ${border}` }}>
-            <p className="text-lg font-extrabold leading-none mb-1" style={{ color }}>{value}</p>
+          {
+            label: 'Now',
+            value: cl ?? '—',
+            color: lineColor,
+            bg:    'rgba(29,158,117,0.07)',
+            border:'rgba(29,158,117,0.15)',
+            sub:   null,
+          },
+          {
+            label: 'Best',
+            value: summary.best || '—',
+            color: '#C9952A',
+            bg:    'rgba(201,149,42,0.07)',
+            border:'rgba(201,149,42,0.15)',
+            sub:   null,
+          },
+          {
+            label: 'Trend',
+            value: summary.trend ? trendArrow : '—',
+            color: trendColor,
+            bg:    'rgba(255,255,255,0.03)',
+            border:'rgba(255,255,255,0.07)',
+            sub:   'vs last week',
+          },
+        ].map(({ label, value, color, bg, border, sub }) => (
+          <div key={label} className="text-center rounded-2xl py-4 px-1"
+            style={{
+              background: bg,
+              border: `1px solid ${border}`,
+              borderTop: '2px solid rgba(29,158,117,0.35)',
+            }}>
+            <p className="text-2xl font-extrabold leading-none mb-1" style={{ color }}>{value}</p>
             <p className="text-[9px] uppercase tracking-widest font-semibold"
               style={{ color: 'rgba(255,255,255,0.2)' }}>{label}</p>
+            {sub && (
+              <p className="text-[8px] mt-0.5" style={{ color: 'rgba(255,255,255,0.13)' }}>{sub}</p>
+            )}
           </div>
         ))}
       </div>
