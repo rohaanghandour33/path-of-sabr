@@ -51,7 +51,7 @@ const QUESTION_BANK = {
 
 function getDayOfYear() {
   const now = new Date();
-  return Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 86400000);
+  return Math.floor((now - new Date(now.getFullYear(), 0, 1)) / 86400000);
 }
 
 function getDailyQuestions() {

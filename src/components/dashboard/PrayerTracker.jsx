@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../contexts/AuthContext';
 
 const PRAYERS = [
   { key: 'fajr',    label: 'Fajr',    fallback: 'Pre-dawn',  aladhanKey: 'Fajr' },
@@ -110,7 +111,7 @@ function calculateStreak(records) {
   const sorted = [...records].sort((a, b) => new Date(b.date) - new Date(a.date));
   for (const record of sorted) {
     let missedInDay = false;
-    for (const p of [...PRAYER_KEYS].reverse()) {
+    for (const p of PRAYER_KEYS) {
       const s = record[p];
       if (s === 'on_time' || s === 'late') streak++;
       else if (s === 'missed') { missedInDay = true; break; }
@@ -213,32 +214,68 @@ function PrayerSummaryCard({ records, title, subtitle }) {
 
 // ── Main component ─────────────────────────────────────────────────────────────
 export default function PrayerTracker({ userId, weekOffset = 0, customRange = null, onUpdate, compact = false }) {
+  const { user } = useAuth();
   const [prayers, setPrayers] = useState({});
   const [readOnlyRecords, setReadOnlyRecords] = useState([]);
   const [streak, setStreak] = useState(0);
   const [loading, setLoading] = useState(true);
   const [prayerTimes, setPrayerTimes] = useState({});
+  const [locationLabel, setLocationLabel] = useState('');
   const [showSunnah, setShowSunnah] = useState(false);
-  const today = new Date().toISOString().split('T')[0];
-  const isJummah = new Date().getDay() === 5;
 
+  const tz    = user?.user_metadata?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const today = new Intl.DateTimeFormat('en-CA', { timeZone: tz }).format(new Date());
+  const isJummah = new Intl.DateTimeFormat('en-US', { timeZone: tz, weekday: 'long' }).format(new Date()) === 'Friday';
+
+  // ── Fetch prayer times: city+country first, geolocation fallback ─────────────
   useEffect(() => {
+    fetchPrayerTimes();
+  }, [user]);
+
+  async function fetchPrayerTimes() {
+    const city    = user?.user_metadata?.city?.trim();
+    const country = user?.user_metadata?.country?.trim();
+
+    // ── Primary: use stored city + country (no permission needed) ────────────
+    if (city && country) {
+      try {
+        // No date in URL — Aladhan defaults to today server-side (avoids date-format issues)
+        const res = await fetch(
+          `https://api.aladhan.com/v1/timingsByCity?city=${encodeURIComponent(city)}&country=${encodeURIComponent(country)}&method=3`
+        );
+        if (res.ok) {
+          const t = (await res.json())?.data?.timings;
+          if (t) {
+            const mapped = {};
+            PRAYERS.forEach(({ key, aladhanKey }) => { if (t[aladhanKey]) mapped[key] = to12h(t[aladhanKey]); });
+            setPrayerTimes(mapped);
+            setLocationLabel(`${city}, ${country}`);
+            return;
+          }
+        }
+      } catch { /* fall through to geolocation */ }
+    }
+
+    // ── Fallback: browser geolocation (if no city/country stored) ────────────
     if (!navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition(
       async ({ coords }) => {
         try {
-          const res = await fetch(`https://api.aladhan.com/v1/timings?latitude=${coords.latitude}&longitude=${coords.longitude}&method=2`);
+          const res = await fetch(
+            `https://api.aladhan.com/v1/timings/${Math.floor(Date.now()/1000)}?latitude=${coords.latitude}&longitude=${coords.longitude}&method=3`
+          );
           if (!res.ok) return;
           const t = (await res.json())?.data?.timings;
           if (!t) return;
           const mapped = {};
           PRAYERS.forEach(({ key, aladhanKey }) => { if (t[aladhanKey]) mapped[key] = to12h(t[aladhanKey]); });
           setPrayerTimes(mapped);
+          setLocationLabel('Your location');
         } catch { /* silent */ }
       },
       () => {}
     );
-  }, []);
+  }
 
   useEffect(() => {
     if (!userId) return;
@@ -272,23 +309,29 @@ export default function PrayerTracker({ userId, weekOffset = 0, customRange = nu
   };
 
   const updatePrayer = async (prayer, status) => {
-    const nv = prayers[prayer] === status ? null : status;
+    const prev = prayers[prayer];
+    const nv = prev === status ? null : status;
     setPrayers((p) => ({ ...p, [prayer]: nv }));
-    await supabase.from('prayers').upsert({ user_id: userId, date: today, [prayer]: nv }, { onConflict: 'user_id,date' });
+    const { error } = await supabase.from('prayers').upsert({ user_id: userId, date: today, [prayer]: nv }, { onConflict: 'user_id,date' });
+    if (error) { console.error('[PrayerTracker] updatePrayer error:', error.message); setPrayers((p) => ({ ...p, [prayer]: prev })); return; }
     onUpdate?.();
   };
 
   const setSunnah = async (prayerKey, type, value) => {
     const field = `${prayerKey}_sunnah_${type}`;
+    const prev = prayers[field];
     setPrayers((p) => ({ ...p, [field]: value }));
-    await supabase.from('prayers').upsert({ user_id: userId, date: today, [field]: value }, { onConflict: 'user_id,date' });
+    const { error } = await supabase.from('prayers').upsert({ user_id: userId, date: today, [field]: value }, { onConflict: 'user_id,date' });
+    if (error) { console.error('[PrayerTracker] setSunnah error:', error.message); setPrayers((p) => ({ ...p, [field]: prev })); return; }
     onUpdate?.();
   };
 
   const toggleField = async (field) => {
-    const nv = !prayers[field];
+    const prev = prayers[field];
+    const nv = !prev;
     setPrayers((p) => ({ ...p, [field]: nv }));
-    await supabase.from('prayers').upsert({ user_id: userId, date: today, [field]: nv }, { onConflict: 'user_id,date' });
+    const { error } = await supabase.from('prayers').upsert({ user_id: userId, date: today, [field]: nv }, { onConflict: 'user_id,date' });
+    if (error) { console.error('[PrayerTracker] toggleField error:', error.message); setPrayers((p) => ({ ...p, [field]: prev })); return; }
     onUpdate?.();
   };
 
@@ -313,11 +356,15 @@ export default function PrayerTracker({ userId, weekOffset = 0, customRange = nu
           <p className="text-[10px] font-bold tracking-[0.16em] uppercase" style={{ color: 'rgba(255,255,255,0.22)' }}>
             Today's Prayers
           </p>
-          {loggedCount > 0 && (
+          {locationLabel ? (
+            <p className="text-[10px] mt-0.5 font-medium" style={{ color: 'rgba(29,158,117,0.65)' }}>
+              🕌 {locationLabel}
+            </p>
+          ) : loggedCount > 0 ? (
             <p className="text-[11px] mt-0.5 font-semibold" style={{ color: 'rgba(255,255,255,0.28)' }}>
               {loggedCount} of 5 logged
             </p>
-          )}
+          ) : null}
         </div>
         <div className="flex items-center gap-2">
           {!compact && rawatib > 0 && (

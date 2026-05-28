@@ -110,6 +110,10 @@ STRICT RULES — follow every single one without exception:
 
 23. When your response has more than one thought, separate each thought into its own paragraph with a blank line between them. Do not write everything as one long block. Each paragraph should be one clear idea — the way Claude responds. Two or three short paragraphs is always better than one long chunk.
 
+DATE AND TIME AWARENESS — critical, follow without exception:
+
+You always know the exact current date and time. It is provided to you at the top of the USER CONTEXT section as "Current date and time (user's timezone)" and it is refreshed on every single message. Never say "I do not have access to today's date", "I cannot tell what day it is", "I don't have live date information", or any variation of that. You have the date. Use it. If the user asks what day it is, what the Islamic date is, or anything time-related, use the date given to you in the context. If they mention an Islamic occasion (Day of Arafah, Eid, Ramadan, etc.), you can cross-reference the Gregorian date you have to reason about whether that occasion is today, recent, or past. Do not pretend to be unaware of time.
+
 ISLAMIC ACCURACY RULES — these override everything else when it comes to religious content:
 
 Hadith authenticity: Only cite hadith graded Sahih or Hasan. Never cite weak (da'if), fabricated (mawdu'), or unverified narrations under any circumstance. If a hadith is Hasan, always say it is Hasan — never present it as Sahih. The hadith "if you cannot cry then try to cry" is weak — never use it.
@@ -123,15 +127,34 @@ Fiqh uncertainty: If you are not certain about a ruling, say "I'm not certain ab
 Quotation marks: Whenever you quote a Quran verse, a hadith, or the direct words of a scholar, always wrap the quoted text in quotation marks. Never present a quote without quotation marks around it. This applies every time — no exceptions.`;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-function fmt(d) { return d.toISOString().split('T')[0]; }
 function getTier(user) { return user?.user_metadata?.subscription_tier || 'free'; }
 
-function calcPrayerStreak(records) {
-  const today = new Date(); today.setHours(0, 0, 0, 0);
+/** Local date in YYYY-MM-DD for the user's stored timezone (falls back to browser TZ). */
+function getLocalDate(tz) {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: tz }).format(new Date());
+}
+
+/** Full human-readable date + time in the user's timezone, e.g. "Wednesday, 28 May 2026, 9:14 PM" */
+function getLocalDateTime(tz) {
+  return new Intl.DateTimeFormat('en-GB', {
+    timeZone: tz,
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+    hour: '2-digit', minute: '2-digit',
+  }).format(new Date());
+}
+
+function fmt(d, tz) {
+  if (tz) return new Intl.DateTimeFormat('en-CA', { timeZone: tz }).format(d);
+  return d.toISOString().split('T')[0];
+}
+
+function calcPrayerStreak(records, tz) {
   let streak = 0;
+  const now = new Date();
   for (let i = 0; i < 60; i++) {
-    const d = new Date(today); d.setDate(today.getDate() - i);
-    const r = records.find(rec => rec.date === fmt(d));
+    const d = new Date(now.getTime() - i * 86400000);
+    const dateStr = fmt(d, tz);
+    const r = records.find(rec => rec.date === dateStr);
     if (!r) break;
     if (!PRAYER_KEYS.some(p => r[p])) break;
     streak++;
@@ -159,6 +182,11 @@ function formatMoodData(moodRow) {
 function buildPersonalContext(ctx) {
   return [
     `USER CONTEXT (personalised — do not cache):`,
+    // ── Live date — this is regenerated on every send so the AI always ──────
+    // knows the real current date in the user's timezone. Never use a date ──
+    // mentioned earlier in the conversation — always use this one. ───────────
+    `Current date and time (user's timezone): ${ctx.localDateTime}`,
+    `User's timezone: ${ctx.timezone}`,
     `Name: ${ctx.name || 'dear brother/sister'}`,
     `Why they joined: ${ctx.q1 || 'Not provided'}`,
     `Prayers they struggle with: ${ctx.q2 === 'Yes' ? (ctx.q2b?.join(', ') || 'Not specified') : 'Does not struggle with specific prayers'}`,
@@ -436,22 +464,28 @@ function PrayerDot({ status, label }) {
 
 // ─── Main component ───────────────────────────────────────────────────────────
 export default function Companion({ userId, user, embedded = false }) {
-  const [messages, setMessages]       = useState([]);
-  const [input, setInput]             = useState('');
-  const [responding, setResponding]   = useState(false);
-  const [streamText, setStreamText]   = useState('');
+  const [messages, setMessages]         = useState([]);
+  const [input, setInput]               = useState('');
+  const [responding, setResponding]     = useState(false);
+  const [streamText, setStreamText]     = useState('');
   const [messageCount, setMessageCount] = useState(0);
-  const [limit, setLimit]             = useState(3);
-  const [loading, setLoading]         = useState(true);
-  const [personalContext, setPersonalContext] = useState('');
+  const [limit, setLimit]               = useState(3);
+  const [loading, setLoading]           = useState(true);
   // Sidebar data
   const [streakCount, setStreakCount]   = useState(0);
   const [prayerToday, setPrayerToday]   = useState(null);
   const [moodScore, setMoodScore]       = useState(null);
 
+  // Store raw ctx data (without date) so we can rebuild personalContext
+  // with a fresh live timestamp on every single send — no stale state.
+  const ctxRef = useRef(null);
+
   const messagesEndRef = useRef(null);
   const inputRef       = useRef(null);
-  const today = new Date().toISOString().split('T')[0];
+
+  // User's timezone from signup metadata — falls back to browser TZ
+  const tz    = user?.user_metadata?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const today = getLocalDate(tz);
 
   // ── Auto-scroll ──────────────────────────────────────────────────────────
   useEffect(() => {
@@ -479,23 +513,25 @@ export default function Companion({ userId, user, embedded = false }) {
         supabase.from('prayers').select('*').eq('user_id', userId).eq('date', today).maybeSingle(),
         supabase.from('moods').select('*').eq('user_id', userId).eq('date', today).maybeSingle(),
         supabase.from('prayers').select('*').eq('user_id', userId)
-          .gte('date', fmt(new Date(Date.now() - 60 * 86400000)))
+          .gte('date', fmt(new Date(Date.now() - 60 * 86400000), tz))
           .order('date', { ascending: false }),
         supabase.from('ai_messages').select('message_count').eq('user_id', userId).eq('date', today).maybeSingle(),
         supabase.from('ai_conversations').select('role,content,created_at').eq('user_id', userId)
           .order('created_at', { ascending: false }),
       ]);
 
-      const streak = calcPrayerStreak(prayerHistory || []);
-      const ctx = {
-        name: user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'dear brother/sister',
+      const streak = calcPrayerStreak(prayerHistory || [], tz);
+
+      // Store base ctx (no date) — date is injected fresh on every send
+      ctxRef.current = {
+        name:      user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'dear brother/sister',
+        timezone:  tz,
         ...(onboarding || {}),
         prayerData: formatPrayerData(prayerRow),
         moodData:   formatMoodData(moodRow),
         streak,
       };
 
-      setPersonalContext(buildPersonalContext(ctx));
       setStreakCount(streak);
       setPrayerToday(prayerRow);
       try { setMoodScore(moodRow?.mood_score ?? null); } catch {}
@@ -533,6 +569,16 @@ export default function Companion({ userId, user, embedded = false }) {
     // Send last 20 messages as context to the AI — full history shown to user but capped here for token cost
     const last10  = allMsgs.slice(-20).map(m => ({ role: m.role, content: m.content }));
 
+    // Build personalContext RIGHT NOW with the exact current date/time.
+    // This runs on every send so the AI can never have a stale date —
+    // even if the page has been open for days or the user had a conversation
+    // yesterday that mentioned the Day of Arafah.
+    const liveContext = buildPersonalContext({
+      ...(ctxRef.current || {}),
+      timezone:      tz,
+      localDateTime: getLocalDateTime(tz),
+    });
+
     // ── Thinking delay — feels considered, not instant ─────────────────────
     const wordCount = text.trim().split(/\s+/).length;
     const isShortMsg = wordCount <= 8;
@@ -551,7 +597,7 @@ export default function Companion({ userId, user, embedded = false }) {
       const response = await fetch('/api/companion', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: last10, staticPrompt: SYSTEM_PROMPT_TEMPLATE, personalContext }),
+        body: JSON.stringify({ messages: last10, staticPrompt: SYSTEM_PROMPT_TEMPLATE, personalContext: liveContext }),
       });
 
       console.log('[Companion] ← HTTP status:', response.status);

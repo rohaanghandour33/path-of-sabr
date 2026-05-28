@@ -37,7 +37,7 @@ function TrophyCard({ trophy, number }) {
         </p>
       )}
       <p className="text-[9px]" style={{ color: 'rgba(201,149,42,0.35)' }}>
-        {new Date(trophy.earned_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+        {new Date(trophy.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
       </p>
     </div>
   );
@@ -53,7 +53,7 @@ export default function TrophyShelf({ userId, onBack }) {
       .from('user_trophies')
       .select('*')
       .eq('user_id', userId)
-      .order('earned_at', { ascending: false })
+      .order('created_at', { ascending: false })
       .then(({ data }) => { setTrophies(data || []); setLoading(false); });
   }, [userId]);
 

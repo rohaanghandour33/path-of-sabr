@@ -20,11 +20,18 @@ export function AuthProvider({ children }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = (email, password, fullName) =>
+  const signUp = (email, password, fullName, { timezone, country, city } = {}) =>
     supabase.auth.signUp({
       email,
       password,
-      options: { data: { full_name: fullName } },
+      options: {
+        data: {
+          full_name: fullName,
+          timezone: timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
+          country:  country  || '',
+          city:     city     || '',
+        },
+      },
     });
 
   const signIn = (email, password) =>

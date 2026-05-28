@@ -81,20 +81,30 @@ export default function TasksView({ userId, isFirstWeek, freeDays, onNeedSchedul
 
   const completeTask = async () => {
     if (!task) return;
-    const newCount = trophyCount + 1;
     const msg = TROPHY_MESSAGES[Math.floor(Math.random() * TROPHY_MESSAGES.length)];
 
-    await Promise.all([
+    // Fetch accurate live count from DB to avoid stale local counter
+    const { count: liveCount } = await supabase
+      .from('user_trophies')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId);
+    const newCount = (liveCount || 0) + 1;
+
+    const [{ error: taskErr }, { error: trophyErr }] = await Promise.all([
       supabase.from('user_tasks')
         .update({ completed: true })
         .eq('id', task.id),
       supabase.from('user_trophies').insert({
-        user_id:       userId,
-        task_title:    task.task_title,
+        user_id:        userId,
+        task_title:     task.task_title,
         trophy_message: msg,
         trophy_number:  newCount,
       }),
     ]);
+
+    if (taskErr)   console.error('[TasksView] task update error:', taskErr.message);
+    if (trophyErr) console.error('[TasksView] trophy insert error:', trophyErr.message);
+    if (taskErr || trophyErr) return;
 
     setTrophyCount(newCount);
     setTrophyMsg(msg);
