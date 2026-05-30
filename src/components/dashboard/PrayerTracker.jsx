@@ -97,7 +97,7 @@ const STATUS_BADGE_LABEL = { on_time: '✓ On time', late: '~ Late', missed: '�
 // ── Sunnah options per prayer ─────────────────────────────────────────────────
 const SUNNAH = {
   fajr:    { before: { opts: [2],    emp: [2] }, after: null },
-  dhuhr:   { before: { opts: [4, 6], emp: [4] }, after: { opts: [2, 4], emp: [2] } },
+  dhuhr:   { before: { opts: [2, 4], emp: [4] }, after: { opts: [2, 4], emp: [2] } },
   asr:     { before: { opts: [2, 4], emp: [] },  after: null },
   maghrib: { before: { opts: [2],    emp: [] },  after: { opts: [2, 4], emp: [2] } },
   isha:    { before: { opts: [2, 4], emp: [] },  after: { opts: [2, 4], emp: [2] } },
