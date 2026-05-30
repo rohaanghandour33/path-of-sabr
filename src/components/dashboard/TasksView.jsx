@@ -65,11 +65,11 @@ export default function TasksView({ userId, isFirstWeek, freeDays, onNeedSchedul
   };
 
   const fetchTrophyCount = async () => {
-    const { count } = await supabase
+    const { data } = await supabase
       .from('user_trophies')
-      .select('*', { count: 'exact', head: true })
+      .select('id')
       .eq('user_id', userId);
-    setTrophyCount(count || 0);
+    setTrophyCount(data?.length || 0);
   };
 
   const handleGenerate = async () => {
@@ -84,11 +84,11 @@ export default function TasksView({ userId, isFirstWeek, freeDays, onNeedSchedul
     const msg = TROPHY_MESSAGES[Math.floor(Math.random() * TROPHY_MESSAGES.length)];
 
     // Fetch accurate live count from DB to avoid stale local counter
-    const { count: liveCount } = await supabase
+    const { data: existingTrophies } = await supabase
       .from('user_trophies')
-      .select('*', { count: 'exact', head: true })
+      .select('id')
       .eq('user_id', userId);
-    const newCount = (liveCount || 0) + 1;
+    const newCount = (existingTrophies?.length || 0) + 1;
 
     const [{ error: taskErr }, { error: trophyErr }] = await Promise.all([
       supabase.from('user_tasks')
