@@ -1,37 +1,232 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
-// ── Country list (Muslim-majority countries first, then alphabetical) ─────────
+// ── Countries with flag emojis (sorted alphabetically) ───────────────────────
 const COUNTRIES = [
-  // Muslim-majority / commonly used first
-  'Afghanistan','Albania','Algeria','Azerbaijan','Bahrain','Bangladesh','Bosnia and Herzegovina',
-  'Brunei','Chad','Comoros','Djibouti','Egypt','Gambia','Guinea','Indonesia','Iran','Iraq',
-  'Jordan','Kazakhstan','Kosovo','Kuwait','Kyrgyzstan','Lebanon','Libya','Malaysia','Maldives',
-  'Mali','Mauritania','Morocco','Niger','Nigeria','Oman','Pakistan','Palestine','Qatar',
-  'Saudi Arabia','Senegal','Sierra Leone','Somalia','Sudan','Syria','Tajikistan','Tunisia',
-  'Turkey','Turkmenistan','United Arab Emirates','Uzbekistan','Western Sahara','Yemen',
-  // Rest of world
-  'Argentina','Australia','Austria','Belgium','Brazil','Canada','China','Denmark','Ethiopia',
-  'Finland','France','Germany','Ghana','Greece','Hungary','India','Ireland','Israel','Italy',
-  'Japan','Kenya','Mexico','Netherlands','New Zealand','Norway','Philippines','Poland',
-  'Portugal','Russia','South Africa','South Korea','Spain','Sri Lanka','Sweden','Switzerland',
-  'Tanzania','Thailand','Uganda','Ukraine','United Kingdom','United States','Vietnam','Zimbabwe',
-].sort();
+  { name: 'Afghanistan',            flag: '🇦🇫' },
+  { name: 'Albania',                flag: '🇦🇱' },
+  { name: 'Algeria',                flag: '🇩🇿' },
+  { name: 'Argentina',              flag: '🇦🇷' },
+  { name: 'Australia',              flag: '🇦🇺' },
+  { name: 'Austria',                flag: '🇦🇹' },
+  { name: 'Azerbaijan',             flag: '🇦🇿' },
+  { name: 'Bahrain',                flag: '🇧🇭' },
+  { name: 'Bangladesh',             flag: '🇧🇩' },
+  { name: 'Belgium',                flag: '🇧🇪' },
+  { name: 'Bosnia and Herzegovina', flag: '🇧🇦' },
+  { name: 'Brazil',                 flag: '🇧🇷' },
+  { name: 'Brunei',                 flag: '🇧🇳' },
+  { name: 'Canada',                 flag: '🇨🇦' },
+  { name: 'Chad',                   flag: '🇹🇩' },
+  { name: 'China',                  flag: '🇨🇳' },
+  { name: 'Comoros',                flag: '🇰🇲' },
+  { name: 'Denmark',                flag: '🇩🇰' },
+  { name: 'Djibouti',               flag: '🇩🇯' },
+  { name: 'Egypt',                  flag: '🇪🇬' },
+  { name: 'Ethiopia',               flag: '🇪🇹' },
+  { name: 'Finland',                flag: '🇫🇮' },
+  { name: 'France',                 flag: '🇫🇷' },
+  { name: 'Gambia',                 flag: '🇬🇲' },
+  { name: 'Germany',                flag: '🇩🇪' },
+  { name: 'Ghana',                  flag: '🇬🇭' },
+  { name: 'Greece',                 flag: '🇬🇷' },
+  { name: 'Guinea',                 flag: '🇬🇳' },
+  { name: 'Hungary',                flag: '🇭🇺' },
+  { name: 'India',                  flag: '🇮🇳' },
+  { name: 'Indonesia',              flag: '🇮🇩' },
+  { name: 'Iran',                   flag: '🇮🇷' },
+  { name: 'Iraq',                   flag: '🇮🇶' },
+  { name: 'Ireland',                flag: '🇮🇪' },
+  { name: 'Israel',                 flag: '🇮🇱' },
+  { name: 'Italy',                  flag: '🇮🇹' },
+  { name: 'Japan',                  flag: '🇯🇵' },
+  { name: 'Jordan',                 flag: '🇯🇴' },
+  { name: 'Kazakhstan',             flag: '🇰🇿' },
+  { name: 'Kenya',                  flag: '🇰🇪' },
+  { name: 'Kosovo',                 flag: '🇽🇰' },
+  { name: 'Kuwait',                 flag: '🇰🇼' },
+  { name: 'Kyrgyzstan',             flag: '🇰🇬' },
+  { name: 'Lebanon',                flag: '🇱🇧' },
+  { name: 'Libya',                  flag: '🇱🇾' },
+  { name: 'Malaysia',               flag: '🇲🇾' },
+  { name: 'Maldives',               flag: '🇲🇻' },
+  { name: 'Mali',                   flag: '🇲🇱' },
+  { name: 'Mauritania',             flag: '🇲🇷' },
+  { name: 'Mexico',                 flag: '🇲🇽' },
+  { name: 'Morocco',                flag: '🇲🇦' },
+  { name: 'Netherlands',            flag: '🇳🇱' },
+  { name: 'New Zealand',            flag: '🇳🇿' },
+  { name: 'Niger',                  flag: '🇳🇪' },
+  { name: 'Nigeria',                flag: '🇳🇬' },
+  { name: 'Norway',                 flag: '🇳🇴' },
+  { name: 'Oman',                   flag: '🇴🇲' },
+  { name: 'Pakistan',               flag: '🇵🇰' },
+  { name: 'Palestine',              flag: '🇵🇸' },
+  { name: 'Philippines',            flag: '🇵🇭' },
+  { name: 'Poland',                 flag: '🇵🇱' },
+  { name: 'Portugal',               flag: '🇵🇹' },
+  { name: 'Qatar',                  flag: '🇶🇦' },
+  { name: 'Russia',                 flag: '🇷🇺' },
+  { name: 'Saudi Arabia',           flag: '🇸🇦' },
+  { name: 'Senegal',                flag: '🇸🇳' },
+  { name: 'Sierra Leone',           flag: '🇸🇱' },
+  { name: 'Somalia',                flag: '🇸🇴' },
+  { name: 'South Africa',           flag: '🇿🇦' },
+  { name: 'South Korea',            flag: '🇰🇷' },
+  { name: 'Spain',                  flag: '🇪🇸' },
+  { name: 'Sri Lanka',              flag: '🇱🇰' },
+  { name: 'Sudan',                  flag: '🇸🇩' },
+  { name: 'Sweden',                 flag: '🇸🇪' },
+  { name: 'Switzerland',            flag: '🇨🇭' },
+  { name: 'Syria',                  flag: '🇸🇾' },
+  { name: 'Tajikistan',             flag: '🇹🇯' },
+  { name: 'Tanzania',               flag: '🇹🇿' },
+  { name: 'Thailand',               flag: '🇹🇭' },
+  { name: 'Tunisia',                flag: '🇹🇳' },
+  { name: 'Turkey',                 flag: '🇹🇷' },
+  { name: 'Turkmenistan',           flag: '🇹🇲' },
+  { name: 'Uganda',                 flag: '🇺🇬' },
+  { name: 'Ukraine',                flag: '🇺🇦' },
+  { name: 'United Arab Emirates',   flag: '🇦🇪' },
+  { name: 'United Kingdom',         flag: '🇬🇧' },
+  { name: 'United States',          flag: '🇺🇸' },
+  { name: 'Uzbekistan',             flag: '🇺🇿' },
+  { name: 'Vietnam',                flag: '🇻🇳' },
+  { name: 'Western Sahara',         flag: '🇪🇭' },
+  { name: 'Yemen',                  flag: '🇾🇪' },
+  { name: 'Zimbabwe',               flag: '🇿🇼' },
+].sort((a, b) => a.name.localeCompare(b.name));
+
+// ── Custom country picker with flags + search ─────────────────────────────────
+function CountrySelect({ value, onChange }) {
+  const [open, setOpen]     = useState(false);
+  const [search, setSearch] = useState('');
+  const wrapRef  = useRef(null);
+  const inputRef = useRef(null);
+
+  // Close when clicking outside
+  useEffect(() => {
+    const handler = (e) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target)) {
+        setOpen(false);
+        setSearch('');
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  // Focus search input when opening
+  useEffect(() => {
+    if (open && inputRef.current) inputRef.current.focus();
+  }, [open]);
+
+  const filtered = search.trim()
+    ? COUNTRIES.filter(c => c.name.toLowerCase().includes(search.toLowerCase()))
+    : COUNTRIES;
+
+  const selected = COUNTRIES.find(c => c.name === value);
+
+  return (
+    <div ref={wrapRef} className="relative">
+      {/* Trigger */}
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        className="w-full rounded-xl px-3 py-2.5 text-sm text-left flex items-center justify-between transition-colors"
+        style={{
+          background: 'rgba(255,255,255,0.06)',
+          border: open
+            ? '1px solid rgba(29,158,117,0.55)'
+            : '1px solid rgba(255,255,255,0.1)',
+          color: value ? 'white' : 'rgba(255,255,255,0.3)',
+        }}
+      >
+        <span className="flex items-center gap-2 truncate">
+          {selected ? (
+            <>
+              <span className="text-base flex-shrink-0">{selected.flag}</span>
+              <span className="truncate">{selected.name}</span>
+            </>
+          ) : (
+            <span>Select country</span>
+          )}
+        </span>
+        <span className="flex-shrink-0 ml-1 text-[10px]" style={{ color: 'rgba(255,255,255,0.25)' }}>
+          {open ? '▲' : '▼'}
+        </span>
+      </button>
+
+      {/* Dropdown */}
+      {open && (
+        <div
+          className="absolute left-0 right-0 mt-1 rounded-xl overflow-hidden z-50"
+          style={{
+            background: '#0b2318',
+            border: '1px solid rgba(29,158,117,0.22)',
+            boxShadow: '0 12px 40px rgba(0,0,0,0.6)',
+          }}
+        >
+          {/* Search */}
+          <div className="px-3 py-2" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+            <input
+              ref={inputRef}
+              type="text"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search…"
+              className="w-full bg-transparent text-white text-sm placeholder-white/25 focus:outline-none"
+            />
+          </div>
+
+          {/* List */}
+          <div className="overflow-y-auto" style={{ maxHeight: 220, scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.1) transparent' }}>
+            {filtered.length === 0 ? (
+              <p className="text-center py-4 text-sm" style={{ color: 'rgba(255,255,255,0.3)' }}>No results</p>
+            ) : (
+              filtered.map(c => {
+                const isSelected = c.name === value;
+                return (
+                  <button
+                    key={c.name}
+                    type="button"
+                    onClick={() => { onChange(c.name); setOpen(false); setSearch(''); }}
+                    className="w-full text-left px-3 py-2.5 flex items-center gap-2.5 text-sm transition-colors"
+                    style={{
+                      background: isSelected ? 'rgba(29,158,117,0.15)' : 'transparent',
+                      color: isSelected ? '#1D9E75' : 'rgba(255,255,255,0.8)',
+                    }}
+                    onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}
+                    onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = 'transparent'; }}
+                  >
+                    <span className="text-base flex-shrink-0">{c.flag}</span>
+                    <span>{c.name}</span>
+                    {isSelected && <span className="ml-auto text-xs">✓</span>}
+                  </button>
+                );
+              })
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function Signup() {
   const { signUp } = useAuth();
   const navigate = useNavigate();
-  const [fullName,  setFullName]  = useState('');
-  const [email,     setEmail]     = useState('');
-  const [password,  setPassword]  = useState('');
-  const [country,   setCountry]   = useState('');
-  const [city,      setCity]      = useState('');
-  const [timezone,  setTimezone]  = useState(() => Intl.DateTimeFormat().resolvedOptions().timeZone);
+  const [fullName,     setFullName]     = useState('');
+  const [email,        setEmail]        = useState('');
+  const [password,     setPassword]     = useState('');
+  const [country,      setCountry]      = useState('');
+  const [city,         setCity]         = useState('');
+  const [timezone,     setTimezone]     = useState(() => Intl.DateTimeFormat().resolvedOptions().timeZone);
   const [showTzPicker, setShowTzPicker] = useState(false);
-  const [error,     setError]     = useState('');
-  const [loading,   setLoading]   = useState(false);
-  const [success,   setSuccess]   = useState(false);
+  const [error,        setError]        = useState('');
+  const [loading,      setLoading]      = useState(false);
+  const [success,      setSuccess]      = useState(false);
 
   // All IANA timezones supported by the browser
   const allTimezones = Intl.supportedValuesOf
@@ -96,7 +291,7 @@ export default function Signup() {
     );
   }
 
-  // ── SIGNUP FORM (re-enable by setting COMING_SOON = false above) ───────────
+  // ── SIGNUP FORM ───────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-16">
       <div className="w-full max-w-md">
@@ -162,7 +357,7 @@ export default function Signup() {
                 />
               </div>
 
-              {/* ── Location — needed for accurate prayer times ─────────────── */}
+              {/* ── Location ─────────────────────────────────────────────────── */}
               <div className="rounded-xl p-4 space-y-4" style={{ background: 'rgba(29,158,117,0.05)', border: '1px solid rgba(29,158,117,0.15)' }}>
                 <div className="flex items-start gap-2">
                   <span className="text-base mt-0.5">🕌</span>
@@ -174,15 +369,7 @@ export default function Signup() {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs font-medium mb-1.5" style={{ color: 'rgba(255,255,255,0.5)' }}>Country</label>
-                    <select
-                      value={country}
-                      onChange={(e) => setCountry(e.target.value)}
-                      className="w-full rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-[#1D9E75]/60 transition-colors"
-                      style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', colorScheme: 'dark' }}
-                    >
-                      <option value="">Select country</option>
-                      {COUNTRIES.map(c => <option key={c} value={c}>{c}</option>)}
-                    </select>
+                    <CountrySelect value={country} onChange={setCountry} />
                   </div>
 
                   <div>
